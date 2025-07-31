@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block title %}บันทึกการปรับเทียบแรงบิด - {{ machine.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-cog fa-lg"></i>
+                    บันทึกการปรับเทียบแรงบิด
+                </h1>
+                <p class="page-subtitle">{{ machine.name }} - {{ machine.machine_type.name }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- ข้อมูลเครื่องมือ -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    ข้อมูลเครื่องมือ
+                </h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-3">
+                        <small><strong>ชื่อ:</strong> {{ machine.name }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>รุ่น:</strong> {{ machine.model|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>หมายเลข:</strong> {{ machine.serial_number|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>ประเภท:</strong> {{ machine.machine_type.name }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ฟอร์มบันทึกการปรับเทียบ -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    ข้อมูลการปรับเทียบแรงบิด
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- CW Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-2">
+                                <i class="fas fa-clockwise me-1"></i>CW (Clockwise) - ตามเข็มนาฬิกา
+                            </h6>
+                        </div>
+                    </div>
+
+                    <!-- CW Table -->
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th style="width: 8%">UUC.set</th>
+                                    <th style="width: 12%">STD.Read 0°</th>
+                                    <th style="width: 12%">STD.Read 90°</th>
+                                    <th style="width: 12%">STD.Read 180°</th>
+                                    <th style="width: 12%">STD.Read 270°</th>
+                                    <th style="width: 8%">AVERAGE</th>
+                                    <th style="width: 8%">Error</th>
+                                    <th style="width: 10%">Reading 4%</th>
+                                    <th style="width: 18%">Tolerance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cwset_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw0_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw90_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw180_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw270_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw_avg_1" readonly></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw_error_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw_reading_1" readonly></td>
+                                    <td><input type="text" class="form-control form-control-sm" name="cw_tolerance_1" readonly></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cwset_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw0_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw90_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw180_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw270_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw_avg_2" readonly></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw_error_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw_reading_2" readonly></td>
+                                    <td><input type="text" class="form-control form-control-sm" name="cw_tolerance_2" readonly></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cwset_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw0_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw90_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw180_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw270_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw_avg_3" readonly></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw_error_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cw_reading_3" readonly></td>
+                                    <td><input type="text" class="form-control form-control-sm" name="cw_tolerance_3" readonly></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- CCW Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-warning mb-2">
+                                <i class="fas fa-counter-clockwise me-1"></i>CCW (Counter-Clockwise) - ทวนเข็มนาฬิกา
+                            </h6>
+                        </div>
+                    </div>
+
+                    <!-- CCW Table -->
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-warning">
+                                <tr>
+                                    <th style="width: 8%">UUC.set</th>
+                                    <th style="width: 12%">STD.Read 0°</th>
+                                    <th style="width: 12%">STD.Read 90°</th>
+                                    <th style="width: 12%">STD.Read 180°</th>
+                                    <th style="width: 12%">STD.Read 270°</th>
+                                    <th style="width: 8%">AVERAGE</th>
+                                    <th style="width: 8%">Error</th>
+                                    <th style="width: 10%">Reading 6%</th>
+                                    <th style="width: 18%">Tolerance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccwset_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw0_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw90_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw180_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw270_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw_avg_1" readonly></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw_error_1"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw_reading_1" readonly></td>
+                                    <td><input type="text" class="form-control form-control-sm" name="ccw_tolerance_1" readonly></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccwset_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw0_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw90_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw180_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw270_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw_avg_2" readonly></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw_error_2"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw_reading_2" readonly></td>
+                                    <td><input type="text" class="form-control form-control-sm" name="ccw_tolerance_2" readonly></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccwset_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw0_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw90_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw180_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw270_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw_avg_3" readonly></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw_error_3"></td>
+                                    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ccw_reading_3" readonly></td>
+                                    <td><input type="text" class="form-control form-control-sm" name="ccw_tolerance_3" readonly></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- วันที่ปรับเทียบ -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <small><strong>วันที่ปรับเทียบ</strong></small>
+                            <input type="datetime-local" class="form-control form-control-sm" name="update" value="{{ form.update.value|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-save me-1"></i>บันทึกการปรับเทียบ
+                                </button>
+                                <a href="{% url 'select-machine-for-calibration' %}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-arrow-left me-1"></i>กลับไปเลือกเครื่องมือ
+                                </a>
+                                <a href="{% url 'calibrate-torque-list' %}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-list me-1"></i>ดูรายการทั้งหมด
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript สำหรับคำนวณค่าเฉลี่ยอัตโนมัติ
+document.addEventListener('DOMContentLoaded', function() {
+    // CW Calculations
+    for (let i = 1; i <= 3; i++) {
+        const inputs = [
+            document.querySelector(`input[name="cw0_${i}"]`),
+            document.querySelector(`input[name="cw90_${i}"]`),
+            document.querySelector(`input[name="cw180_${i}"]`),
+            document.querySelector(`input[name="cw270_${i}"]`)
+        ];
+        const avgInput = document.querySelector(`input[name="cw_avg_${i}"]`);
+        const setInput = document.querySelector(`input[name="cwset_${i}"]`);
+        const readingInput = document.querySelector(`input[name="cw_reading_${i}"]`);
+        const toleranceInput = document.querySelector(`input[name="cw_tolerance_${i}"]`);
+
+        inputs.forEach(input => {
+            input.addEventListener('input', calculateCW);
+        });
+        setInput.addEventListener('input', calculateCW);
+
+        function calculateCW() {
+            const values = inputs.map(input => parseFloat(input.value) || 0);
+            const setValue = parseFloat(setInput.value) || 0;
+            
+            // คำนวณค่าเฉลี่ยเฉพาะเมื่อมีข้อมูลครบ 4 ค่า
+            const validValues = values.filter(v => v !== 0);
+            if (validValues.length === 4) {
+                const avg = validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+                avgInput.value = avg.toFixed(2);
+                
+                const reading = setValue * 0.04; // 4%
+                readingInput.value = reading.toFixed(2);
+                
+                const tolerance = `${(setValue - reading).toFixed(1)} - ${(setValue + reading).toFixed(1)}`;
+                toleranceInput.value = tolerance;
+            } else {
+                // ล้างค่าถ้าไม่มีข้อมูลครบ
+                avgInput.value = '';
+                readingInput.value = '';
+                toleranceInput.value = '';
+            }
+        }
+    }
+
+    // CCW Calculations
+    for (let i = 1; i <= 3; i++) {
+        const inputs = [
+            document.querySelector(`input[name="ccw0_${i}"]`),
+            document.querySelector(`input[name="ccw90_${i}"]`),
+            document.querySelector(`input[name="ccw180_${i}"]`),
+            document.querySelector(`input[name="ccw270_${i}"]`)
+        ];
+        const avgInput = document.querySelector(`input[name="ccw_avg_${i}"]`);
+        const setInput = document.querySelector(`input[name="ccwset_${i}"]`);
+        const readingInput = document.querySelector(`input[name="ccw_reading_${i}"]`);
+        const toleranceInput = document.querySelector(`input[name="ccw_tolerance_${i}"]`);
+
+        inputs.forEach(input => {
+            input.addEventListener('input', calculateCCW);
+        });
+        setInput.addEventListener('input', calculateCCW);
+
+        function calculateCCW() {
+            const values = inputs.map(input => parseFloat(input.value) || 0);
+            const setValue = parseFloat(setInput.value) || 0;
+            
+            // คำนวณค่าเฉลี่ยเฉพาะเมื่อมีข้อมูลครบ 4 ค่า
+            const validValues = values.filter(v => v !== 0);
+            if (validValues.length === 4) {
+                const avg = validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+                avgInput.value = avg.toFixed(2);
+                
+                const reading = setValue * 0.06; // 6%
+                readingInput.value = reading.toFixed(2);
+                
+                const tolerance = `${(setValue - reading).toFixed(1)} - ${(setValue + reading).toFixed(1)}`;
+                toleranceInput.value = tolerance;
+            } else {
+                // ล้างค่าถ้าไม่มีข้อมูลครบ
+                avgInput.value = '';
+                readingInput.value = '';
+                toleranceInput.value = '';
+            }
+        }
+    }
+});
+</script>
+{% endblock %} 

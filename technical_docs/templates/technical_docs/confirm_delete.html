@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}ลบเอกสารเทคนิค{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-trash"></i>
+                        ยืนยันการลบเอกสาร
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'technical_docs:document_list' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> กลับไปรายการเอกสาร
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle"></i> คำเตือน</h5>
+                        <p>คุณกำลังจะลบเอกสาร "<strong>{{ document.title }}</strong>"</p>
+                        <p>การดำเนินการนี้ไม่สามารถยกเลิกได้</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>รายละเอียดเอกสาร:</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>ชื่อเอกสาร:</strong></td>
+                                    <td>{{ document.title }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ไฟล์:</strong></td>
+                                    <td>{{ document.filename }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>วันที่สร้าง:</strong></td>
+                                    <td>{{ document.created_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                {% if document.description %}
+                                <tr>
+                                    <td><strong>คำอธิบาย:</strong></td>
+                                    <td>{{ document.description }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> ยืนยันการลบ
+                            </button>
+                            <a href="{% url 'technical_docs:document_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> ยกเลิก
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

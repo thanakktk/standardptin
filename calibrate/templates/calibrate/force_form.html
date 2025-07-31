@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-weight"></i>
+                        {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการปรับเทียบแรง (Force)
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'calibrate-force-list' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> กลับไปรายการ
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3">ข้อมูลแรงกด (Compression)</h5>
+                                <div class="form-group">
+                                    <label for="{{ form.apply_com.id_for_label }}">{{ form.apply_com.label }}</label>
+                                    {{ form.apply_com }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.compress.id_for_label }}">{{ form.compress.label }}</label>
+                                    {{ form.compress }}
+                                </div>
+                                
+                                <h5 class="text-success mb-3 mt-4">ข้อมูลแรงดึง (Tension)</h5>
+                                <div class="form-group">
+                                    <label for="{{ form.apply_ten.id_for_label }}">{{ form.apply_ten.label }}</label>
+                                    {{ form.apply_ten }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.tension.id_for_label }}">{{ form.tension.label }}</label>
+                                    {{ form.tension }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="text-info mb-3">ข้อมูลทั่วไป</h5>
+                                <div class="form-group">
+                                    <label for="{{ form.fullscale.id_for_label }}">{{ form.fullscale.label }}</label>
+                                    {{ form.fullscale }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.error.id_for_label }}">{{ form.error.label }}</label>
+                                    {{ form.error }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.tolerance_start.id_for_label }}">{{ form.tolerance_start.label }}</label>
+                                    {{ form.tolerance_start }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.tolerance_end.id_for_label }}">{{ form.tolerance_end.label }}</label>
+                                    {{ form.tolerance_end }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.update.id_for_label }}">{{ form.update.label }}</label>
+                                    {{ form.update }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.uuc_id.id_for_label }}">{{ form.uuc_id.label }}</label>
+                                    {{ form.uuc_id }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> บันทึก
+                            </button>
+                            <a href="{% url 'calibrate-force-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> ยกเลิก
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

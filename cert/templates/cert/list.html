@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block title %}รายการใบรับรอง - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-certificate me-3"></i>
+                    รายการใบรับรอง
+                </h1>
+                <p class="page-subtitle">
+                    จัดการใบรับรองการสอบเทียบเครื่องมือวัด
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'cert-add' %}" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    เพิ่มใบรับรอง
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Data Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-table me-2"></i>
+                รายการใบรับรอง ({{ certificates.count }} รายการ)
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%">
+                                <i class="fas fa-hashtag me-1"></i>เลขที่ใบรับรอง
+                            </th>
+                            <th style="width: 20%">
+                                <i class="fas fa-tools me-1"></i>เครื่องมือ
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-calendar-plus me-1"></i>วันที่ออก
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-calendar-times me-1"></i>วันหมดอายุ
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-file me-1"></i>ไฟล์
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-sticky-note me-1"></i>หมายเหตุ
+                            </th>
+                            <th style="width: 11%">
+                                <i class="fas fa-cogs me-1"></i>จัดการ
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in certificates %}
+                        <tr>
+                            <td>
+                                <strong>{{ c.cert_no }}</strong>
+                            </td>
+                            <td>
+                                <strong>{{ c.machine }}</strong>
+                                {% if c.machine.model %}
+                                    <br><small class="text-muted">{{ c.machine.model }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-success">{{ c.issue_date|date:"d/m/Y" }}</span>
+                            </td>
+                            <td>
+                                {% if c.expire_date %}
+                                    {% if c.expire_date < today %}
+                                        <span class="badge bg-danger">{{ c.expire_date|date:"d/m/Y" }}</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{{ c.expire_date|date:"d/m/Y" }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary">ไม่ระบุ</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if c.file %}
+                                    <a href="{{ c.file.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-download me-1"></i>ดาวน์โหลด
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">ไม่มีไฟล์</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if c.remark %}
+                                    <span class="text-muted">{{ c.remark|truncatewords:5 }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'cert-edit' c.pk %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'cert-delete' c.pk %}" class="btn btn-outline-danger btn-sm" title="ลบ">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-info-circle fa-3x mb-3"></i>
+                                    <h5>ไม่พบข้อมูลใบรับรอง</h5>
+                                    <p>กรุณาเพิ่มใบรับรองใหม่</p>
+                                    <a href="{% url 'cert-add' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>เพิ่มใบรับรอง
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mt-4">
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-certificate"></i>
+                </div>
+                <div class="stats-number">{{ certificates.count }}</div>
+                <div class="stats-label">ใบรับรองทั้งหมด</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-number">{{ valid_certs|default:"0" }}</div>
+                <div class="stats-label">ใบรับรองที่ยังไม่หมดอายุ</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stats-number">{{ expiring_certs|default:"0" }}</div>
+                <div class="stats-label">ใบรับรองใกล้หมดอายุ</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stats-number">{{ expired_certs|default:"0" }}</div>
+                <div class="stats-label">ใบรับรองที่หมดอายุ</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-upload fa-2x text-primary mb-2"></i>
+                    <h6>อัปโหลดใบรับรอง</h6>
+                    <p class="text-muted small">เพิ่มใบรับรองการสอบเทียบใหม่</p>
+                    <a href="{% url 'cert-add' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>เพิ่มใหม่
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-search fa-2x text-success mb-2"></i>
+                    <h6>ค้นหาใบรับรอง</h6>
+                    <p class="text-muted small">ค้นหาและกรองใบรับรอง</p>
+                    <button class="btn btn-outline-success btn-sm" onclick="alert('ฟีเจอร์นี้จะเปิดใช้งานเร็วๆ นี้')">
+                        <i class="fas fa-search me-1"></i>ค้นหา
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Home -->
+    <div class="text-center mt-4">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="fas fa-home me-2"></i>กลับหน้าแรก
+        </a>
+    </div>
+</div>
+{% endblock %} 

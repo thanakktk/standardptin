@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}รายการเครื่องมือวัด - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-tools me-3"></i>
+                    รายการเครื่องมือวัด
+                </h1>
+                <p class="page-subtitle">
+                    จัดการข้อมูลเครื่องมือวัดและการสอบเทียบ
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'machine-add' %}" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    เพิ่มเครื่องมือวัด
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-2"></i>
+                กรองและค้นหาข้อมูล
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get">
+                <div class="row g-3">
+                    <div class="col-md-4 col-lg-2">
+                        <label class="form-label">
+                            <i class="fas fa-building me-1"></i>หน่วยงาน
+                        </label>
+                        {{ filter_form.organize_id }}
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label class="form-label">
+                            <i class="fas fa-tag me-1"></i>ประเภท
+                        </label>
+                        {{ filter_form.machine_type }}
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label class="form-label">
+                            <i class="fas fa-calendar me-1"></i>วันที่เริ่มต้น
+                        </label>
+                        {{ filter_form.date_from }}
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label class="form-label">
+                            <i class="fas fa-calendar me-1"></i>วันที่สิ้นสุด
+                        </label>
+                        {{ filter_form.date_to }}
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label class="form-label">
+                            <i class="fas fa-search me-1"></i>ค้นหา Serial
+                        </label>
+                        {{ filter_form.serial_search }}
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label class="form-label">
+                            <i class="fas fa-search me-1"></i>ค้นหาชื่อ
+                        </label>
+                        {{ filter_form.name_search }}
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="btn-group" role="group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>กรอง
+                            </button>
+                            <a href="{% url 'machine-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>ล้างการกรอง
+                            </a>
+                            <button type="submit" formaction="{% url 'machine-send-filtered-email' %}" class="btn btn-success">
+                                <i class="fas fa-envelope me-1"></i>ส่งอีเมลข้อมูลที่กรอง
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Data Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-table me-2"></i>
+                รายการเครื่องมือวัด ({{ machines.count }} รายการ)
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">
+                                <i class="fas fa-hashtag me-1"></i>ID
+                            </th>
+                            <th style="width: 20%">
+                                <i class="fas fa-tools me-1"></i>ชื่อเครื่องมือ
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-tag me-1"></i>รุ่น
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-barcode me-1"></i>Serial
+                            </th>
+                            <th style="width: 10%">
+                                <i class="fas fa-ruler me-1"></i>หน่วย
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-industry me-1"></i>ผู้ผลิต
+                            </th>
+                            <th style="width: 20%">
+                                <i class="fas fa-cogs me-1"></i>จัดการ
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in machines %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary">{{ m.id }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ m.name }}</strong>
+                                {% if m.organize %}
+                                    <br><small class="text-muted">{{ m.organize.name }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ m.model|default:"-" }}</td>
+                            <td>
+                                <code>{{ m.serial_number|default:"-" }}</code>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ m.unit }}</span>
+                            </td>
+                            <td>{{ m.manufacture }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'machine-edit' m.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'machine-delete' m.id %}" class="btn btn-outline-danger btn-sm" title="ลบ">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                    <a href="{% url 'machine-send-email' m.id %}" class="btn btn-outline-success btn-sm" title="ส่งข้อมูลทางอีเมล">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                    <a href="{% url 'machine-calibration' m.id %}" class="btn btn-outline-info btn-sm" title="บันทึกการปรับเทียบ">
+                                        <i class="fas fa-cog"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-info-circle fa-3x mb-3"></i>
+                                    <h5>ไม่พบข้อมูลเครื่องมือวัด</h5>
+                                    <p>กรุณาเพิ่มเครื่องมือวัดใหม่หรือลองเปลี่ยนเงื่อนไขการค้นหา</p>
+                                    <a href="{% url 'machine-add' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>เพิ่มเครื่องมือวัด
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Home -->
+    <div class="text-center mt-4">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="fas fa-home me-2"></i>กลับหน้าแรก
+        </a>
+    </div>
+</div>
+{% endblock %} 

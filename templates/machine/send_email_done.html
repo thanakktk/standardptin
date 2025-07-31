@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2>ส่งอีเมลสำเร็จ</h2>
+  <p>ข้อมูลเครื่องมือ <strong>{{ machine.name }}</strong> ถูกส่งไปยังอีเมลของคุณเรียบร้อยแล้ว</p>
+  <a href="{% url 'machine-list' %}" class="btn btn-success">กลับไปหน้ารายการเครื่องมือ</a>
+</div>
+{% endblock %} 

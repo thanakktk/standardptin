@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}สมัครสมาชิก - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title text-center">
+                        <i class="fas fa-user-plus"></i>
+                        สมัครสมาชิก
+                    </h3>
+                </div>
+                <div class="card-body">
+  <form method="post">
+    {% csrf_token %}
+                        
+                        <!-- ข้อมูลพื้นฐาน -->
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-user"></i> ข้อมูลพื้นฐาน
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.username.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.email.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- คำนำหน้า -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.prefix.id_for_label }}">{{ form.prefix.label }}</label>
+                                    {{ form.prefix }}
+                                    {% if form.prefix.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.prefix.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ชื่อภาษาไทย -->
+                        <h5 class="text-success mb-3 mt-4">
+                            <i class="fas fa-language"></i> ชื่อภาษาไทย
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.first_name_th.id_for_label }}">{{ form.first_name_th.label }}</label>
+                                    {{ form.first_name_th }}
+                                    {% if form.first_name_th.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.first_name_th.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.last_name_th.id_for_label }}">{{ form.last_name_th.label }}</label>
+                                    {{ form.last_name_th }}
+                                    {% if form.last_name_th.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.last_name_th.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ชื่อภาษาอังกฤษ -->
+                        <h5 class="text-info mb-3 mt-4">
+                            <i class="fas fa-globe"></i> ชื่อภาษาอังกฤษ
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.first_name_en.id_for_label }}">{{ form.first_name_en.label }}</label>
+                                    {{ form.first_name_en }}
+                                    {% if form.first_name_en.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.first_name_en.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.last_name_en.id_for_label }}">{{ form.last_name_en.label }}</label>
+                                    {{ form.last_name_en }}
+                                    {% if form.last_name_en.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.last_name_en.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- เบอร์โทรศัพท์ -->
+                        <h5 class="text-warning mb-3 mt-4">
+                            <i class="fas fa-phone"></i> ข้อมูลติดต่อ
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+                                    {{ form.phone }}
+                                    {% if form.phone.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.phone.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.phone_extension.id_for_label }}">{{ form.phone_extension.label }}</label>
+                                    {{ form.phone_extension }}
+                                    {% if form.phone_extension.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.phone_extension.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- หน่วยงาน -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.organize.id_for_label }}">{{ form.organize.label }}</label>
+                                    {{ form.organize }}
+                                    {% if form.organize.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.organize.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- รหัสผ่าน -->
+                        <h5 class="text-danger mb-3 mt-4">
+                            <i class="fas fa-lock"></i> รหัสผ่าน
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+                                    {{ form.password1 }}
+                                    {% if form.password1.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.password1.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+                                    {{ form.password2 }}
+                                    {% if form.password2.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.password2.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ข้อผิดพลาดทั่วไป -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="form-group text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus"></i> สมัครสมาชิก
+                            </button>
+                        </div>
+  </form>
+                    
+                    <div class="text-center mt-3">
+                        <p>มีบัญชีแล้ว? <a href="{% url 'login' %}" class="btn btn-link">เข้าสู่ระบบ</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} ใบรับรอง</h1>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">บันทึก</button>
+    <a href="{% url 'cert-list' %}" class="btn btn-secondary">ยกเลิก</a>
+</form>
+{% endblock %} 

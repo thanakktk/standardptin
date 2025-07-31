@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}อัพโหลดเอกสารเทคนิค{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-upload"></i>
+                        อัพโหลดเอกสารเทคนิค
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'technical_docs:document_list' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> กลับไปรายการเอกสาร
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">คำอธิบายเอกสาร (ไม่บังคับ)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+                            {{ form.file }}
+                            {% if form.file.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.file.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">รองรับไฟล์ PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX และรูปภาพ</small>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> อัพโหลดเอกสาร
+                            </button>
+                            <a href="{% url 'technical_docs:document_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> ยกเลิก
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

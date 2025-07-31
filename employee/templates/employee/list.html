@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>รายการพนักงาน</h1>
+<a href="{% url 'employee-add' %}" class="btn btn-success">เพิ่มพนักงาน</a>
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>ชื่อ</th>
+            <th>ตำแหน่ง</th>
+            <th>โทรศัพท์</th>
+            <th>อีเมล</th>
+            <th>หน่วยงาน</th>
+            <th>จัดการ</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in employees %}
+        <tr>
+            <td>{{ e.name }}</td>
+            <td>{{ e.position }}</td>
+            <td>{{ e.phone }}</td>
+            <td>{{ e.email }}</td>
+            <td>{{ e.organize }}</td>
+            <td>
+                <a href="{% url 'employee-edit' e.pk %}" class="btn btn-primary btn-sm">แก้ไข</a>
+                <a href="{% url 'employee-delete' e.pk %}" class="btn btn-danger btn-sm">ลบ</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">ไม่มีข้อมูล</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="/" class="btn btn-secondary">กลับหน้าแรก</a>
+{% endblock %} 

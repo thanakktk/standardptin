@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-cog"></i>
+                        {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการปรับเทียบแรงบิด (Torque)
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'calibrate-torque-list' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> กลับไปรายการ
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- CW Section -->
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-arrow-right"></i> ข้อมูล CW (Clockwise)
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.cwset.id_for_label }}">{{ form.cwset.label }}</label>
+                                    {{ form.cwset }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.cw0.id_for_label }}">{{ form.cw0.label }}</label>
+                                    {{ form.cw0 }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.cw90.id_for_label }}">{{ form.cw90.label }}</label>
+                                    {{ form.cw90 }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.cw180.id_for_label }}">{{ form.cw180.label }}</label>
+                                    {{ form.cw180 }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.cw270.id_for_label }}">{{ form.cw270.label }}</label>
+                                    {{ form.cw270 }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.cw_reading.id_for_label }}">{{ form.cw_reading.label }}</label>
+                                    {{ form.cw_reading }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.cw_avg.id_for_label }}">{{ form.cw_avg.label }}</label>
+                                    {{ form.cw_avg }}
+                                    <small class="form-text text-muted">คำนวณอัตโนมัติจากค่า cw0, cw90, cw180, cw270</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.cw_error.id_for_label }}">{{ form.cw_error.label }}</label>
+                                    {{ form.cw_error }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.cw_tolerance_start.id_for_label }}">{{ form.cw_tolerance_start.label }}</label>
+                                    {{ form.cw_tolerance_start }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.cw_tolerance_end.id_for_label }}">{{ form.cw_tolerance_end.label }}</label>
+                                    {{ form.cw_tolerance_end }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- CCW Section -->
+                        <h5 class="text-success mb-3">
+                            <i class="fas fa-arrow-left"></i> ข้อมูล CCW (Counter-clockwise)
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.ccwset.id_for_label }}">{{ form.ccwset.label }}</label>
+                                    {{ form.ccwset }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.ccw0.id_for_label }}">{{ form.ccw0.label }}</label>
+                                    {{ form.ccw0 }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.ccw90.id_for_label }}">{{ form.ccw90.label }}</label>
+                                    {{ form.ccw90 }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.ccw180.id_for_label }}">{{ form.ccw180.label }}</label>
+                                    {{ form.ccw180 }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.ccw270.id_for_label }}">{{ form.ccw270.label }}</label>
+                                    {{ form.ccw270 }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.ccw_reading.id_for_label }}">{{ form.ccw_reading.label }}</label>
+                                    {{ form.ccw_reading }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.ccw_avg.id_for_label }}">{{ form.ccw_avg.label }}</label>
+                                    {{ form.ccw_avg }}
+                                    <small class="form-text text-muted">คำนวณอัตโนมัติจากค่า ccw0, ccw90, ccw180, ccw270</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.ccw_error.id_for_label }}">{{ form.ccw_error.label }}</label>
+                                    {{ form.ccw_error }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.ccw_tolerance_start.id_for_label }}">{{ form.ccw_tolerance_start.label }}</label>
+                                    {{ form.ccw_tolerance_start }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.ccw_tolerance_end.id_for_label }}">{{ form.ccw_tolerance_end.label }}</label>
+                                    {{ form.ccw_tolerance_end }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- General Info -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.update.id_for_label }}">{{ form.update.label }}</label>
+                                    {{ form.update }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.uuc_id.id_for_label }}">{{ form.uuc_id.label }}</label>
+                                    {{ form.uuc_id }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> บันทึก
+                            </button>
+                            <a href="{% url 'calibrate-torque-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> ยกเลิก
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

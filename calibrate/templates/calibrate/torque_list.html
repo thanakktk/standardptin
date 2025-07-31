@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>รายการบันทึกการปรับเทียบแรงบิด (Torque)</h1>
+<a href="{% url 'calibrate-torque-add' %}" class="btn btn-success">เพิ่มบันทึก</a>
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>CW Set</th>
+            <th>CW0</th>
+            <th>CW90</th>
+            <th>CW AVG</th>
+            <th>CW Error</th>
+            <th>CCW Set</th>
+            <th>CCW0</th>
+            <th>CCW90</th>
+            <th>CCW AVG</th>
+            <th>CCW Error</th>
+            <th>จัดการ</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in calibrations %}
+        <tr>
+            <td>{{ c.cal_torque_id }}</td>
+            <td>{{ c.cwset }}</td>
+            <td>{{ c.cw0 }}</td>
+            <td>{{ c.cw90 }}</td>
+            <td>{{ c.cw_avg }}</td>
+            <td>{{ c.cw_error }}</td>
+            <td>{{ c.ccwset }}</td>
+            <td>{{ c.ccw0 }}</td>
+            <td>{{ c.ccw90 }}</td>
+            <td>{{ c.ccw_avg }}</td>
+            <td>{{ c.ccw_error }}</td>
+            <td>
+                <a href="{% url 'calibrate-torque-edit' c.cal_torque_id %}" class="btn btn-primary btn-sm">แก้ไข</a>
+                <a href="{% url 'calibrate-torque-delete' c.cal_torque_id %}" class="btn btn-danger btn-sm">ลบ</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="12">ไม่มีข้อมูล</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="/" class="btn btn-secondary">กลับหน้าแรก</a>
+{% endblock %} 

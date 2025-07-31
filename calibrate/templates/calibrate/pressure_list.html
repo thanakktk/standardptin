@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>รายการบันทึกการปรับเทียบความดัน (Pressure)</h1>
+<a href="{% url 'calibrate-pressure-add' %}" class="btn btn-success">เพิ่มบันทึก</a>
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Set</th>
+            <th>M1</th>
+            <th>M2</th>
+            <th>AVG</th>
+            <th>Error</th>
+            <th>จัดการ</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in calibrations %}
+        <tr>
+            <td>{{ c.cal_pressure_id }}</td>
+            <td>{{ c.set }}</td>
+            <td>{{ c.m1 }}</td>
+            <td>{{ c.m2 }}</td>
+            <td>{{ c.avg }}</td>
+            <td>{{ c.error }}</td>
+            <td>
+                <a href="{% url 'calibrate-pressure-edit' c.cal_pressure_id %}" class="btn btn-primary btn-sm">แก้ไข</a>
+                <a href="{% url 'calibrate-pressure-delete' c.cal_pressure_id %}" class="btn btn-danger btn-sm">ลบ</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">ไม่มีข้อมูล</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="/" class="btn btn-secondary">กลับหน้าแรก</a>
+{% endblock %} 

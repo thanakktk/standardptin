@@ -1,0 +1,407 @@
+{% extends 'base.html' %}
+
+{% block title %}หน้าแรก - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-balance-scale me-2"></i>
+                    ระบบจัดการการสอบเทียบเครื่องมือวัด
+                </h1>
+                <p class="page-subtitle">
+                    ระบบจัดการข้อมูลการสอบเทียบสำหรับหน่วยงานราชการ
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                                    <div class="d-flex align-items-center justify-content-md-end">
+                        <div class="text-white me-2">
+                            <i class="fas fa-calendar-alt fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">ปีงบประมาณ 2567</h6>
+                            <small class="opacity-75">ระบบจัดการข้อมูล</small>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Welcome Message -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info border-0">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle fa-2x me-3 text-primary"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">ยินดีต้อนรับสู่ระบบจัดการการสอบเทียบเครื่องมือวัด</h5>
+                        <p class="mb-0">ระบบนี้ช่วยในการจัดการข้อมูลการสอบเทียบเครื่องมือวัด ใบรับรอง และเอกสารที่เกี่ยวข้อง</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-5">
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div class="stats-number">{{ machine_count|default:"0" }}</div>
+                <div class="stats-label">เครื่องมือวัด</div>
+                {% if machine_count > 0 %}
+                    <small class="text-muted">{{ recent_machines.count }} รายการล่าสุด</small>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div class="stats-number">{{ calibration_count|default:"0" }}</div>
+                <div class="stats-label">บันทึกการปรับเทียบ</div>
+                {% if calibration_count > 0 %}
+                    <small class="text-muted">{{ recent_calibrations.count }} รายการล่าสุด</small>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-certificate"></i>
+                </div>
+                <div class="stats-number">{{ cert_count|default:"0" }}</div>
+                <div class="stats-label">ใบรับรอง</div>
+                {% if cert_count > 0 %}
+                    <small class="text-muted">{{ valid_certs|default:"0" }} ใบที่ยังไม่หมดอายุ</small>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-number">{{ employee_count|default:"0" }}</div>
+                <div class="stats-label">พนักงาน</div>
+                {% if organize_count > 0 %}
+                    <small class="text-muted">{{ organize_count|default:"0" }} หน่วยงาน</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        การดำเนินการด่วน
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'machine-add' %}" class="btn btn-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                                <span>เพิ่มเครื่องมือวัด</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                                                                <a href="{% url 'calibrate-force-add' %}" class="btn btn-success w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-clipboard-plus fa-2x mb-2"></i>
+                                <span>บันทึกการปรับเทียบ</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'cert-add' %}" class="btn btn-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-certificate fa-2x mb-2"></i>
+                                <span>เพิ่มใบรับรอง</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'employee-add' %}" class="btn btn-info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                                <i class="fas fa-user-plus fa-2x mb-2"></i>
+                                <span>เพิ่มพนักงาน</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-th-large me-2"></i>
+                        เมนูหลัก
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <i class="fas fa-tools fa-3x text-primary"></i>
+                                    </div>
+                                    <h5 class="card-title">เครื่องมือวัด</h5>
+                                    <p class="card-text text-muted">จัดการข้อมูลเครื่องมือวัดและการสอบเทียบ</p>
+                                    <a href="{% url 'machine-list' %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-arrow-right me-1"></i>เข้าสู่ระบบ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <i class="fas fa-clipboard-check fa-3x text-success"></i>
+                                    </div>
+                                    <h5 class="card-title">บันทึกการปรับเทียบ</h5>
+                                    <p class="card-text text-muted">บันทึกและจัดการข้อมูลการสอบเทียบ</p>
+                                    <a href="{% url 'calibrate-dashboard' %}" class="btn btn-outline-success">
+                                        <i class="fas fa-arrow-right me-1"></i>เข้าสู่ระบบ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <i class="fas fa-certificate fa-3x text-warning"></i>
+                                    </div>
+                                    <h5 class="card-title">ใบรับรอง</h5>
+                                    <p class="card-text text-muted">จัดการใบรับรองการสอบเทียบ</p>
+                                    <a href="{% url 'cert-list' %}" class="btn btn-outline-warning">
+                                        <i class="fas fa-arrow-right me-1"></i>เข้าสู่ระบบ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <i class="fas fa-building fa-3x text-info"></i>
+                                    </div>
+                                    <h5 class="card-title">หน่วยงาน</h5>
+                                    <p class="card-text text-muted">จัดการข้อมูลหน่วยงานและองค์กร</p>
+                                    <a href="{% url 'organize-list' %}" class="btn btn-outline-info">
+                                        <i class="fas fa-arrow-right me-1"></i>เข้าสู่ระบบ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <i class="fas fa-users fa-3x text-secondary"></i>
+                                    </div>
+                                    <h5 class="card-title">พนักงาน</h5>
+                                    <p class="card-text text-muted">จัดการข้อมูลพนักงานและผู้ใช้งาน</p>
+                                    <a href="{% url 'employee-list' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-right me-1"></i>เข้าสู่ระบบ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <i class="fas fa-file-alt fa-3x text-danger"></i>
+                                    </div>
+                                    <h5 class="card-title">เอกสารเทคนิค</h5>
+                                    <p class="card-text text-muted">จัดการเอกสารและคู่มือทางเทคนิค</p>
+                                    <a href="{% url 'technical_docs:document_list' %}" class="btn btn-outline-danger">
+                                        <i class="fas fa-arrow-right me-1"></i>เข้าสู่ระบบ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Data -->
+    <div class="row mt-4">
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-tools me-2"></i>
+                        เครื่องมือวัดล่าสุด
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_machines %}
+                        <div class="list-group list-group-flush">
+                            {% for machine in recent_machines %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ machine.name }}</strong>
+                                        <br><small class="text-muted">{{ machine.model|default:"-" }}</small>
+                                    </div>
+                                    <span class="badge bg-primary">{{ machine.id }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center mb-0">ยังไม่มีข้อมูลเครื่องมือวัด</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        การปรับเทียบล่าสุด
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_calibrations %}
+                        <div class="list-group list-group-flush">
+                            {% for cal in recent_calibrations %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>ID: {{ cal.cal_force_id }}</strong>
+                                        <br><small class="text-muted">Compress: {{ cal.compress|default:"-" }}</small>
+                                    </div>
+                                    <span class="badge bg-success">แรง</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center mb-0">ยังไม่มีข้อมูลการปรับเทียบ</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-certificate me-2"></i>
+                        ใบรับรองล่าสุด
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_certificates %}
+                        <div class="list-group list-group-flush">
+                            {% for cert in recent_certificates %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ cert.cert_no }}</strong>
+                                        <br><small class="text-muted">{{ cert.machine.name|default:"-" }}</small>
+                                    </div>
+                                    {% if cert.expire_date %}
+                                        {% if cert.expire_date < today %}
+                                            <span class="badge bg-danger">หมดอายุ</span>
+                                        {% else %}
+                                            <span class="badge bg-success">ยังไม่หมดอายุ</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary">ไม่ระบุ</span>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center mb-0">ยังไม่มีข้อมูลใบรับรอง</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Information -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        ข้อมูลระบบ
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-cog me-2"></i>
+                                ข้อมูลระบบ
+                            </h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    ระบบจัดการการสอบเทียบเครื่องมือวัด
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    รองรับการจัดการข้อมูลครบถ้วน
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    ระบบรายงานและสถิติ
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    ความปลอดภัยระดับสูง
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                ความปลอดภัย
+                            </h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-lock text-warning me-2"></i>
+                                    การเข้าสู่ระบบด้วยรหัสผ่าน
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-user-shield text-warning me-2"></i>
+                                    ระบบสิทธิ์การใช้งาน
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-history text-warning me-2"></i>
+                                    บันทึกการใช้งานระบบ
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-database text-warning me-2"></i>
+                                    การสำรองข้อมูลอัตโนมัติ
+    </li>
+  </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

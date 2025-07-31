@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}เลือกเครื่องมือเพื่อบันทึกการปรับเทียบ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-search fa-lg"></i>
+                    เลือกเครื่องมือเพื่อบันทึกการปรับเทียบ
+                </h1>
+                <p class="page-subtitle">เลือกเครื่องมือที่ต้องการบันทึกการปรับเทียบ</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- ฟอร์มค้นหาและกรอง -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-filter me-2"></i>
+                    ค้นหาและกรองเครื่องมือ
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">
+                            <i class="fas fa-search me-1"></i>ค้นหา
+                        </label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search_query }}" placeholder="ชื่อ, รุ่น, หรือหมายเลขเครื่อง">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="machine_type" class="form-label">
+                            <i class="fas fa-tag me-1"></i>ประเภทเครื่องมือ
+                        </label>
+                        <select class="form-select" id="machine_type" name="machine_type">
+                            <option value="">ทุกประเภท</option>
+                            {% for type in machine_types %}
+                                <option value="{{ type.name }}" {% if selected_type == type.name %}selected{% endif %}>
+                                    {{ type.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="btn-group w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>ค้นหา
+                            </button>
+                            <a href="{% url 'select-machine-for-calibration' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>ล้างการกรอง
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- รายการเครื่องมือ -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-tools me-2"></i>
+                    รายการเครื่องมือ ({{ machines.count }} รายการ)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if machines %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ลำดับ</th>
+                                    <th>ชื่อเครื่องมือ</th>
+                                    <th>รุ่น</th>
+                                    <th>หมายเลขเครื่อง</th>
+                                    <th>ประเภท</th>
+                                    <th>หน่วยงาน</th>
+                                    <th>ช่วงการวัด</th>
+                                    <th>ความละเอียด</th>
+                                    <th>หน่วย</th>
+                                    <th>ผู้ผลิต</th>
+                                    <th>จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for machine in machines %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ machine.name }}</strong>
+                                    </td>
+                                    <td>{{ machine.model|default:"-" }}</td>
+                                    <td>
+                                        <code>{{ machine.serial_number|default:"-" }}</code>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ machine.machine_type.name }}</span>
+                                    </td>
+                                    <td>{{ machine.organize.name|default:"-" }}</td>
+                                    <td>{{ machine.range|default:"-" }}</td>
+                                    <td>{{ machine.res_uuc|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ machine.unit.name }}</span>
+                                    </td>
+                                    <td>{{ machine.manufacture.name }}</td>
+                                    <td>
+                                        <a href="{% url 'create-calibration-with-machine' machine.id %}" 
+                                           class="btn btn-success btn-sm">
+                                            <i class="fas fa-plus me-1"></i>บันทึกการปรับเทียบ
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">ไม่พบเครื่องมือ</h5>
+                        <p class="text-muted">ลองเปลี่ยนเงื่อนไขการค้นหาหรือเพิ่มเครื่องมือใหม่</p>
+                        <a href="{% url 'machine-add' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>เพิ่มเครื่องมือใหม่
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ปุ่มกลับ -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>กลับไปหน้าหลักการปรับเทียบ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

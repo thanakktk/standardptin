@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}บันทึกการปรับเทียบ - {{ machine.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-cog"></i>
+                        บันทึกการปรับเทียบ
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'machine-list' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> กลับไปรายการเครื่องมือ
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>ข้อมูลเครื่องมือ</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>ชื่อเครื่องมือ:</strong></td>
+                                    <td>{{ machine.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>รุ่น:</strong></td>
+                                    <td>{{ machine.model|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Serial Number:</strong></td>
+                                    <td>{{ machine.serial_number|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ประเภท:</strong></td>
+                                    <td>{{ machine.machine_type }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>หน่วยนับ:</strong></td>
+                                    <td>{{ machine.unit }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ผู้ผลิต:</strong></td>
+                                    <td>{{ machine.manufacture }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>ข้อมูลการปรับเทียบ</h5>
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}">ชื่อเครื่องมือ</label>
+                                    {{ form.name }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.model.id_for_label }}">รุ่น</label>
+                                    {{ form.model }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.serial_number.id_for_label }}">Serial Number</label>
+                                    {{ form.serial_number }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.max_value.id_for_label }}">ค่าสูงสุดของเครื่อง</label>
+                                    {{ form.max_value }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.measurement_range.id_for_label }}">ช่วงการวัด</label>
+                                    {{ form.measurement_range }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.resolution.id_for_label }}">ความละเอียด</label>
+                                    {{ form.resolution }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.uuc_unit.id_for_label }}">UUC หน่วยนับ</label>
+                                    {{ form.uuc_unit }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.unit_count.id_for_label }}">หน่วยนับ</label>
+                                    {{ form.unit_count }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.organization.id_for_label }}">หน่วยงาน</label>
+                                    {{ form.organization }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.manufacturer.id_for_label }}">ผู้ผลิต</label>
+                                    {{ form.manufacturer }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.calculator.id_for_label }}">ผู้คำนวณ</label>
+                                    {{ form.calculator }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> บันทึกการปรับเทียบ
+                                    </button>
+                                    <a href="{% url 'machine-list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> ยกเลิก
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

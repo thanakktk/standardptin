@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}เอกสารเทคนิค{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-alt"></i>
+                        เอกสารเทคนิค
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'technical_docs:upload_document' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> อัพโหลดเอกสารใหม่
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if documents %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%">#</th>
+                                        <th style="width: 25%">ชื่อเอกสาร</th>
+                                        <th style="width: 35%">คำอธิบาย</th>
+                                        <th style="width: 15%">ไฟล์</th>
+                                        <th style="width: 10%">วันที่สร้าง</th>
+                                        <th style="width: 10%">การดำเนินการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for document in documents %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ document.title }}</td>
+                                        <td>
+                                            {% if document.description %}
+                                                {{ document.description|truncatewords:20 }}
+                                            {% else %}
+                                                <span class="text-muted">ไม่มีคำอธิบาย</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ document.filename }}</span>
+                                        </td>
+                                        <td>{{ document.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{% url 'technical_docs:download_document' document.pk %}" 
+                                                   class="btn btn-sm btn-success" 
+                                                   title="ดาวน์โหลด">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                                <a href="{% url 'technical_docs:delete_document' document.pk %}" 
+                                                   class="btn btn-sm btn-danger" 
+                                                   title="ลบ"
+                                                   onclick="return confirm('คุณต้องการลบเอกสารนี้หรือไม่?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">ยังไม่มีเอกสารเทคนิค</h5>
+                            <p class="text-muted">คลิกปุ่ม "อัพโหลดเอกสารใหม่" เพื่อเพิ่มเอกสาร</p>
+                            <a href="{% url 'technical_docs:upload_document' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> อัพโหลดเอกสารใหม่
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

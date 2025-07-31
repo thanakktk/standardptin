@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-tachometer-alt"></i>
+                        {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการปรับเทียบความดัน (Pressure)
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'calibrate-pressure-list' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> กลับไปรายการ
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.set.id_for_label }}">{{ form.set.label }}</label>
+                                    {{ form.set }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.m1.id_for_label }}">{{ form.m1.label }}</label>
+                                    {{ form.m1 }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.m2.id_for_label }}">{{ form.m2.label }}</label>
+                                    {{ form.m2 }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.m3.id_for_label }}">{{ form.m3.label }}</label>
+                                    {{ form.m3 }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.m4.id_for_label }}">{{ form.m4.label }}</label>
+                                    {{ form.m4 }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.avg.id_for_label }}">{{ form.avg.label }}</label>
+                                    {{ form.avg }}
+                                    <small class="form-text text-muted">คำนวณอัตโนมัติจากค่า m1, m2, m3, m4</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.error.id_for_label }}">{{ form.error.label }}</label>
+                                    {{ form.error }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.tolerance_start.id_for_label }}">{{ form.tolerance_start.label }}</label>
+                                    {{ form.tolerance_start }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.tolerance_end.id_for_label }}">{{ form.tolerance_end.label }}</label>
+                                    {{ form.tolerance_end }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.update.id_for_label }}">{{ form.update.label }}</label>
+                                    {{ form.update }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.uuc_id.id_for_label }}">{{ form.uuc_id.label }}</label>
+                                    {{ form.uuc_id }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> บันทึก
+                            </button>
+                            <a href="{% url 'calibrate-pressure-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> ยกเลิก
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

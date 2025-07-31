@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}เข้าสู่ระบบ - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg border-0">
+                <div class="card-header text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-user-circle fa-4x text-primary"></i>
+                    </div>
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        เข้าสู่ระบบ
+                    </h3>
+                    <p class="text-muted mb-0 mt-2">ระบบจัดการการสอบเทียบเครื่องมือวัด</p>
+                </div>
+                <div class="card-body p-4">
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-2"></i>{{ form.username.label }}
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="{{ form.username.id_for_label }}"
+                                       name="{{ form.username.name }}"
+                                       placeholder="กรอกชื่อผู้ใช้"
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">
+                                <i class="fas fa-lock me-2"></i>{{ form.password.label }}
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="{{ form.password.id_for_label }}"
+                                       name="{{ form.password.name }}"
+                                       placeholder="กรอกรหัสผ่าน"
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                เข้าสู่ระบบ
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p class="mb-2">
+                            <i class="fas fa-info-circle me-2 text-info"></i>
+                            ยังไม่มีบัญชี?
+                        </p>
+                        <a href="{% url 'register' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-plus me-2"></i>
+                            สมัครสมาชิก
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Information -->
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        ความปลอดภัยของระบบ
+                    </h6>
+                    <div class="row text-muted">
+                        <div class="col-6">
+                            <small>
+                                <i class="fas fa-lock me-1"></i>
+                                เข้ารหัสข้อมูล
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small>
+                                <i class="fas fa-user-shield me-1"></i>
+                                ระบบสิทธิ์
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small>
+                                <i class="fas fa-history me-1"></i>
+                                บันทึกการใช้งาน
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small>
+                                <i class="fas fa-database me-1"></i>
+                                สำรองข้อมูล
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

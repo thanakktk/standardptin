@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }}เครื่องมือวัด - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-tools me-3"></i>
+                    {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }}เครื่องมือวัด
+                </h1>
+                <p class="page-subtitle">
+                    กรอกข้อมูลเครื่องมือวัดเพื่อการจัดการและการสอบเทียบ
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'machine-list' %}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-2"></i>กลับไปรายการ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        ข้อมูลเครื่องมือวัด
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+<form method="post">
+    {% csrf_token %}
+                        
+                        <!-- ข้อมูลพื้นฐาน -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    ข้อมูลพื้นฐาน
+                                </h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tools me-1"></i>{{ form.name.label }}
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.model.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>{{ form.model.label }}
+                                </label>
+                                {{ form.model }}
+                                {% if form.model.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.model.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.serial_number.id_for_label }}" class="form-label">
+                                    <i class="fas fa-barcode me-1"></i>{{ form.serial_number.label }}
+                                </label>
+                                {{ form.serial_number }}
+                                {% if form.serial_number.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.serial_number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.unit.id_for_label }}" class="form-label">
+                                    <i class="fas fa-ruler me-1"></i>{{ form.unit.label }}
+                                </label>
+                                {{ form.unit }}
+                                {% if form.unit.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.unit.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- ข้อมูลผู้ผลิตและหน่วยงาน -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-success mb-3">
+                                    <i class="fas fa-industry me-2"></i>
+                                    ข้อมูลผู้ผลิตและหน่วยงาน
+                                </h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.manufacture.id_for_label }}" class="form-label">
+                                    <i class="fas fa-industry me-1"></i>{{ form.manufacture.label }}
+                                </label>
+                                {{ form.manufacture }}
+                                {% if form.manufacture.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.manufacture.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.organize.id_for_label }}" class="form-label">
+                                    <i class="fas fa-building me-1"></i>{{ form.organize.label }}
+                                </label>
+                                {{ form.organize }}
+                                {% if form.organize.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.organize.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.calibration_equipment.id_for_label }}" class="form-label">
+                                    <i class="fas fa-cog me-1"></i>{{ form.calibration_equipment.label }}
+                                </label>
+                                {{ form.calibration_equipment }}
+                                {% if form.calibration_equipment.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.calibration_equipment.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.machine_type.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>{{ form.machine_type.label }}
+                                </label>
+                                {{ form.machine_type }}
+                                {% if form.machine_type.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.machine_type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- ข้อมูลเพิ่มเติม -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-info mb-3">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    ข้อมูลเพิ่มเติม
+                                </h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.range_min.id_for_label }}" class="form-label">
+                                    <i class="fas fa-arrow-down me-1"></i>{{ form.range_min.label }}
+                                </label>
+                                {{ form.range_min }}
+                                {% if form.range_min.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.range_min.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.range_max.id_for_label }}" class="form-label">
+                                    <i class="fas fa-arrow-up me-1"></i>{{ form.range_max.label }}
+                                </label>
+                                {{ form.range_max }}
+                                {% if form.range_max.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.range_max.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.resolution.id_for_label }}" class="form-label">
+                                    <i class="fas fa-search me-1"></i>{{ form.resolution.label }}
+                                </label>
+                                {{ form.resolution }}
+                                {% if form.resolution.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.resolution.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.accuracy.id_for_label }}" class="form-label">
+                                    <i class="fas fa-bullseye me-1"></i>{{ form.accuracy.label }}
+                                </label>
+                                {{ form.accuracy }}
+                                {% if form.accuracy.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.accuracy.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- ข้อผิดพลาดทั่วไป -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- ปุ่มดำเนินการ -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'machine-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>ยกเลิก
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>บันทึกข้อมูล
+                            </button>
+                        </div>
+</form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

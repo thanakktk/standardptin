@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}การปรับเทียบ - {{ machine.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-tools fa-lg"></i>
+                    การปรับเทียบเครื่องมือ
+                </h1>
+                <p class="page-subtitle">{{ machine.name }} - {{ machine.machine_type.name }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'machine-calibration-add' machine.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> เพิ่มบันทึกการปรับเทียบ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- ข้อมูลเครื่องมือ -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-info-circle"></i>
+                            ข้อมูลเครื่องมือ
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>ชื่อ:</strong> {{ machine.name }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>รุ่น:</strong> {{ machine.model|default:"-" }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>หมายเลขเครื่อง:</strong> {{ machine.serial_number|default:"-" }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>ประเภท:</strong> {{ machine.machine_type.name }}
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-3">
+                                <strong>ช่วงการวัด:</strong> {{ machine.range|default:"-" }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>ความละเอียด:</strong> {{ machine.res_uuc|default:"-" }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>หน่วย:</strong> {{ machine.unit.name }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>ผู้ผลิต:</strong> {{ machine.manufacture.name }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- รายการการปรับเทียบ -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-clipboard-list"></i>
+                            รายการการปรับเทียบ
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if calibrations %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>ลำดับ</th>
+                                            <th>วันที่ปรับเทียบ</th>
+                                            {% if calibration_type == 'force' %}
+                                                <th>แรงกด (Compression)</th>
+                                                <th>แรงดึง (Tension)</th>
+                                                <th>ค่ากด (Compression)</th>
+                                                <th>ค่าดึง (Tension)</th>
+                                                <th>ค่าช่วงการวัดสูงสุด</th>
+                                                <th>ค่าความคลาดเคลื่อน</th>
+                                            {% elif calibration_type == 'pressure' %}
+                                                <th>ค่าตั้งต้น</th>
+                                                <th>ค่าที่ 1</th>
+                                                <th>ค่าที่ 2</th>
+                                                <th>ค่าที่ 3</th>
+                                                <th>ค่าที่ 4</th>
+                                                <th>ค่าเฉลี่ย</th>
+                                                <th>ค่าความคลาดเคลื่อน</th>
+                                            {% elif calibration_type == 'torque' %}
+                                                <th>ตั้งค่า CW</th>
+                                                <th>ค่าเฉลี่ย CW</th>
+                                                <th>ค่าความคลาดเคลื่อน CW</th>
+                                                <th>ตั้งค่า CCW</th>
+                                                <th>ค่าเฉลี่ย CCW</th>
+                                                <th>ค่าความคลาดเคลื่อน CCW</th>
+                                            {% endif %}
+                                            <th>จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for calibration in calibrations %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ calibration.update|date:"d/m/Y H:i"|default:"-" }}</td>
+                                            
+                                            {% if calibration_type == 'force' %}
+                                                <td>{{ calibration.apply_com|default:"-" }}</td>
+                                                <td>{{ calibration.apply_ten|default:"-" }}</td>
+                                                <td>{{ calibration.compress|default:"-" }}</td>
+                                                <td>{{ calibration.tension|default:"-" }}</td>
+                                                <td>{{ calibration.fullscale|default:"-" }}</td>
+                                                <td>{{ calibration.error|default:"-" }}</td>
+                                            {% elif calibration_type == 'pressure' %}
+                                                <td>{{ calibration.set|default:"-" }}</td>
+                                                <td>{{ calibration.m1|default:"-" }}</td>
+                                                <td>{{ calibration.m2|default:"-" }}</td>
+                                                <td>{{ calibration.m3|default:"-" }}</td>
+                                                <td>{{ calibration.m4|default:"-" }}</td>
+                                                <td>{{ calibration.avg|default:"-" }}</td>
+                                                <td>{{ calibration.error|default:"-" }}</td>
+                                            {% elif calibration_type == 'torque' %}
+                                                <td>{{ calibration.cwset|default:"-" }}</td>
+                                                <td>{{ calibration.cw_avg|default:"-" }}</td>
+                                                <td>{{ calibration.cw_error|default:"-" }}</td>
+                                                <td>{{ calibration.ccwset|default:"-" }}</td>
+                                                <td>{{ calibration.ccw_avg|default:"-" }}</td>
+                                                <td>{{ calibration.ccw_error|default:"-" }}</td>
+                                            {% endif %}
+                                            
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    {% if calibration_type == 'force' %}
+                                                        <a href="{% url 'calibrate-force-edit' calibration.cal_force_id %}" class="btn btn-outline-primary btn-sm">
+                                                            <i class="fas fa-edit"></i> แก้ไข
+                                                        </a>
+                                                        <a href="{% url 'calibrate-force-delete' calibration.cal_force_id %}" class="btn btn-outline-danger btn-sm">
+                                                            <i class="fas fa-trash"></i> ลบ
+                                                        </a>
+                                                    {% elif calibration_type == 'pressure' %}
+                                                        <a href="{% url 'calibrate-pressure-edit' calibration.cal_pressure_id %}" class="btn btn-outline-primary btn-sm">
+                                                            <i class="fas fa-edit"></i> แก้ไข
+                                                        </a>
+                                                        <a href="{% url 'calibrate-pressure-delete' calibration.cal_pressure_id %}" class="btn btn-outline-danger btn-sm">
+                                                            <i class="fas fa-trash"></i> ลบ
+                                                        </a>
+                                                    {% elif calibration_type == 'torque' %}
+                                                        <a href="{% url 'calibrate-torque-edit' calibration.cal_torque_id %}" class="btn btn-outline-primary btn-sm">
+                                                            <i class="fas fa-edit"></i> แก้ไข
+                                                        </a>
+                                                        <a href="{% url 'calibrate-torque-delete' calibration.cal_torque_id %}" class="btn btn-outline-danger btn-sm">
+                                                            <i class="fas fa-trash"></i> ลบ
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-clipboard fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">ยังไม่มีบันทึกการปรับเทียบ</h5>
+                                <p class="text-muted">เริ่มต้นบันทึกการปรับเทียบสำหรับเครื่องมือนี้</p>
+                                <a href="{% url 'machine-calibration-add' machine.id %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> เพิ่มบันทึกการปรับเทียบ
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ปุ่มกลับ -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <a href="{% url 'machine-list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> กลับไปรายการเครื่องมือ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
