@@ -161,69 +161,10 @@
                                     </div>
                                 {% endif %}
                             </div>
+
                         </div>
 
-                        <!-- ข้อมูลเพิ่มเติม -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h5 class="text-info mb-3">
-                                    <i class="fas fa-plus-circle me-2"></i>
-                                    ข้อมูลเพิ่มเติม
-                                </h5>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.range_min.id_for_label }}" class="form-label">
-                                    <i class="fas fa-arrow-down me-1"></i>{{ form.range_min.label }}
-                                </label>
-                                {{ form.range_min }}
-                                {% if form.range_min.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.range_min.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.range_max.id_for_label }}" class="form-label">
-                                    <i class="fas fa-arrow-up me-1"></i>{{ form.range_max.label }}
-                                </label>
-                                {{ form.range_max }}
-                                {% if form.range_max.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.range_max.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.resolution.id_for_label }}" class="form-label">
-                                    <i class="fas fa-search me-1"></i>{{ form.resolution.label }}
-                                </label>
-                                {{ form.resolution }}
-                                {% if form.resolution.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.resolution.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.accuracy.id_for_label }}" class="form-label">
-                                    <i class="fas fa-bullseye me-1"></i>{{ form.accuracy.label }}
-                                </label>
-                                {{ form.accuracy }}
-                                {% if form.accuracy.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.accuracy.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
+
 
                         <!-- ข้อผิดพลาดทั่วไป -->
                         {% if form.non_field_errors %}

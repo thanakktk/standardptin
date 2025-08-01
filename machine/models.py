@@ -54,6 +54,12 @@ class CalibrationEquipment(models.Model):
         verbose_name_plural = "เครื่องมือที่ใช้สอบเทียบ"
 
 class Machine(models.Model):
+    STATUS_CHOICES = [
+        ('normal', 'ปกติ'),
+        ('urgent', 'ด่วน'),
+        ('very_urgent', 'ด่วนมาก'),
+    ]
+    
     organize = models.ForeignKey('organize.Organize', on_delete=models.CASCADE, verbose_name="หน่วยงาน", null=True, blank=True)
     machine_type = models.ForeignKey(MachineType, on_delete=models.CASCADE, verbose_name="ประเภทเครื่องมือ")
     name = models.CharField(max_length=45, verbose_name="ชื่อเครื่องมือ")
@@ -65,6 +71,7 @@ class Machine(models.Model):
     unit = models.ForeignKey(MachineUnit, on_delete=models.CASCADE, verbose_name="หน่วยนับ")
     manufacture = models.ForeignKey(Manufacture, on_delete=models.CASCADE, verbose_name="ผู้ผลิต")
     calibration_equipment = models.ForeignKey(CalibrationEquipment, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='normal', verbose_name="สถานะ")
     deleted = models.BooleanField(default=False, verbose_name="ลบแล้ว")
 
     def __str__(self):

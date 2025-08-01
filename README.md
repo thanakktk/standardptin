@@ -7,8 +7,8 @@
 1. สร้าง virtualenv และติดตั้ง dependencies
 
 ```bash
-python -m venv venv
-venv\Scripts\activate  # หรือ source venv/bin/activate (บน macOS/Linux)
+python -m venv env
+env\Scripts\activate  # หรือ source env/bin/activate (บน macOS/Linux)
 pip install -r requirements.txt
 ```
 

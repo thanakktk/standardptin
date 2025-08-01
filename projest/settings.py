@@ -147,7 +147,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'pakka.sort@gmail.com'         # อีเมล Gmail ของคุณ
-EMAIL_HOST_PASSWORD = 'youcfprnjwwugiuc'  
+EMAIL_HOST_PASSWORD = 'uzqljseesuyhbjpa'  
 # EMAIL_HOST_PASSWORD = 'jvkf nkzt lcyy jixz'  # ใส่ App Password ที่สร้างจาก Google
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 

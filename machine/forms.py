@@ -59,6 +59,13 @@ class MachineFilterForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ค้นหาชื่อเครื่องมือ'})
     )
+    
+    # ฟิลเตอร์สำหรับสถานะ
+    status = forms.ChoiceField(
+        choices=[('', 'เลือกสถานะ')] + Machine.STATUS_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
 
 class CalibrationDataForm(forms.Form):
     # ข้อมูลสำหรับบันทึกการปรับเทียบ

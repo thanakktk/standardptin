@@ -1,7 +1,7 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from .models import Machine
-from .forms import MachineForm, MachineFilterForm, CalibrationDataForm
+from .models import Machine, CalibrationEquipment
+from .forms import MachineForm, MachineFilterForm, CalibrationDataForm, CalibrationEquipmentForm
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required
@@ -26,6 +26,7 @@ class MachineListView(LoginRequiredMixin, ListView):
         date_to = self.request.GET.get('date_to')
         serial_search = self.request.GET.get('serial_search')
         name_search = self.request.GET.get('name_search')
+        status = self.request.GET.get('status')
         
         # กรองตามหน่วยงาน
         if organize_id:
@@ -48,6 +49,10 @@ class MachineListView(LoginRequiredMixin, ListView):
         # ค้นหาชื่อเครื่องมือ
         if name_search:
             queryset = queryset.filter(name__icontains=name_search)
+        
+        # กรองตามสถานะ
+        if status:
+            queryset = queryset.filter(status=status)
         
         return queryset
     
@@ -164,3 +169,57 @@ def send_filtered_email(request):
             messages.error(request, f'เกิดข้อผิดพลาดในการส่งอีเมล: {str(e)}')
     
     return redirect('machine-list')
+
+# CalibrationEquipment Views
+class CalibrationEquipmentListView(LoginRequiredMixin, ListView):
+    model = CalibrationEquipment
+    template_name = 'machine/calibration_equipment_list.html'
+    context_object_name = 'calibration_equipment'
+    
+    def get_queryset(self):
+        queryset = CalibrationEquipment.objects.all()
+        
+        # รับพารามิเตอร์การกรอง
+        machine_type = self.request.GET.get('machine_type')
+        name_search = self.request.GET.get('name_search')
+        serial_search = self.request.GET.get('serial_search')
+        
+        # กรองตามประเภทเครื่องมือ
+        if machine_type:
+            queryset = queryset.filter(machine_type_id=machine_type)
+        
+        # ค้นหาชื่อเครื่องมือ
+        if name_search:
+            queryset = queryset.filter(name__icontains=name_search)
+        
+        # ค้นหา Serial Number
+        if serial_search:
+            queryset = queryset.filter(serial_number__icontains=serial_search)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from .models import MachineType
+        context['machine_types'] = MachineType.objects.all()
+        return context
+
+class CalibrationEquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = CalibrationEquipment
+    form_class = CalibrationEquipmentForm
+    template_name = 'machine/calibration_equipment_form.html'
+    success_url = reverse_lazy('calibration-equipment-list')
+    permission_required = 'machine.add_calibrationequipment'
+
+class CalibrationEquipmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = CalibrationEquipment
+    form_class = CalibrationEquipmentForm
+    template_name = 'machine/calibration_equipment_form.html'
+    success_url = reverse_lazy('calibration-equipment-list')
+    permission_required = 'machine.change_calibrationequipment'
+
+class CalibrationEquipmentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = CalibrationEquipment
+    template_name = 'machine/calibration_equipment_confirm_delete.html'
+    success_url = reverse_lazy('calibration-equipment-list')
+    permission_required = 'machine.delete_calibrationequipment'
