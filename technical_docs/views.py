@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
 import os
+import urllib.parse
 from .models import TechnicalDocument
 from .forms import TechnicalDocumentForm
 
@@ -36,13 +37,28 @@ def upload_document(request):
 @login_required
 def download_document(request, pk):
     """ดาวน์โหลดเอกสาร"""
+    import urllib.parse
     document = get_object_or_404(TechnicalDocument, pk=pk)
     file_path = document.file.path
     
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
             response = HttpResponse(fh.read(), content_type='application/octet-stream')
-            response['Content-Disposition'] = f'attachment; filename="{document.filename()}"'
+            filename = document.original_filename or document.filename()
+            try:
+                encoded_filename = urllib.parse.quote(filename)
+                response['Content-Disposition'] = f"attachment; filename*=UTF-8''{encoded_filename}"
+            except Exception:
+                # fallback เป็นชื่อไฟล์อังกฤษง่ายๆ
+                import re
+                safe_filename = re.sub(r'[^\w\s-]', '_', filename)
+                safe_filename = re.sub(r'[-\s]+', '_', safe_filename)
+                safe_filename = safe_filename.strip('_')
+                # ตรวจสอบนามสกุลไฟล์
+                if '.' in filename:
+                    file_extension = filename.split('.')[-1]
+                    safe_filename = f"{safe_filename}.{file_extension}"
+                response['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
             return response
     else:
         messages.error(request, 'ไม่พบไฟล์')

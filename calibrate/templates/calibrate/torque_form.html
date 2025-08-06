@@ -1,178 +1,566 @@
 {% extends 'base.html' %}
+
+{% block title %}{{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการปรับเทียบแรงบิด - {{ object.uuc_id.name|default:'เครื่องมือ' }}{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-cog"></i>
-                        {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการปรับเทียบแรงบิด (Torque)
-                    </h3>
-                    <div class="card-tools">
-                        <a href="{% url 'calibrate-torque-list' %}" class="btn btn-secondary btn-sm">
-                            <i class="fas fa-arrow-left"></i> กลับไปรายการ
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <!-- CW Section -->
-                        <h5 class="text-primary mb-3">
-                            <i class="fas fa-arrow-right"></i> ข้อมูล CW (Clockwise)
-                        </h5>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.cwset.id_for_label }}">{{ form.cwset.label }}</label>
-                                    {{ form.cwset }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.cw0.id_for_label }}">{{ form.cw0.label }}</label>
-                                    {{ form.cw0 }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.cw90.id_for_label }}">{{ form.cw90.label }}</label>
-                                    {{ form.cw90 }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.cw180.id_for_label }}">{{ form.cw180.label }}</label>
-                                    {{ form.cw180 }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.cw270.id_for_label }}">{{ form.cw270.label }}</label>
-                                    {{ form.cw270 }}
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.cw_reading.id_for_label }}">{{ form.cw_reading.label }}</label>
-                                    {{ form.cw_reading }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.cw_avg.id_for_label }}">{{ form.cw_avg.label }}</label>
-                                    {{ form.cw_avg }}
-                                    <small class="form-text text-muted">คำนวณอัตโนมัติจากค่า cw0, cw90, cw180, cw270</small>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.cw_error.id_for_label }}">{{ form.cw_error.label }}</label>
-                                    {{ form.cw_error }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.cw_tolerance_start.id_for_label }}">{{ form.cw_tolerance_start.label }}</label>
-                                    {{ form.cw_tolerance_start }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.cw_tolerance_end.id_for_label }}">{{ form.cw_tolerance_end.label }}</label>
-                                    {{ form.cw_tolerance_end }}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <hr class="my-4">
-                        
-                        <!-- CCW Section -->
-                        <h5 class="text-success mb-3">
-                            <i class="fas fa-arrow-left"></i> ข้อมูล CCW (Counter-clockwise)
-                        </h5>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.ccwset.id_for_label }}">{{ form.ccwset.label }}</label>
-                                    {{ form.ccwset }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.ccw0.id_for_label }}">{{ form.ccw0.label }}</label>
-                                    {{ form.ccw0 }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.ccw90.id_for_label }}">{{ form.ccw90.label }}</label>
-                                    {{ form.ccw90 }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.ccw180.id_for_label }}">{{ form.ccw180.label }}</label>
-                                    {{ form.ccw180 }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.ccw270.id_for_label }}">{{ form.ccw270.label }}</label>
-                                    {{ form.ccw270 }}
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.ccw_reading.id_for_label }}">{{ form.ccw_reading.label }}</label>
-                                    {{ form.ccw_reading }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.ccw_avg.id_for_label }}">{{ form.ccw_avg.label }}</label>
-                                    {{ form.ccw_avg }}
-                                    <small class="form-text text-muted">คำนวณอัตโนมัติจากค่า ccw0, ccw90, ccw180, ccw270</small>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.ccw_error.id_for_label }}">{{ form.ccw_error.label }}</label>
-                                    {{ form.ccw_error }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.ccw_tolerance_start.id_for_label }}">{{ form.ccw_tolerance_start.label }}</label>
-                                    {{ form.ccw_tolerance_start }}
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="{{ form.ccw_tolerance_end.id_for_label }}">{{ form.ccw_tolerance_end.label }}</label>
-                                    {{ form.ccw_tolerance_end }}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <hr class="my-4">
-                        
-                        <!-- General Info -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.update.id_for_label }}">{{ form.update.label }}</label>
-                                    {{ form.update }}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.uuc_id.id_for_label }}">{{ form.uuc_id.label }}</label>
-                                    {{ form.uuc_id }}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save"></i> บันทึก
-                            </button>
-                            <a href="{% url 'calibrate-torque-list' %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> ยกเลิก
-                            </a>
-                        </div>
-                    </form>
-                </div>
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-cog fa-lg"></i>
+                    {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการปรับเทียบแรงบิด
+                </h1>
+                <p class="page-subtitle">
+                    {% if object.uuc_id %}
+                        {{ object.uuc_id.name }} - {{ object.uuc_id.machine_type.name }}
+                    {% else %}
+                        เลือกเครื่องมือเพื่อบันทึกการปรับเทียบ
+                    {% endif %}
+                </p>
             </div>
         </div>
     </div>
 </div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- ข้อมูลเครื่องมือ -->
+        {% if object.uuc_id %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    ข้อมูลเครื่องมือ
+                </h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-3">
+                        <small><strong>ชื่อ:</strong> {{ object.uuc_id.name }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>รุ่น:</strong> {{ object.uuc_id.model|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>หมายเลข:</strong> {{ object.uuc_id.serial_number|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>ประเภท:</strong> {{ object.uuc_id.machine_type.name }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ฟอร์มบันทึกการปรับเทียบ -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    ข้อมูลการปรับเทียบแรงบิด
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- ข้อมูลทั่วไป -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="{{ form.update.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>{{ form.update.label }}
+                            </label>
+                            {{ form.update }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.next_due.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar-check me-1"></i>{{ form.next_due.label }}
+                            </label>
+                            {{ form.next_due }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                <i class="fas fa-flag me-1"></i>{{ form.status.label }}
+                            </label>
+                            {{ form.status }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                <i class="fas fa-exclamation-triangle me-1"></i>{{ form.priority.label }}
+                            </label>
+                            {{ form.priority }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
+                            </label>
+                            <div id="calibration-equipment-container">
+                                <div class="row mb-2 calibration-equipment-row">
+                                    <div class="col-md-8">
+                                        <select name="uuc_id_1" class="form-control" required>
+                                            <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                            {% for machine in machines %}
+                                                <option value="{{ machine.id }}" {% if object.uuc_id == machine %}selected{% endif %}>{{ machine.name }} - {{ machine.machine_type.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="button" class="btn btn-success btn-sm add-equipment-btn">
+                                            <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ตารางการปรับเทียบ CW -->
+                    <div class="table-responsive mb-4">
+                        <h6 class="text-primary mb-2">
+                            <i class="fas fa-arrow-right me-1"></i>ข้อมูล CW (Clockwise)
+                        </h6>
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Set</th>
+                                    <th>0°</th>
+                                    <th>90°</th>
+                                    <th>180°</th>
+                                    <th>270°</th>
+                                    <th>Reading</th>
+                                    <th>AVG</th>
+                                    <th>Error</th>
+                                    <th>Tolerance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="cwset_1" class="form-control form-control-sm" step="0.1" value="{{ object.cwset|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw0_1" class="form-control form-control-sm" step="0.1" value="{{ object.cw0|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw90_1" class="form-control form-control-sm" step="0.1" value="{{ object.cw90|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw180_1" class="form-control form-control-sm" step="0.1" value="{{ object.cw180|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw270_1" class="form-control form-control-sm" step="0.1" value="{{ object.cw270|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw_reading_1" class="form-control form-control-sm" step="0.1" value="{{ object.cw_reading|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw_avg_1" class="form-control form-control-sm" step="0.01" readonly value="{{ object.cw_avg|default:'' }}">
+                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw_error_1" class="form-control form-control-sm" step="0.01" readonly value="{{ object.cw_error|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="cw_tolerance_1" class="form-control form-control-sm" readonly value="{{ object.cw_tolerance_start|default:'' }} - {{ object.cw_tolerance_end|default:'' }}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="cwset_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw0_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw90_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw180_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw270_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw_reading_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw_avg_2" class="form-control form-control-sm" step="0.01" readonly>
+                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw_error_2" class="form-control form-control-sm" step="0.01" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="cw_tolerance_2" class="form-control form-control-sm" readonly>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="cwset_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw0_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw90_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw180_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw270_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw_reading_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw_avg_3" class="form-control form-control-sm" step="0.01" readonly>
+                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cw_error_3" class="form-control form-control-sm" step="0.01" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="cw_tolerance_3" class="form-control form-control-sm" readonly>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ตารางการปรับเทียบ CCW -->
+                    <div class="table-responsive mb-4">
+                        <h6 class="text-success mb-2">
+                            <i class="fas fa-arrow-left me-1"></i>ข้อมูล CCW (Counter-clockwise)
+                        </h6>
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Set</th>
+                                    <th>0°</th>
+                                    <th>90°</th>
+                                    <th>180°</th>
+                                    <th>270°</th>
+                                    <th>Reading</th>
+                                    <th>AVG</th>
+                                    <th>Error</th>
+                                    <th>Tolerance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="ccwset_1" class="form-control form-control-sm" step="0.1" value="{{ object.ccwset|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw0_1" class="form-control form-control-sm" step="0.1" value="{{ object.ccw0|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw90_1" class="form-control form-control-sm" step="0.1" value="{{ object.ccw90|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw180_1" class="form-control form-control-sm" step="0.1" value="{{ object.ccw180|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw270_1" class="form-control form-control-sm" step="0.1" value="{{ object.ccw270|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw_reading_1" class="form-control form-control-sm" step="0.1" value="{{ object.ccw_reading|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw_avg_1" class="form-control form-control-sm" step="0.01" readonly value="{{ object.ccw_avg|default:'' }}">
+                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw_error_1" class="form-control form-control-sm" step="0.01" readonly value="{{ object.ccw_error|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="ccw_tolerance_1" class="form-control form-control-sm" readonly value="{{ object.ccw_tolerance_start|default:'' }} - {{ object.ccw_tolerance_end|default:'' }}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="ccwset_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw0_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw90_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw180_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw270_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw_reading_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw_avg_2" class="form-control form-control-sm" step="0.01" readonly>
+                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw_error_2" class="form-control form-control-sm" step="0.01" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="ccw_tolerance_2" class="form-control form-control-sm" readonly>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="ccwset_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw0_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw90_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw180_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw270_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw_reading_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw_avg_3" class="form-control form-control-sm" step="0.01" readonly>
+                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ccw_error_3" class="form-control form-control-sm" step="0.01" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="ccw_tolerance_3" class="form-control form-control-sm" readonly>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-1"></i>บันทึกการปรับเทียบ
+                                </button>
+                                <a href="{% url 'calibrate-torque-list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>กลับไปรายการ
+                                </a>
+                                {% if object.pk %}
+                                <a href="{% url 'calibrate-torque-delete' object.pk %}" class="btn btn-danger">
+                                    <i class="fas fa-trash me-1"></i>ลบ
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript สำหรับคำนวณค่าเฉลี่ย CW และ CCW
+document.addEventListener('DOMContentLoaded', function() {
+    // CW Table
+    const cwRows = document.querySelectorAll('tbody tr');
+    
+    cwRows.forEach((row, rowIndex) => {
+        const cwsetInput = row.querySelector('input[name^="cwset_"]');
+        const cw0Input = row.querySelector('input[name^="cw0_"]');
+        const cw90Input = row.querySelector('input[name^="cw90_"]');
+        const cw180Input = row.querySelector('input[name^="cw180_"]');
+        const cw270Input = row.querySelector('input[name^="cw270_"]');
+        const cwReadingInput = row.querySelector('input[name^="cw_reading_"]');
+        const cwAvgInput = row.querySelector('input[name^="cw_avg_"]');
+        const cwErrorInput = row.querySelector('input[name^="cw_error_"]');
+        const cwToleranceInput = row.querySelector('input[name^="cw_tolerance_"]');
+        
+        // ฟังก์ชันคำนวณค่าเฉลี่ย CW
+        function calculateCWAverage() {
+            const values = [];
+            [cw0Input, cw90Input, cw180Input, cw270Input].forEach(input => {
+                if (input && input.value) {
+                    const value = parseFloat(input.value);
+                    if (!isNaN(value) && value !== 0) {
+                        values.push(value);
+                    }
+                }
+            });
+            
+            if (values.length > 0) {
+                const average = values.reduce((sum, val) => sum + val, 0) / values.length;
+                if (cwAvgInput) {
+                    cwAvgInput.value = average.toFixed(2);
+                }
+                return average;
+            }
+            return 0;
+        }
+        
+        // ฟังก์ชันคำนวณ Error CW
+        function calculateCWError() {
+            if (cwsetInput && cwAvgInput) {
+                const setValue = parseFloat(cwsetInput.value) || 0;
+                const avgValue = parseFloat(cwAvgInput.value) || 0;
+                const error = avgValue - setValue;
+                if (cwErrorInput) {
+                    cwErrorInput.value = error.toFixed(2);
+                }
+            }
+        }
+        
+        // ฟังก์ชันคำนวณ Tolerance CW
+        function calculateCWTolerance() {
+            if (cwsetInput) {
+                const setValue = parseFloat(cwsetInput.value) || 0;
+                const minValue = (setValue - 5).toFixed(2);
+                const maxValue = (setValue + 5).toFixed(2);
+                if (cwToleranceInput) {
+                    cwToleranceInput.value = `${minValue} - ${maxValue}`;
+                }
+            }
+        }
+        
+        // เพิ่ม event listener สำหรับ CW inputs
+        [cw0Input, cw90Input, cw180Input, cw270Input].forEach(input => {
+            if (input) {
+                input.addEventListener('input', () => {
+                    calculateCWAverage();
+                    calculateCWError();
+                });
+            }
+        });
+        
+        // เพิ่ม event listener สำหรับ set input
+        if (cwsetInput) {
+            cwsetInput.addEventListener('input', () => {
+                calculateCWError();
+                calculateCWTolerance();
+            });
+        }
+    });
+    
+    // CCW Table
+    const ccwRows = document.querySelectorAll('tbody tr');
+    
+    ccwRows.forEach((row, rowIndex) => {
+        const ccwsetInput = row.querySelector('input[name^="ccwset_"]');
+        const ccw0Input = row.querySelector('input[name^="ccw0_"]');
+        const ccw90Input = row.querySelector('input[name^="ccw90_"]');
+        const ccw180Input = row.querySelector('input[name^="ccw180_"]');
+        const ccw270Input = row.querySelector('input[name^="ccw270_"]');
+        const ccwReadingInput = row.querySelector('input[name^="ccw_reading_"]');
+        const ccwAvgInput = row.querySelector('input[name^="ccw_avg_"]');
+        const ccwErrorInput = row.querySelector('input[name^="ccw_error_"]');
+        const ccwToleranceInput = row.querySelector('input[name^="ccw_tolerance_"]');
+        
+        // ฟังก์ชันคำนวณค่าเฉลี่ย CCW
+        function calculateCCWAverage() {
+            const values = [];
+            [ccw0Input, ccw90Input, ccw180Input, ccw270Input].forEach(input => {
+                if (input && input.value) {
+                    const value = parseFloat(input.value);
+                    if (!isNaN(value) && value !== 0) {
+                        values.push(value);
+                    }
+                }
+            });
+            
+            if (values.length > 0) {
+                const average = values.reduce((sum, val) => sum + val, 0) / values.length;
+                if (ccwAvgInput) {
+                    ccwAvgInput.value = average.toFixed(2);
+                }
+                return average;
+            }
+            return 0;
+        }
+        
+        // ฟังก์ชันคำนวณ Error CCW
+        function calculateCCWError() {
+            if (ccwsetInput && ccwAvgInput) {
+                const setValue = parseFloat(ccwsetInput.value) || 0;
+                const avgValue = parseFloat(ccwAvgInput.value) || 0;
+                const error = avgValue - setValue;
+                if (ccwErrorInput) {
+                    ccwErrorInput.value = error.toFixed(2);
+                }
+            }
+        }
+        
+        // ฟังก์ชันคำนวณ Tolerance CCW
+        function calculateCCWTolerance() {
+            if (ccwsetInput) {
+                const setValue = parseFloat(ccwsetInput.value) || 0;
+                const minValue = (setValue - 5).toFixed(2);
+                const maxValue = (setValue + 5).toFixed(2);
+                if (ccwToleranceInput) {
+                    ccwToleranceInput.value = `${minValue} - ${maxValue}`;
+                }
+            }
+        }
+        
+        // เพิ่ม event listener สำหรับ CCW inputs
+        [ccw0Input, ccw90Input, ccw180Input, ccw270Input].forEach(input => {
+            if (input) {
+                input.addEventListener('input', () => {
+                    calculateCCWAverage();
+                    calculateCCWError();
+                });
+            }
+        });
+        
+        // เพิ่ม event listener สำหรับ set input
+        if (ccwsetInput) {
+            ccwsetInput.addEventListener('input', () => {
+                calculateCCWError();
+                calculateCCWTolerance();
+            });
+        }
+    });
+
+    // JavaScript สำหรับเพิ่มเครื่องมือที่ใช้สอบเทียบ
+    let equipmentCounter = 1;
+    
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-equipment-btn')) {
+            equipmentCounter++;
+            const container = document.getElementById('calibration-equipment-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-2 calibration-equipment-row';
+            newRow.innerHTML = `
+                <div class="col-md-8">
+                    <select name="uuc_id_${equipmentCounter}" class="form-control">
+                        <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                        {% for machine in machines %}
+                            <option value="{{ machine.id }}">{{ machine.name }} - {{ machine.machine_type.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                        <i class="fas fa-minus"></i> ลบ
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        if (e.target.classList.contains('remove-equipment-btn')) {
+            e.target.closest('.calibration-equipment-row').remove();
+        }
+    });
+});
+</script>
 {% endblock %} 

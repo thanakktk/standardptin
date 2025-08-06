@@ -54,7 +54,13 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <span class="badge badge-info">{{ document.filename }}</span>
+                                            <span class="badge badge-info">
+                                                {% if document.original_filename %}
+                                                    {{ document.original_filename }}
+                                                {% else %}
+                                                    {{ document.filename }}
+                                                {% endif %}
+                                            </span>
                                         </td>
                                         <td>{{ document.created_at|date:"d/m/Y H:i" }}</td>
                                         <td>

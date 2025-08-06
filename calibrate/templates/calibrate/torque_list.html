@@ -1,47 +1,199 @@
 {% extends 'base.html' %}
+
+{% block title %}รายการบันทึกการปรับเทียบแรงบิด - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
 {% block content %}
-<h1>รายการบันทึกการปรับเทียบแรงบิด (Torque)</h1>
-<a href="{% url 'calibrate-torque-add' %}" class="btn btn-success">เพิ่มบันทึก</a>
-<table class="table table-bordered mt-3">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>CW Set</th>
-            <th>CW0</th>
-            <th>CW90</th>
-            <th>CW AVG</th>
-            <th>CW Error</th>
-            <th>CCW Set</th>
-            <th>CCW0</th>
-            <th>CCW90</th>
-            <th>CCW AVG</th>
-            <th>CCW Error</th>
-            <th>จัดการ</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for c in calibrations %}
-        <tr>
-            <td>{{ c.cal_torque_id }}</td>
-            <td>{{ c.cwset }}</td>
-            <td>{{ c.cw0 }}</td>
-            <td>{{ c.cw90 }}</td>
-            <td>{{ c.cw_avg }}</td>
-            <td>{{ c.cw_error }}</td>
-            <td>{{ c.ccwset }}</td>
-            <td>{{ c.ccw0 }}</td>
-            <td>{{ c.ccw90 }}</td>
-            <td>{{ c.ccw_avg }}</td>
-            <td>{{ c.ccw_error }}</td>
-            <td>
-                <a href="{% url 'calibrate-torque-edit' c.cal_torque_id %}" class="btn btn-primary btn-sm">แก้ไข</a>
-                <a href="{% url 'calibrate-torque-delete' c.cal_torque_id %}" class="btn btn-danger btn-sm">ลบ</a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="12">ไม่มีข้อมูล</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
-<a href="/" class="btn btn-secondary">กลับหน้าแรก</a>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-cog me-3"></i>
+                    รายการบันทึกการปรับเทียบแรงบิด (Torque)
+                </h1>
+                <p class="page-subtitle">
+                    จัดการข้อมูลการสอบเทียบเครื่องมือวัดแรงบิด
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'calibrate-torque-add' %}" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    เพิ่มบันทึกการปรับเทียบ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Data Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-table me-2"></i>
+                รายการบันทึกการปรับเทียบแรงบิด ({{ calibrations.count }} รายการ)
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 8%">
+                                <i class="fas fa-hashtag me-1"></i>ID
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-cog me-1"></i>CW Set
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-chart-line me-1"></i>CW AVG
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-exclamation-triangle me-1"></i>CW Error
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-cog me-1"></i>CCW Set
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-chart-line me-1"></i>CCW AVG
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-exclamation-triangle me-1"></i>CCW Error
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-flag me-1"></i>สถานะการปรับเทียบ
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-cogs me-1"></i>จัดการ
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in calibrations %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary">{{ c.cal_torque_id }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ c.cwset|default:"-" }}</strong>
+                            </td>
+                            <td>
+                                <strong>{{ c.cw_avg|default:"-" }}</strong>
+                            </td>
+                            <td>
+                                {% if c.cw_error %}
+                                    <span class="badge bg-warning">{{ c.cw_error }}</span>
+                                {% else %}
+                                    <span class="badge bg-success">ปกติ</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ c.ccwset|default:"-" }}</strong>
+                            </td>
+                            <td>
+                                <strong>{{ c.ccw_avg|default:"-" }}</strong>
+                            </td>
+                            <td>
+                                {% if c.ccw_error %}
+                                    <span class="badge bg-warning">{{ c.ccw_error }}</span>
+                                {% else %}
+                                    <span class="badge bg-success">ปกติ</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if c.status == 'pending' %}
+                                    <span class="badge bg-warning">รอปรับเทียบ</span>
+                                {% elif c.status == 'in_progress' %}
+                                    <span class="badge bg-info">กำลังปรับเทียบ</span>
+                                {% elif c.status == 'passed' %}
+                                    <span class="badge bg-success">ผ่านการปรับเทียบ</span>
+                                {% elif c.status == 'cert_issued' %}
+                                    <span class="badge bg-primary">ออกใบรับรอง</span>
+                                {% elif c.status == 'failed' %}
+                                    <span class="badge bg-danger">ไม่ผ่านการสอบเทียบ</span>
+                                {% elif c.status == 'not_set' %}
+                                    <span class="badge bg-secondary">ยังไม่ตั้งค่า</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ c.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'calibrate-torque-edit' c.cal_torque_id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'calibrate-torque-delete' c.cal_torque_id %}" class="btn btn-outline-danger btn-sm" title="ลบ">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-info-circle fa-3x mb-3"></i>
+                                    <h5>ไม่พบข้อมูลการปรับเทียบแรงบิด</h5>
+                                    <p>กรุณาเพิ่มบันทึกการปรับเทียบใหม่</p>
+                                    <a href="{% url 'calibrate-torque-add' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>เพิ่มบันทึกการปรับเทียบ
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-compress fa-2x text-primary mb-2"></i>
+                    <h6>บันทึกการปรับเทียบแรง</h6>
+                    <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัดแรง</p>
+                    <a href="{% url 'calibrate-force-list' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-right me-1"></i>ดูรายการ
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-tachometer-alt fa-2x text-success mb-2"></i>
+                    <h6>บันทึกการปรับเทียบความดัน</h6>
+                    <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัดความดัน</p>
+                    <a href="{% url 'calibrate-pressure-list' %}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-arrow-right me-1"></i>ดูรายการ
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-cog fa-2x text-warning mb-2"></i>
+                    <h6>บันทึกการปรับเทียบแรงบิด</h6>
+                    <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัดแรงบิด</p>
+                    <a href="{% url 'calibrate-torque-add' %}" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-plus me-1"></i>เพิ่มใหม่
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Home -->
+    <div class="text-center mt-4">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="fas fa-home me-2"></i>กลับหน้าแรก
+        </a>
+    </div>
+</div>
 {% endblock %} 

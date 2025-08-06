@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}รายงานผลปรับเทียบ{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-chart-line me-2"></i>รายงานผลปรับเทียบ
+                </h1>
+                <p class="page-subtitle">รายงานผลการปรับเทียบเครื่องมือวัดแบบละเอียด</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <button class="btn btn-success me-2" onclick="exportToWord()">
+                    <i class="fas fa-file-word me-2"></i>Export Word
+                </button>
+                <button class="btn btn-primary" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel me-2"></i>Export Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Options -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-2"></i>ตัวกรองข้อมูล
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{% url 'calibrate-report-detail' %}">
+                <div class="row">
+                    <div class="col-md-2">
+                        <label for="department" class="form-label">
+                            <i class="fas fa-building me-1"></i>หน่วยงาน
+                        </label>
+                        <input type="text" class="form-control" id="department" name="department" 
+                               value="{{ department }}" placeholder="รหัสหน่วยงาน">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="instrument_type" class="form-label">
+                            <i class="fas fa-tag me-1"></i>ประเภท
+                        </label>
+                        <select class="form-select" id="instrument_type" name="instrument_type">
+                            <option value="">เลือกประเภทเครื่องมือ</option>
+                            <option value="force" {% if instrument_type == 'force' %}selected{% endif %}>Force Gauge</option>
+                            <option value="pressure" {% if instrument_type == 'pressure' %}selected{% endif %}>Pressure Gauge</option>
+                            <option value="torque" {% if instrument_type == 'torque' %}selected{% endif %}>Torque Wrench</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="start_date" class="form-label">
+                            <i class="fas fa-calendar me-1"></i>วันที่เริ่มต้น
+                        </label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" 
+                               value="{{ start_date }}" placeholder="วว/ดด/ปปปป">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="end_date" class="form-label">
+                            <i class="fas fa-calendar me-1"></i>วันที่สิ้นสุด
+                        </label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" 
+                               value="{{ end_date }}" placeholder="วว/ดด/ปปปป">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="serial_search" class="form-label">
+                            <i class="fas fa-search me-1"></i>ค้นหา Serial
+                        </label>
+                        <input type="text" class="form-control" id="serial_search" name="serial_search" 
+                               value="{{ serial_search }}" placeholder="ค้นหา Serial Number">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="name_search" class="form-label">
+                            <i class="fas fa-search me-1"></i>ค้นหาชื่อ
+                        </label>
+                        <input type="text" class="form-control" id="name_search" name="name_search" 
+                               value="{{ name_search }}" placeholder="ค้นหาชื่อเครื่องมือ">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <label for="status_filter" class="form-label">
+                                                            <i class="fas fa-flag me-1"></i>สถานะการปรับเทียบ
+                        </label>
+                        <select class="form-select" id="status_filter" name="status_filter">
+                                                            <option value="">เลือกสถานะการปรับเทียบ</option>
+                            <option value="cert_issued" {% if status_filter == 'cert_issued' %}selected{% endif %}>ออกใบรับรอง</option>
+                            <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>ไม่ผ่านการปรับเทียบ</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-2"></i>กรองข้อมูล
+                            </button>
+                            <a href="{% url 'calibrate-report-detail' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>ล้างตัวกรอง
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Detailed Calibration Report Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-table me-2"></i>รายงานผลการปรับเทียบแบบละเอียด
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped" id="calibrationDetailTable">
+                    <thead>
+                        <tr>
+                            <th>ลำดับ</th>
+                            <th>Model</th>
+                            <th>SERIAL No.</th>
+                            <th>ชื่อเครื่องวัด</th>
+                            <th>หน่วยผู้ใช้</th>
+                            <th>จำนวน</th>
+                            <th>หมายเหตุ</th>
+                            <th>วันที่ปรับเทียบ</th>
+                            <th>วันที่ครบกำหนด</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cal in all_calibrations %}
+                        <tr data-status="{{ cal.status }}" data-type="{{ cal.type }}" data-date="{{ cal.update_date|date:'Y-m-d' }}">
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ cal.machine_model|default:"-" }}</td>
+                            <td>{{ cal.serial_number|default:"-" }}</td>
+                            <td>
+                                {% if cal.type == 'force' %}
+                                    Force Gauge
+                                {% elif cal.type == 'pressure' %}
+                                    Pressure Gauge
+                                {% elif cal.type == 'torque' %}
+                                    Torque Wrench
+                                {% else %}
+                                    {{ cal.type_name }}
+                                {% endif %}
+                            </td>
+                            <td>ฝสอ.ฝูง ๔๐๓ บน.๔</td>
+                            <td>๑</td>
+                            <td>
+                                {% if cal.status == 'cert_issued' or cal.status == 'passed' or cal.status == 'active' %}
+                                    <span class="badge bg-success">ออกใบรับรอง</span>
+                                {% elif cal.status == 'failed' or cal.status == 'pending' or cal.status == 'in_progress' or cal.status == 'not_set' %}
+                                    <span class="badge bg-danger">ไม่ผ่านการปรับเทียบ</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ cal.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ cal.update_date|date:"d/m/Y"|default:"-" }}</td>
+                            <td>
+                                {% if cal.next_due %}
+                                    <span class="{% if cal.next_due < today %}text-danger{% elif cal.next_due < today_plus_30 %}text-warning{% else %}text-success{% endif %}">
+                                        {{ cal.next_due|date:"d/m/Y" }}
+                                    </span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">
+                                <i class="fas fa-info-circle me-2"></i>ไม่พบข้อมูลการปรับเทียบ
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ all_calibrations|length }}</h4>
+                    <small>รายการทั้งหมด</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ all_calibrations|length }}</h4>
+                    <small>ผ่านการปรับเทียบ</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">0</h4>
+                    <small>กำลังปรับเทียบ</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">0</h4>
+                    <small>ไม่ผ่านการสอบเทียบ</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportToWord() {
+    // เรียกใช้ URL ของ Django สำหรับ export Word พร้อมพารามิเตอร์การกรอง
+    let url = "{% url 'export-calibration-word' %}";
+    let params = new URLSearchParams(window.location.search);
+    if (params.toString()) {
+        url += '?' + params.toString();
+    }
+    window.location.href = url;
+}
+
+function exportToExcel() {
+    // เรียกใช้ URL ของ Django สำหรับ export Excel พร้อมพารามิเตอร์การกรอง
+    let url = "{% url 'export-calibration-excel' %}";
+    let params = new URLSearchParams(window.location.search);
+    if (params.toString()) {
+        url += '?' + params.toString();
+    }
+    window.location.href = url;
+}
+
+// Auto-apply filter when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Show all rows initially
+    const rows = document.querySelectorAll('#calibrationDetailTable tbody tr');
+    rows.forEach(row => {
+        row.style.display = '';
+    });
+});
+</script>
+{% endblock %} 

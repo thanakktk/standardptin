@@ -4,10 +4,21 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import HttpResponse
 from .models import CalibrationForce, CalibrationPressure, CalibrationTorque
 from .forms import CalibrationForceForm, CalibrationPressureForm, CalibrationTorqueForm
 from machine.models import Machine, MachineType
 from django.db import models
+from docx import Document
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.oxml.shared import OxmlElement, qn
+from datetime import datetime
+import io
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.utils import get_column_letter
 
 class CalibrationForceListView(LoginRequiredMixin, ListView):
     model = CalibrationForce
@@ -717,3 +728,707 @@ def process_pressure_calibration(request, machine):
     # ถ้าไม่ใช่ POST request
     messages.error(request, 'วิธีการส่งข้อมูลไม่ถูกต้อง')
     return redirect('select-machine-for-calibration')
+
+@login_required
+def calibration_report(request):
+    """หน้ารายงานปรับเทียบ"""
+    from datetime import date, timedelta
+    
+    # ดึงข้อมูลการปรับเทียบทั้งหมด
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id').all()
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id').all()
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id').all()
+    
+    # รวมข้อมูลการปรับเทียบทั้งหมด
+    all_calibrations = []
+    
+    # เพิ่มข้อมูล Force calibrations
+    for cal in force_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_force_id,
+            'type': 'force',
+            'type_name': 'การปรับเทียบแรง',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,  # ใช้ update date แทน
+        })
+    
+    # เพิ่มข้อมูล Pressure calibrations
+    for cal in pressure_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_pressure_id,
+            'type': 'pressure',
+            'type_name': 'การปรับเทียบความดัน',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,  # ใช้ update date แทน
+        })
+    
+    # เพิ่มข้อมูล Torque calibrations
+    for cal in torque_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_torque_id,
+            'type': 'torque',
+            'type_name': 'การปรับเทียบแรงบิด',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,  # ใช้ update date แทน
+        })
+    
+    # เรียงลำดับตามวันที่ปรับเทียบล่าสุด
+    all_calibrations.sort(key=lambda x: x['created_at'] if x['created_at'] else date.min, reverse=True)
+    
+    # ข้อมูลวันที่สำหรับการคำนวณสถานะ
+    today = date.today()
+    today_plus_30 = today + timedelta(days=30)
+    
+    context = {
+        'force_machines': Machine.objects.filter(machine_type__name__icontains='force').count(),
+        'pressure_machines': Machine.objects.filter(machine_type__name__icontains='pressure').count(),
+        'torque_machines': Machine.objects.filter(machine_type__name__icontains='torque').count(),
+        'total_calibrations': (
+            CalibrationForce.objects.count() +
+            CalibrationPressure.objects.count() +
+            CalibrationTorque.objects.count()
+        ),
+        'all_calibrations': all_calibrations,
+        'today': today,
+        'today_plus_30': today_plus_30,
+    }
+    return render(request, 'calibrate/dashboard.html', context)
+
+@login_required
+def calibration_report_detail(request):
+    """หน้ารายงานผลปรับเทียบแบบละเอียด"""
+    from datetime import date, timedelta
+    
+    # รับพารามิเตอร์การกรอง
+    department = request.GET.get('department', '')
+    instrument_type = request.GET.get('instrument_type', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    serial_search = request.GET.get('serial_search', '')
+    name_search = request.GET.get('name_search', '')
+    status_filter = request.GET.get('status_filter', '')
+    
+    # ดึงข้อมูลการปรับเทียบทั้งหมด
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id').all()
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id').all()
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id').all()
+    
+    # รวมข้อมูลการปรับเทียบทั้งหมด
+    all_calibrations = []
+    
+    # เพิ่มข้อมูล Force calibrations
+    for cal in force_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_force_id,
+            'type': 'force',
+            'type_name': 'การปรับเทียบแรง',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,
+        })
+    
+    # เพิ่มข้อมูล Pressure calibrations
+    for cal in pressure_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_pressure_id,
+            'type': 'pressure',
+            'type_name': 'การปรับเทียบความดัน',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,
+        })
+    
+    # เพิ่มข้อมูล Torque calibrations
+    for cal in torque_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_torque_id,
+            'type': 'torque',
+            'type_name': 'การปรับเทียบแรงบิด',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,
+        })
+    
+    # กรองข้อมูลตามพารามิเตอร์
+    filtered_calibrations = []
+    for cal in all_calibrations:
+        include_item = True
+        
+        # กรองตาม Serial Number
+        if serial_search and serial_search.lower() not in cal['serial_number'].lower():
+            include_item = False
+        
+        # กรองตามชื่อเครื่องมือ
+        if name_search and name_search.lower() not in cal['machine_name'].lower():
+            include_item = False
+        
+        # กรองตามประเภทเครื่องมือ
+        if instrument_type:
+            if instrument_type == 'force' and cal['type'] != 'force':
+                include_item = False
+            elif instrument_type == 'pressure' and cal['type'] != 'pressure':
+                include_item = False
+            elif instrument_type == 'torque' and cal['type'] != 'torque':
+                include_item = False
+        
+        # กรองตามสถานะ
+        if status_filter:
+            if status_filter == 'cert_issued' and cal['status'] not in ['cert_issued', 'passed', 'active']:
+                include_item = False
+            elif status_filter == 'failed' and cal['status'] not in ['failed', 'pending', 'in_progress', 'not_set']:
+                include_item = False
+        
+        # กรองตามวันที่
+        if start_date and cal['update_date']:
+            try:
+                start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+                if cal['update_date'] < start_date_obj:
+                    include_item = False
+            except:
+                pass
+        
+        if end_date and cal['update_date']:
+            try:
+                end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+                if cal['update_date'] > end_date_obj:
+                    include_item = False
+            except:
+                pass
+        
+        if include_item:
+            filtered_calibrations.append(cal)
+    
+    # เรียงลำดับตามวันที่ปรับเทียบล่าสุด
+    filtered_calibrations.sort(key=lambda x: x['created_at'] if x['created_at'] else date.min, reverse=True)
+    
+    # ข้อมูลวันที่สำหรับการคำนวณสถานะ
+    today = date.today()
+    today_plus_30 = today + timedelta(days=30)
+    
+    context = {
+        'force_machines': Machine.objects.filter(machine_type__name__icontains='force').count(),
+        'pressure_machines': Machine.objects.filter(machine_type__name__icontains='pressure').count(),
+        'torque_machines': Machine.objects.filter(machine_type__name__icontains='torque').count(),
+        'total_calibrations': (
+            CalibrationForce.objects.count() +
+            CalibrationPressure.objects.count() +
+            CalibrationTorque.objects.count()
+        ),
+        'all_calibrations': filtered_calibrations,
+        'today': today,
+        'today_plus_30': today_plus_30,
+        # พารามิเตอร์การกรอง
+        'department': department,
+        'instrument_type': instrument_type,
+        'start_date': start_date,
+        'end_date': end_date,
+        'serial_search': serial_search,
+        'name_search': name_search,
+        'status_filter': status_filter,
+    }
+    return render(request, 'calibrate/calibration_report_detail.html', context)
+
+@login_required
+def export_to_word(request):
+    """Export รายงานปรับเทียบเป็นไฟล์ Word"""
+    from datetime import date, timedelta
+    
+    # รับพารามิเตอร์การกรอง (เหมือนกับใน calibration_report_detail)
+    department = request.GET.get('department', '')
+    instrument_type = request.GET.get('instrument_type', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    serial_search = request.GET.get('serial_search', '')
+    name_search = request.GET.get('name_search', '')
+    status_filter = request.GET.get('status_filter', '')
+    
+    # ดึงข้อมูลการปรับเทียบทั้งหมด
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id').all()
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id').all()
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id').all()
+    
+    # รวมข้อมูลการปรับเทียบทั้งหมด
+    all_calibrations = []
+    
+    # เพิ่มข้อมูล Force calibrations
+    for cal in force_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_force_id,
+            'type': 'force',
+            'type_name': 'การปรับเทียบแรง',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,
+        })
+    
+    # เพิ่มข้อมูล Pressure calibrations
+    for cal in pressure_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_pressure_id,
+            'type': 'pressure',
+            'type_name': 'การปรับเทียบความดัน',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,
+        })
+    
+    # เพิ่มข้อมูล Torque calibrations
+    for cal in torque_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_torque_id,
+            'type': 'torque',
+            'type_name': 'การปรับเทียบแรงบิด',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,
+        })
+    
+    # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)
+    filtered_calibrations = []
+    for cal in all_calibrations:
+        include_item = True
+        
+        # กรองตาม Serial Number
+        if serial_search and serial_search.lower() not in cal['serial_number'].lower():
+            include_item = False
+        
+        # กรองตามชื่อเครื่องมือ
+        if name_search and name_search.lower() not in cal['machine_name'].lower():
+            include_item = False
+        
+        # กรองตามประเภทเครื่องมือ
+        if instrument_type:
+            if instrument_type == 'force' and cal['type'] != 'force':
+                include_item = False
+            elif instrument_type == 'pressure' and cal['type'] != 'pressure':
+                include_item = False
+            elif instrument_type == 'torque' and cal['type'] != 'torque':
+                include_item = False
+        
+        # กรองตามสถานะ
+        if status_filter:
+            if status_filter == 'cert_issued' and cal['status'] not in ['cert_issued', 'passed', 'active']:
+                include_item = False
+            elif status_filter == 'failed' and cal['status'] not in ['failed', 'pending', 'in_progress', 'not_set']:
+                include_item = False
+        
+        # กรองตามวันที่
+        if start_date and cal['update_date']:
+            try:
+                start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+                if cal['update_date'] < start_date_obj:
+                    include_item = False
+            except:
+                pass
+        
+        if end_date and cal['update_date']:
+            try:
+                end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+                if cal['update_date'] > end_date_obj:
+                    include_item = False
+            except:
+                pass
+        
+        if include_item:
+            filtered_calibrations.append(cal)
+    
+    # เรียงลำดับตามวันที่ปรับเทียบล่าสุด
+    filtered_calibrations.sort(key=lambda x: x['created_at'] if x['created_at'] else date.min, reverse=True)
+    
+    # สร้าง Word document
+    doc = Document()
+    
+    # ตั้งค่าหน้ากระดาษ
+    section = doc.sections[0]
+    section.page_width = Inches(8.5)
+    section.page_height = Inches(11)
+    section.left_margin = Inches(1)
+    section.right_margin = Inches(1)
+    section.top_margin = Inches(1)
+    section.bottom_margin = Inches(1)
+    
+    # หัวเรื่อง
+    title = doc.add_heading('รายงานปรับเทียบ', 0)
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    # วันที่รายงาน
+    date_paragraph = doc.add_paragraph()
+    date_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    date_run = date_paragraph.add_run(f'วันที่: {datetime.now().strftime("%d/%m/%Y")}')
+    date_run.font.size = Pt(12)
+    
+    # เพิ่มบรรทัดว่าง
+    doc.add_paragraph()
+    
+    # สร้างตาราง
+    table = doc.add_table(rows=1, cols=7)
+    table.style = 'Table Grid'
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    
+    # หัวตาราง
+    header_cells = table.rows[0].cells
+    headers = ['ลำดับ', 'Model', 'SERIAL No.', 'ชื่อเครื่องวัด', 'หน่วยผู้ใช้', 'จำนวน', 'หมายเหตุ']
+    
+    for i, header in enumerate(headers):
+        header_cells[i].text = header
+        header_cells[i].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        header_cells[i].paragraphs[0].runs[0].font.bold = True
+    
+    # เพิ่มข้อมูลในตาราง
+    for i, cal in enumerate(filtered_calibrations, 1):
+        row_cells = table.add_row().cells
+        
+        # ลำดับ
+        row_cells[0].text = str(i)
+        row_cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # Model
+        row_cells[1].text = cal['machine_model'] if cal['machine_model'] != '-' else '-'
+        row_cells[1].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # SERIAL No.
+        row_cells[2].text = cal['serial_number'] if cal['serial_number'] != '-' else '-'
+        row_cells[2].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # ชื่อเครื่องวัด
+        if cal['type'] == 'force':
+            instrument_name = 'Force Gauge'
+        elif cal['type'] == 'pressure':
+            instrument_name = 'Pressure Gauge'
+        elif cal['type'] == 'torque':
+            instrument_name = 'Torque Wrench'
+        else:
+            instrument_name = cal['type_name']
+        
+        row_cells[3].text = instrument_name
+        row_cells[3].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # หน่วยผู้ใช้
+        row_cells[4].text = 'ฝสอ.ฝูง ๔๐๓ บน.๔'
+        row_cells[4].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # จำนวน
+        row_cells[5].text = '๑'
+        row_cells[5].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # หมายเหตุ
+        if cal['status'] in ['cert_issued', 'passed', 'active']:
+            remark = 'ออกใบรับรอง'
+        elif cal['status'] in ['failed', 'pending', 'in_progress', 'not_set']:
+            remark = 'ไม่ผ่านการปรับเทียบ'
+        else:
+            remark = cal['status']
+        
+        row_cells[6].text = remark
+        row_cells[6].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    # เพิ่มบรรทัดว่าง
+    doc.add_paragraph()
+    
+    # สรุปข้อมูล
+    summary_paragraph = doc.add_paragraph()
+    summary_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    summary_run = summary_paragraph.add_run(f'สรุป: รายการทั้งหมด {len(filtered_calibrations)} รายการ')
+    summary_run.font.size = Pt(12)
+    summary_run.font.bold = True
+    
+    # บันทึกไฟล์
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    
+    # ส่งไฟล์กลับ
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+    response['Content-Disposition'] = f'attachment; filename="รายงานปรับเทียบ_{datetime.now().strftime("%Y%m%d")}.docx"'
+    
+    return response
+
+@login_required
+def export_to_excel(request):
+    """Export รายงานปรับเทียบเป็นไฟล์ Excel"""
+    from datetime import date, timedelta
+    
+    # รับพารามิเตอร์การกรอง (เหมือนกับใน calibration_report_detail)
+    department = request.GET.get('department', '')
+    instrument_type = request.GET.get('instrument_type', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    serial_search = request.GET.get('serial_search', '')
+    name_search = request.GET.get('name_search', '')
+    status_filter = request.GET.get('status_filter', '')
+    
+    # ดึงข้อมูลการปรับเทียบทั้งหมด
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id').all()
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id').all()
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id').all()
+    
+    # รวมข้อมูลการปรับเทียบทั้งหมด
+    all_calibrations = []
+    
+    # เพิ่มข้อมูล Force calibrations
+    for cal in force_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_force_id,
+            'type': 'force',
+            'type_name': 'การปรับเทียบแรง',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,
+        })
+    
+    # เพิ่มข้อมูล Pressure calibrations
+    for cal in pressure_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_pressure_id,
+            'type': 'pressure',
+            'type_name': 'การปรับเทียบความดัน',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,
+        })
+    
+    # เพิ่มข้อมูล Torque calibrations
+    for cal in torque_calibrations:
+        all_calibrations.append({
+            'id': cal.cal_torque_id,
+            'type': 'torque',
+            'type_name': 'การปรับเทียบแรงบิด',
+            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
+            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
+            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'created_at': cal.update,
+        })
+    
+    # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)
+    filtered_calibrations = []
+    for cal in all_calibrations:
+        include_item = True
+        
+        # กรองตาม Serial Number
+        if serial_search and serial_search.lower() not in cal['serial_number'].lower():
+            include_item = False
+        
+        # กรองตามชื่อเครื่องมือ
+        if name_search and name_search.lower() not in cal['machine_name'].lower():
+            include_item = False
+        
+        # กรองตามประเภทเครื่องมือ
+        if instrument_type:
+            if instrument_type == 'force' and cal['type'] != 'force':
+                include_item = False
+            elif instrument_type == 'pressure' and cal['type'] != 'pressure':
+                include_item = False
+            elif instrument_type == 'torque' and cal['type'] != 'torque':
+                include_item = False
+        
+        # กรองตามสถานะ
+        if status_filter:
+            if status_filter == 'cert_issued' and cal['status'] not in ['cert_issued', 'passed', 'active']:
+                include_item = False
+            elif status_filter == 'failed' and cal['status'] not in ['failed', 'pending', 'in_progress', 'not_set']:
+                include_item = False
+        
+        # กรองตามวันที่
+        if start_date and cal['update_date']:
+            try:
+                start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+                if cal['update_date'] < start_date_obj:
+                    include_item = False
+            except:
+                pass
+        
+        if end_date and cal['update_date']:
+            try:
+                end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+                if cal['update_date'] > end_date_obj:
+                    include_item = False
+            except:
+                pass
+        
+        if include_item:
+            filtered_calibrations.append(cal)
+    
+    # เรียงลำดับตามวันที่ปรับเทียบล่าสุด
+    filtered_calibrations.sort(key=lambda x: x['created_at'] if x['created_at'] else date.min, reverse=True)
+    
+    # สร้าง Excel workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "รายงานปรับเทียบ"
+    
+    # ตั้งค่าหัวเรื่อง
+    title_font = Font(name='TH Sarabun New', size=16, bold=True)
+    header_font = Font(name='TH Sarabun New', size=12, bold=True)
+    cell_font = Font(name='TH Sarabun New', size=11)
+    
+    # สีสำหรับ header
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    
+    # หัวเรื่อง
+    ws['A1'] = 'รายงานปรับเทียบ'
+    ws['A1'].font = title_font
+    ws.merge_cells('A1:G1')
+    ws['A1'].alignment = Alignment(horizontal='center')
+    
+    # วันที่รายงาน
+    ws['A2'] = f'วันที่: {datetime.now().strftime("%d/%m/%Y")}'
+    ws['A2'].font = cell_font
+    ws.merge_cells('A2:G2')
+    ws['A2'].alignment = Alignment(horizontal='center')
+    
+    # หัวตาราง
+    headers = ['ลำดับ', 'Model', 'SERIAL No.', 'ชื่อเครื่องวัด', 'หน่วยผู้ใช้', 'จำนวน', 'หมายเหตุ']
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=4, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # เพิ่มข้อมูลในตาราง
+    for row, cal in enumerate(filtered_calibrations, 5):
+        # ลำดับ
+        ws.cell(row=row, column=1, value=row-4).alignment = Alignment(horizontal='center')
+        
+        # Model
+        model_value = cal['machine_model'] if cal['machine_model'] != '-' else '-'
+        ws.cell(row=row, column=2, value=model_value).alignment = Alignment(horizontal='center')
+        
+        # SERIAL No.
+        serial_value = cal['serial_number'] if cal['serial_number'] != '-' else '-'
+        ws.cell(row=row, column=3, value=serial_value).alignment = Alignment(horizontal='center')
+        
+        # ชื่อเครื่องวัด
+        if cal['type'] == 'force':
+            instrument_name = 'Force Gauge'
+        elif cal['type'] == 'pressure':
+            instrument_name = 'Pressure Gauge'
+        elif cal['type'] == 'torque':
+            instrument_name = 'Torque Wrench'
+        else:
+            instrument_name = cal['type_name']
+        
+        ws.cell(row=row, column=4, value=instrument_name).alignment = Alignment(horizontal='center')
+        
+        # หน่วยผู้ใช้
+        ws.cell(row=row, column=5, value='ฝสอ.ฝูง ๔๐๓ บน.๔').alignment = Alignment(horizontal='center')
+        
+        # จำนวน
+        ws.cell(row=row, column=6, value='๑').alignment = Alignment(horizontal='center')
+        
+        # หมายเหตุ
+        if cal['status'] in ['cert_issued', 'passed', 'active']:
+            remark = 'ออกใบรับรอง'
+        elif cal['status'] in ['failed', 'pending', 'in_progress', 'not_set']:
+            remark = 'ไม่ผ่านการปรับเทียบ'
+        else:
+            remark = cal['status']
+        
+        ws.cell(row=row, column=7, value=remark).alignment = Alignment(horizontal='center')
+    
+    # ปรับความกว้างคอลัมน์
+    column_widths = [8, 15, 15, 20, 25, 10, 20]
+    for col, width in enumerate(column_widths, 1):
+        ws.column_dimensions[get_column_letter(col)].width = width
+    
+    # เพิ่มเส้นขอบ
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    for row in range(4, len(filtered_calibrations) + 5):
+        for col in range(1, 8):
+            ws.cell(row=row, column=col).border = thin_border
+    
+    # บันทึกไฟล์
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    
+    # ส่งไฟล์กลับ
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="รายงานปรับเทียบ_{datetime.now().strftime("%Y%m%d")}.xlsx"'
+    
+    return response

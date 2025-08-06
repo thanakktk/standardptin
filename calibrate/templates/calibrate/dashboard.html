@@ -111,7 +111,7 @@
                                         <th>มาตรฐาน</th>
                                         <th>วันที่ปรับเทียบ</th>
                                         <th>วันที่ครบกำหนดถัดไป</th>
-                                        <th>สถานะ</th>
+                                        <th>สถานะการปรับเทียบ</th>
                                         <th>ระดับความเร่งด่วน</th>
                                         <th>จัดการ</th>
                                     </tr>
@@ -148,14 +148,20 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            {% if cal.status == 'active' %}
-                                                <span class="badge bg-success">ปกติ</span>
-                                            {% elif cal.status == 'expired' %}
-                                                <span class="badge bg-danger">หมดอายุ</span>
-                                            {% elif cal.status == 'expiring_soon' %}
-                                                <span class="badge bg-warning">ใกล้หมดอายุ</span>
+                                            {% if cal.status == 'pending' %}
+                                                <span class="badge bg-warning">รอปรับเทียบ</span>
+                                            {% elif cal.status == 'in_progress' %}
+                                                <span class="badge bg-info">กำลังปรับเทียบ</span>
+                                            {% elif cal.status == 'passed' %}
+                                                <span class="badge bg-success">ผ่านการปรับเทียบ</span>
+                                            {% elif cal.status == 'cert_issued' %}
+                                                <span class="badge bg-primary">ออกใบรับรอง</span>
+                                            {% elif cal.status == 'failed' %}
+                                                <span class="badge bg-danger">ไม่ผ่านการสอบเทียบ</span>
+                                            {% elif cal.status == 'not_set' %}
+                                                <span class="badge bg-secondary">ยังไม่ตั้งค่า</span>
                                             {% else %}
-                                                <span class="badge bg-secondary">ไม่ระบุ</span>
+                                                <span class="badge bg-secondary">{{ cal.status }}</span>
                                             {% endif %}
                                         </td>
                                         <td>

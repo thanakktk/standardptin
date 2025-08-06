@@ -86,17 +86,27 @@
                             </label>
                             {{ form.priority }}
                         </div>
-                        <div class="col-md-4">
-                            <label for="{{ form.uuc_id.id_for_label }}" class="form-label">
-                                <i class="fas fa-tools me-1"></i>{{ form.uuc_id.label }}
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
                             </label>
-                            {{ form.uuc_id }}
-                        </div>
-                        <div class="col-md-4">
-                            <label for="{{ form.std_id.id_for_label }}" class="form-label">
-                                <i class="fas fa-certificate me-1"></i>{{ form.std_id.label }}
-                            </label>
-                            {{ form.std_id }}
+                            <div id="calibration-equipment-container">
+                                <div class="row mb-2 calibration-equipment-row">
+                                    <div class="col-md-8">
+                                        <select name="uuc_id_1" class="form-control" required>
+                                            <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                            {% for machine in machines %}
+                                                <option value="{{ machine.id }}">{{ machine.name }} - {{ machine.machine_type.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="button" class="btn btn-success btn-sm add-equipment-btn">
+                                            <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -340,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-                // เพิ่ม event listener สำหรับทุก input
+        // เพิ่ม event listener สำหรับทุก input
         [applyComInput, applyTenInput, compressInput, tensionInput].forEach(input => {
             if (input) {
                 input.addEventListener('input', () => {
@@ -356,6 +366,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 input.addEventListener('input', calculateTolerance);
             }
         });
+    });
+
+    // JavaScript สำหรับเพิ่มเครื่องมือที่ใช้สอบเทียบ
+    let equipmentCounter = 1;
+    
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-equipment-btn')) {
+            equipmentCounter++;
+            const container = document.getElementById('calibration-equipment-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-2 calibration-equipment-row';
+            newRow.innerHTML = `
+                <div class="col-md-8">
+                    <select name="uuc_id_${equipmentCounter}" class="form-control">
+                        <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                        {% for machine in machines %}
+                            <option value="{{ machine.id }}">{{ machine.name }} - {{ machine.machine_type.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                        <i class="fas fa-minus"></i> ลบ
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        if (e.target.classList.contains('remove-equipment-btn')) {
+            e.target.closest('.calibration-equipment-row').remove();
+        }
     });
 });
 </script>

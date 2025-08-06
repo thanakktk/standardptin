@@ -4,12 +4,18 @@ from .views import (
     CalibrationPressureListView, CalibrationPressureCreateView, CalibrationPressureUpdateView, CalibrationPressureDeleteView,
     CalibrationTorqueListView, CalibrationTorqueCreateView, CalibrationTorqueUpdateView, CalibrationTorqueDeleteView,
     calibration_dashboard, machine_calibration_list, create_calibration_for_machine, calibration_by_type,
-    select_machine_for_calibration, create_calibration_with_machine
+    select_machine_for_calibration, create_calibration_with_machine, calibration_report, calibration_report_detail, export_to_word, export_to_excel
 )
 
 urlpatterns = [
     # หน้าหลักการปรับเทียบ
     path('', calibration_dashboard, name='calibrate-dashboard'),
+    
+    # รายงานปรับเทียบ
+    path('report/', calibration_report, name='calibrate-report'),
+    path('report/detail/', calibration_report_detail, name='calibrate-report-detail'),
+    path('export/word/', export_to_word, name='export-calibration-word'),
+    path('export/excel/', export_to_excel, name='export-calibration-excel'),
     
     # หน้าดึงข้อมูลเครื่องมือเพื่อบันทึกการปรับเทียบ
     path('select-machine/', select_machine_for_calibration, name='select-machine-for-calibration'),

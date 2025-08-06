@@ -3,10 +3,11 @@ from machine.models import Machine
 
 class CalibrationForce(models.Model):
     STATUS_CHOICES = [
-        ('active', 'ปกติ'),
-        ('expired', 'หมดอายุ'),
-        ('expiring_soon', 'ใกล้หมดอายุ'),
-        ('not_set', 'ไม่ระบุ'),
+        ('pending', 'รอปรับเทียบ'),
+        ('in_progress', 'กำลังปรับเทียบ'),
+        ('passed', 'ผ่านการปรับเทียบ'),
+        ('cert_issued', 'ออกใบรับรอง'),
+        ('failed', 'ไม่ผ่านการสอบเทียบ'),
     ]
     
     PRIORITY_CHOICES = [
@@ -27,10 +28,10 @@ class CalibrationForce(models.Model):
     tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด")
     update = models.DateField(blank=True, null=True, verbose_name="วันที่ calibration")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_set', verbose_name="สถานะ")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะปรับเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="มาตรฐานที่ใช้")
+    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
 
     class Meta:
         verbose_name = "ข้อมูลสอบเทียบแรง"
@@ -38,10 +39,11 @@ class CalibrationForce(models.Model):
 
 class CalibrationPressure(models.Model):
     STATUS_CHOICES = [
-        ('active', 'ปกติ'),
-        ('expired', 'หมดอายุ'),
-        ('expiring_soon', 'ใกล้หมดอายุ'),
-        ('not_set', 'ไม่ระบุ'),
+        ('pending', 'รอปรับเทียบ'),
+        ('in_progress', 'กำลังปรับเทียบ'),
+        ('passed', 'ผ่านการปรับเทียบ'),
+        ('cert_issued', 'ออกใบรับรอง'),
+        ('failed', 'ไม่ผ่านการสอบเทียบ'),
     ]
     
     PRIORITY_CHOICES = [
@@ -63,10 +65,10 @@ class CalibrationPressure(models.Model):
     tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด")
     update = models.DateField(blank=True, null=True, verbose_name="วันที่ calibration")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_set', verbose_name="สถานะ")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะปรับเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="มาตรฐานที่ใช้")
+    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
 
     class Meta:
         verbose_name = "ข้อมูลสอบเทียบความดัน"
@@ -100,10 +102,11 @@ class CalibrationPressure(models.Model):
 
 class CalibrationTorque(models.Model):
     STATUS_CHOICES = [
-        ('active', 'ปกติ'),
-        ('expired', 'หมดอายุ'),
-        ('expiring_soon', 'ใกล้หมดอายุ'),
-        ('not_set', 'ไม่ระบุ'),
+        ('pending', 'รอปรับเทียบ'),
+        ('in_progress', 'กำลังปรับเทียบ'),
+        ('passed', 'ผ่านการปรับเทียบ'),
+        ('cert_issued', 'ออกใบรับรอง'),
+        ('failed', 'ไม่ผ่านการสอบเทียบ'),
     ]
     
     PRIORITY_CHOICES = [
@@ -137,10 +140,10 @@ class CalibrationTorque(models.Model):
     ccw_tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด CCW")
     update = models.DateField(blank=True, null=True, verbose_name="วันที่ calibration")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_set', verbose_name="สถานะ")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_set', verbose_name="สถานะปรับเเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="มาตรฐานที่ใช้")
+    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
 
     class Meta:
         verbose_name = "ข้อมูลสอบเทียบแรงบิด"

@@ -193,6 +193,9 @@
                                     <a href="{% url 'machine-calibration' m.id %}" class="btn btn-outline-info btn-sm" title="บันทึกการปรับเทียบ">
                                         <i class="fas fa-cog"></i>
                                     </a>
+                                    <a href="{% url 'create-calibration-request' m.id %}" class="btn btn-outline-warning btn-sm" title="ส่งคำร้องขอบันทึกปรับเทียบ">
+                                        <i class="fas fa-clipboard-list"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>

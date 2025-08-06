@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.conf import settings
 from datetime import datetime
+from calibrate.models import CalibrationForce, CalibrationPressure, CalibrationTorque
 
 class MachineListView(LoginRequiredMixin, ListView):
     model = Machine
@@ -169,6 +170,83 @@ def send_filtered_email(request):
             messages.error(request, f'เกิดข้อผิดพลาดในการส่งอีเมล: {str(e)}')
     
     return redirect('machine-list')
+
+@login_required
+def create_calibration_request(request, pk):
+    """สร้างคำร้องขอบันทึกปรับเทียบสำหรับเครื่องมือ"""
+    machine = get_object_or_404(Machine, id=pk)
+    
+    # ตรวจสอบประเภทเครื่องมือ
+    machine_type_name = machine.machine_type.name.lower()
+    
+    try:
+        # สร้างบันทึกการปรับเทียบตามประเภทเครื่องมือ
+        if 'force' in machine_type_name:
+            # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+            existing_request = CalibrationForce.objects.filter(
+                uuc_id=machine,
+                status='pending'
+            ).first()
+            
+            if existing_request:
+                messages.warning(request, f'มีคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} อยู่แล้ว')
+                return redirect('machine-list')
+            
+            # สร้างคำร้องขอใหม่
+            calibration = CalibrationForce.objects.create(
+                uuc_id=machine,
+                status='pending',
+                priority='normal'
+            )
+            messages.success(request, f'ส่งคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            
+        elif 'pressure' in machine_type_name:
+            # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+            existing_request = CalibrationPressure.objects.filter(
+                uuc_id=machine,
+                status='pending'
+            ).first()
+            
+            if existing_request:
+                messages.warning(request, f'มีคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} อยู่แล้ว')
+                return redirect('machine-list')
+            
+            # สร้างคำร้องขอใหม่
+            calibration = CalibrationPressure.objects.create(
+                uuc_id=machine,
+                status='pending',
+                priority='normal'
+            )
+            messages.success(request, f'ส่งคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            
+        elif 'torque' in machine_type_name:
+            # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+            existing_request = CalibrationTorque.objects.filter(
+                uuc_id=machine,
+                status__in=['pending', 'not_set']
+            ).first()
+            
+            if existing_request:
+                messages.warning(request, f'มีคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} อยู่แล้ว')
+                return redirect('machine-list')
+            
+            # สร้างคำร้องขอใหม่
+            calibration = CalibrationTorque.objects.create(
+                uuc_id=machine,
+                status='not_set',
+                priority='normal'
+            )
+            messages.success(request, f'ส่งคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            
+        else:
+            messages.error(request, 'ไม่พบประเภทการปรับเทียบที่เหมาะสมสำหรับเครื่องมือนี้')
+            return redirect('machine-list')
+        
+        return redirect('machine-list')
+        
+    except Exception as e:
+        messages.error(request, f'เกิดข้อผิดพลาดในการส่งคำร้องขอ: {str(e)}')
+        return redirect('machine-list')
 
 # CalibrationEquipment Views
 class CalibrationEquipmentListView(LoginRequiredMixin, ListView):
