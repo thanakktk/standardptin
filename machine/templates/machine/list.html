@@ -136,25 +136,26 @@
                             <th style="width: 15%">
                                 <i class="fas fa-barcode me-1"></i>Serial
                             </th>
-                            <th style="width: 10%">
-                                <i class="fas fa-ruler me-1"></i>หน่วย
-                            </th>
-                            <th style="width: 10%">
-                                <i class="fas fa-industry me-1"></i>ผู้ผลิต
-                            </th>
-                            <th style="width: 10%">
-                                <i class="fas fa-flag me-1"></i>สถานะ
-                            </th>
-                            <th style="width: 20%">
-                                <i class="fas fa-cogs me-1"></i>จัดการ
-                            </th>
+                            
+                                                         <th style="width: 15%">
+                                 <i class="fas fa-industry me-1"></i>ผู้ผลิต
+                             </th>
+                             <th style="width: 10%">
+                                 <i class="fas fa-ruler-combined me-1"></i>ช่วงการวัด
+                             </th>
+                             <th style="width: 10%">
+                                 <i class="fas fa-tachometer-alt me-1"></i>ความละเอียด
+                             </th>
+                             <th style="width: 20%">
+                                 <i class="fas fa-cogs me-1"></i>จัดการ
+                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for m in machines %}
                         <tr>
                             <td>
-                                <span class="badge bg-primary">{{ m.id }}</span>
+                                <span class="badge bg-primary">{{ forloop.counter }}</span>
                             </td>
                             <td>
                                 <strong>{{ m.name }}</strong>
@@ -163,22 +164,12 @@
                                 {% endif %}
                             </td>
                             <td>{{ m.model|default:"-" }}</td>
-                            <td>
-                                <code>{{ m.serial_number|default:"-" }}</code>
-                            </td>
-                            <td>
-                                <span class="badge bg-info">{{ m.unit }}</span>
-                            </td>
-                            <td>{{ m.manufacture }}</td>
-                            <td>
-                                {% if m.status == 'normal' %}
-                                    <span class="badge bg-success">ปกติ</span>
-                                {% elif m.status == 'urgent' %}
-                                    <span class="badge bg-warning">ด่วน</span>
-                                {% elif m.status == 'very_urgent' %}
-                                    <span class="badge bg-danger">ด่วนมาก</span>
-                                {% endif %}
-                            </td>
+                                                         <td>
+                                 <code>{{ m.serial_number|default:"-" }}</code>
+                             </td>
+                             <td>{{ m.manufacture }}</td>
+                             <td>{{ m.range|default:"-" }}</td>
+                             <td>{{ m.res_uuc|default:"-" }}</td>
                             <td>
                                 <div class="btn-group" role="group">
                                     <a href="{% url 'machine-edit' m.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
@@ -193,9 +184,12 @@
                                     <a href="{% url 'machine-calibration' m.id %}" class="btn btn-outline-info btn-sm" title="บันทึกการปรับเทียบ">
                                         <i class="fas fa-cog"></i>
                                     </a>
-                                    <a href="{% url 'create-calibration-request' m.id %}" class="btn btn-outline-warning btn-sm" title="ส่งคำร้องขอบันทึกปรับเทียบ">
+                                    <button type="button" class="btn btn-outline-warning btn-sm calibration-request-btn" 
+                                            data-machine-id="{{ m.id }}" 
+                                            data-machine-name="{{ m.name }}"
+                                            title="ส่งคำร้องขอบันทึกปรับเทียบ">
                                         <i class="fas fa-clipboard-list"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -226,4 +220,126 @@
         </a>
     </div>
 </div>
+
+<!-- Modal สำหรับเลือก Priority -->
+<div class="modal fade priority-modal" id="calibrationRequestModal" tabindex="-1" aria-labelledby="calibrationRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="calibrationRequestModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    เลือกระดับความเร่งด่วน
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    กรุณาเลือกระดับความเร่งด่วนสำหรับคำร้องขอบันทึกการปรับเทียบเครื่องมือ: <strong id="machineNameInModal"></strong>
+                </div>
+                
+                <div class="priority-options">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="modalPriority" id="priorityNormal" value="normal" checked>
+                        <label class="form-check-label" for="priorityNormal">
+                            <div class="d-flex align-items-center">
+                                <div class="priority-icon">
+                                    <i class="fas fa-circle text-success"></i>
+                                </div>
+                                <div class="priority-content">
+                                    <strong>ปกติ</strong>
+                                    <small class="text-muted">การปรับเทียบทั่วไป ไม่มีความเร่งด่วน</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="modalPriority" id="priorityUrgent" value="urgent">
+                        <label class="form-check-label" for="priorityUrgent">
+                            <div class="d-flex align-items-center">
+                                <div class="priority-icon">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                </div>
+                                <div class="priority-content">
+                                    <strong>ด่วน</strong>
+                                    <small class="text-muted">มีความเร่งด่วน ต้องดำเนินการเร็ว</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="modalPriority" id="priorityVeryUrgent" value="very_urgent">
+                        <label class="form-check-label" for="priorityVeryUrgent">
+                            <div class="d-flex align-items-center">
+                                <div class="priority-icon">
+                                    <i class="fas fa-exclamation-circle text-danger"></i>
+                                </div>
+                                <div class="priority-content">
+                                    <strong>ด่วนมาก</strong>
+                                    <small class="text-muted">มีความเร่งด่วนสูงสุด ต้องดำเนินการทันที</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>ยกเลิก
+                </button>
+                <button type="button" class="btn btn-success" id="confirmCalibrationRequestBtn">
+                    <i class="fas fa-check me-1"></i>ยืนยันและส่งคำขอ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="/static/ui/default/priority-modal.css">
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // JavaScript สำหรับ Modal Calibration Request
+    const calibrationRequestModal = new bootstrap.Modal(document.getElementById('calibrationRequestModal'));
+    const confirmCalibrationRequestBtn = document.getElementById('confirmCalibrationRequestBtn');
+    const machineNameInModal = document.getElementById('machineNameInModal');
+    let currentMachineId = null;
+
+    // เมื่อกดปุ่มส่งคำร้องขอบันทึกปรับเทียบ
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.calibration-request-btn')) {
+            const btn = e.target.closest('.calibration-request-btn');
+            currentMachineId = btn.getAttribute('data-machine-id');
+            const machineName = btn.getAttribute('data-machine-name');
+            
+            // แสดงชื่อเครื่องมือใน modal
+            machineNameInModal.textContent = machineName;
+            
+            // เปิด modal
+            calibrationRequestModal.show();
+        }
+    });
+
+    // เมื่อยืนยันใน modal
+    confirmCalibrationRequestBtn.addEventListener('click', function() {
+        const selectedPriority = document.querySelector('input[name="modalPriority"]:checked').value;
+        
+        // สร้าง URL พร้อม parameter priority
+        const url = `/machine/${currentMachineId}/create-calibration-request/?priority=${selectedPriority}`;
+        
+        // ปิด modal
+        calibrationRequestModal.hide();
+        
+        // ไปยังหน้าสร้างคำร้องขอบันทึกปรับเทียบ
+        window.location.href = url;
+    });
+
+    // เมื่อกดปุ่มยกเลิกใน modal
+    document.querySelector('[data-bs-dismiss="modal"]').addEventListener('click', function() {
+        calibrationRequestModal.hide();
+    });
+});
+</script>
 {% endblock %} 

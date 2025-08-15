@@ -1,5 +1,6 @@
 from django.db import models
 from machine.models import Machine
+from django.conf import settings
 
 class CalibrationForce(models.Model):
     STATUS_CHOICES = [
@@ -26,12 +27,14 @@ class CalibrationForce(models.Model):
     uncer = models.FloatField(blank=True, null=True, verbose_name="ค่าความไม่แน่นอน (Uncertainty)")
     tolerance_start = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น")
     tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด")
-    update = models.DateField(blank=True, null=True, verbose_name="วันที่ calibration")
+    update = models.DateField(blank=True, null=True, verbose_name="วันที่สอบเทียบ")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะปรับเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
     std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='force_calibrations')
+    certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='force_certificates')
 
     class Meta:
         verbose_name = "ข้อมูลสอบเทียบแรง"
@@ -63,12 +66,14 @@ class CalibrationPressure(models.Model):
     uncer = models.FloatField(blank=True, null=True, verbose_name="ค่าความไม่แน่นอน (Uncertainty)")
     tolerance_start = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น")
     tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด")
-    update = models.DateField(blank=True, null=True, verbose_name="วันที่ calibration")
+    update = models.DateField(blank=True, null=True, verbose_name="วันที่สอบเทียบ")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะปรับเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
     std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='pressure_calibrations')
+    certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='pressure_certificates')
 
     class Meta:
         verbose_name = "ข้อมูลสอบเทียบความดัน"
@@ -138,12 +143,14 @@ class CalibrationTorque(models.Model):
     ccw_uncen = models.FloatField(blank=True, null=True, verbose_name="ค่าความไม่แน่นอน CCW")
     ccw_tolerance_start = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น CCW")
     ccw_tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด CCW")
-    update = models.DateField(blank=True, null=True, verbose_name="วันที่ calibration")
+    update = models.DateField(blank=True, null=True, verbose_name="วันที่สอบเทียบ")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_set', verbose_name="สถานะปรับเเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
     std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='torque_calibrations')
+    certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='torque_certificates')
 
     class Meta:
         verbose_name = "ข้อมูลสอบเทียบแรงบิด"

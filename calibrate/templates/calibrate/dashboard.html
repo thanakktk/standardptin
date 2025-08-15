@@ -8,7 +8,7 @@
         <div class="row">
             <div class="col-md-8">
                 <h1 class="page-title">
-                    <i class="fas fa-tools fa-lg"></i>
+                    <i class="fas fa-clipboard-check fa-lg"></i>
                     หน้าหลักการปรับเทียบ
                 </h1>
                 <p class="page-subtitle">จัดการบันทึกการปรับเทียบเครื่องมือวัด</p>
@@ -27,8 +27,8 @@
                         <i class="fas fa-weight"></i>
                     </div>
                     <div class="stats-content">
-                        <h3>{{ force_machines }}</h3>
-                        <p>เครื่องมือวัดแรง</p>
+                        <h3>{{ force_calibrations_count }}</h3>
+                        <p>บันทึกการปรับเทียบแรง</p>
                     </div>
                 </div>
             </div>
@@ -38,8 +38,8 @@
                         <i class="fas fa-tachometer-alt"></i>
                     </div>
                     <div class="stats-content">
-                        <h3>{{ pressure_machines }}</h3>
-                        <p>เครื่องมือวัดความดัน</p>
+                        <h3>{{ pressure_calibrations_count }}</h3>
+                        <p>บันทึกการปรับเทียบความดัน</p>
                     </div>
                 </div>
             </div>
@@ -49,39 +49,103 @@
                         <i class="fas fa-cog"></i>
                     </div>
                     <div class="stats-content">
-                        <h3>{{ torque_machines }}</h3>
-                        <p>เครื่องมือวัดแรงบิด</p>
+                        <h3>{{ torque_calibrations_count }}</h3>
+                        <p>บันทึกการปรับเทียบแรงบิด</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stats-card">
                     <div class="stats-icon bg-info">
-                        <i class="fas fa-clipboard-check"></i>
+                        <i class="fas fa-clock"></i>
                     </div>
                     <div class="stats-content">
-                        <h3>{{ total_calibrations }}</h3>
-                        <p>บันทึกการปรับเทียบทั้งหมด</p>
+                        <h3>{{ pending_calibrations_count }}</h3>
+                        <p>รอการปรับเทียบ</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ปุ่มเพิ่มบันทึกการปรับเทียบ -->
+        <!-- Search และ Filter -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title">
-                            <i class="fas fa-plus-circle me-2"></i>
-                            เพิ่มบันทึกการปรับเทียบใหม่
+                            <i class="fas fa-search me-2"></i>
+                            ค้นหาและกรองข้อมูล
                         </h5>
                     </div>
                     <div class="card-body">
-                        <p class="card-text">เลือกเครื่องมือที่ต้องการบันทึกการปรับเทียบ ระบบจะดึงข้อมูลเครื่องมือมาให้อัตโนมัติ</p>
-                        <a href="{% url 'select-machine-for-calibration' %}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-search me-2"></i>เลือกเครื่องมือเพื่อบันทึกการปรับเทียบ
-                        </a>
+                        <form method="get" id="searchForm">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-search me-1"></i>ค้นหาชื่อเครื่องมือ
+                                    </label>
+                                    <input type="text" class="form-control" name="name_search" 
+                                           value="{{ request.GET.name_search }}" placeholder="ชื่อเครื่องมือ...">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-barcode me-1"></i>ค้นหา Serial Number
+                                    </label>
+                                    <input type="text" class="form-control" name="serial_search" 
+                                           value="{{ request.GET.serial_search }}" placeholder="Serial Number...">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-tag me-1"></i>ประเภทการปรับเทียบ
+                                    </label>
+                                    <select class="form-control" name="calibration_type">
+                                        <option value="">ทั้งหมด</option>
+                                        <option value="force" {% if request.GET.calibration_type == 'force' %}selected{% endif %}>แรง</option>
+                                        <option value="pressure" {% if request.GET.calibration_type == 'pressure' %}selected{% endif %}>ความดัน</option>
+                                        <option value="torque" {% if request.GET.calibration_type == 'torque' %}selected{% endif %}>แรงบิด</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-flag me-1"></i>สถานะ
+                                    </label>
+                                    <select class="form-control" name="status_filter">
+                                        <option value="">ทั้งหมด</option>
+                                        <option value="pending" {% if request.GET.status_filter == 'pending' %}selected{% endif %}>รอปรับเทียบ</option>
+                                        <option value="in_progress" {% if request.GET.status_filter == 'in_progress' %}selected{% endif %}>กำลังปรับเทียบ</option>
+                                        <option value="passed" {% if request.GET.status_filter == 'passed' %}selected{% endif %}>ผ่านการปรับเทียบ</option>
+                                        <option value="cert_issued" {% if request.GET.status_filter == 'cert_issued' %}selected{% endif %}>ออกใบรับรอง</option>
+                                        <option value="failed" {% if request.GET.status_filter == 'failed' %}selected{% endif %}>ไม่ผ่านการสอบเทียบ</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>ความเร่งด่วน
+                                    </label>
+                                    <select class="form-control" name="priority_filter">
+                                        <option value="">ทั้งหมด</option>
+                                        <option value="normal" {% if request.GET.priority_filter == 'normal' %}selected{% endif %}>ปกติ</option>
+                                        <option value="urgent" {% if request.GET.priority_filter == 'urgent' %}selected{% endif %}>ด่วน</option>
+                                        <option value="very_urgent" {% if request.GET.priority_filter == 'very_urgent' %}selected{% endif %}>ด่วนมาก</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="btn-group" role="group">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search me-1"></i>ค้นหา
+                                        </button>
+                                        <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary">
+                                            <i class="fas fa-times me-1"></i>ล้างการกรอง
+                                        </a>
+                                        <a href="{% url 'select-machine-for-calibration' %}" class="btn btn-success">
+                                            <i class="fas fa-plus me-1"></i>เพิ่มบันทึกใหม่
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -91,11 +155,25 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
                             <i class="fas fa-list me-2"></i>
-                            รายการบันทึกการปรับเทียบทั้งหมด
+                            รายการบันทึกการปรับเทียบทั้งหมด ({{ all_calibrations|length }} รายการ)
                         </h5>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'calibrate-force-list' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-weight me-1"></i>แรง
+                            </a>
+                            <a href="{% url 'calibrate-pressure-list' %}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-tachometer-alt me-1"></i>ความดัน
+                            </a>
+                            <a href="{% url 'calibrate-torque-list' %}" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-cog me-1"></i>แรงบิด
+                            </a>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="deleteSelectedBtn" style="display: none;">
+                                <i class="fas fa-trash me-1"></i>ลบที่เลือก
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         {% if all_calibrations %}
@@ -103,12 +181,17 @@
                             <table class="table table-striped table-hover">
                                 <thead class="table-dark">
                                     <tr>
+                                        <th>
+                                            <input type="checkbox" id="selectAll" class="form-check-input">
+                                        </th>
                                         <th>ลำดับ</th>
                                         <th>ประเภทการปรับเทียบ</th>
                                         <th>ชื่อเครื่องมือ</th>
                                         <th>รุ่น</th>
                                         <th>หมายเลขเครื่อง</th>
                                         <th>มาตรฐาน</th>
+                                        <th>ผู้สอบเทียบ</th>
+                                        <th>ผู้ออกใบรับรอง</th>
                                         <th>วันที่ปรับเทียบ</th>
                                         <th>วันที่ครบกำหนดถัดไป</th>
                                         <th>สถานะการปรับเทียบ</th>
@@ -119,6 +202,10 @@
                                 <tbody>
                                     {% for cal in all_calibrations %}
                                     <tr>
+                                        <td>
+                                            <input type="checkbox" class="form-check-input calibration-checkbox" 
+                                                   data-id="{{ cal.id }}" data-type="{{ cal.type }}">
+                                        </td>
                                         <td>{{ forloop.counter }}</td>
                                         <td>
                                             {% if cal.type == 'force' %}
@@ -133,6 +220,20 @@
                                         <td>{{ cal.machine_model }}</td>
                                         <td><code>{{ cal.serial_number }}</code></td>
                                         <td>{{ cal.std_name }}</td>
+                                        <td>
+                                            {% if cal.calibrator and cal.calibrator != '-' %}
+                                                <span class="badge bg-info">{{ cal.calibrator }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if cal.certificate_issuer and cal.certificate_issuer != '-' %}
+                                                <span class="badge bg-success">{{ cal.certificate_issuer }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             {% if cal.update_date %}
                                                 {{ cal.update_date|date:"d/m/Y" }}
@@ -181,23 +282,29 @@
                                                     <a href="{% url 'calibrate-force-edit' cal.id %}" class="btn btn-sm btn-outline-primary">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <a href="{% url 'calibrate-force-delete' cal.id %}" class="btn btn-sm btn-outline-danger">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
+                                                            data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                            data-name="{{ cal.machine_name }}">
                                                         <i class="fas fa-trash"></i>
-                                                    </a>
+                                                    </button>
                                                 {% elif cal.type == 'pressure' %}
                                                     <a href="{% url 'calibrate-pressure-edit' cal.id %}" class="btn btn-sm btn-outline-success">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <a href="{% url 'calibrate-pressure-delete' cal.id %}" class="btn btn-sm btn-outline-danger">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
+                                                            data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                            data-name="{{ cal.machine_name }}">
                                                         <i class="fas fa-trash"></i>
-                                                    </a>
+                                                    </button>
                                                 {% elif cal.type == 'torque' %}
                                                     <a href="{% url 'calibrate-torque-edit' cal.id %}" class="btn btn-sm btn-outline-warning">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <a href="{% url 'calibrate-torque-delete' cal.id %}" class="btn btn-sm btn-outline-danger">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
+                                                            data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                            data-name="{{ cal.machine_name }}">
                                                         <i class="fas fa-trash"></i>
-                                                    </a>
+                                                    </button>
                                                 {% endif %}
                                             </div>
                                         </td>
@@ -235,4 +342,222 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle text-danger"></i> ยืนยันการลบ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>คุณต้องการลบบันทึกการปรับเทียบ <strong id="deleteItemName"></strong> ใช่หรือไม่?</p>
+                <p class="text-danger"><small>การดำเนินการนี้ไม่สามารถยกเลิกได้</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash"></i> ลบ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Delete Confirmation Modal -->
+<div class="modal fade" id="batchDeleteModal" tabindex="-1" aria-labelledby="batchDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="batchDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle text-danger"></i> ยืนยันการลบหลายรายการ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>คุณต้องการลบบันทึกการปรับเทียบที่เลือก <strong id="selectedCount"></strong> รายการ ใช่หรือไม่?</p>
+                <p class="text-danger"><small>การดำเนินการนี้ไม่สามารถยกเลิกได้</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-danger" id="confirmBatchDeleteBtn">
+                    <i class="fas fa-trash"></i> ลบทั้งหมด
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Select All functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const calibrationCheckboxes = document.querySelectorAll('.calibration-checkbox');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+
+    selectAllCheckbox.addEventListener('change', function() {
+        calibrationCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateDeleteButton();
+    });
+
+    calibrationCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateDeleteButton();
+            updateSelectAll();
+        });
+    });
+
+    function updateDeleteButton() {
+        const checkedBoxes = document.querySelectorAll('.calibration-checkbox:checked');
+        if (checkedBoxes.length > 0) {
+            deleteSelectedBtn.style.display = 'inline-block';
+        } else {
+            deleteSelectedBtn.style.display = 'none';
+        }
+    }
+
+    function updateSelectAll() {
+        const checkedBoxes = document.querySelectorAll('.calibration-checkbox:checked');
+        const totalBoxes = calibrationCheckboxes.length;
+        selectAllCheckbox.checked = checkedBoxes.length === totalBoxes;
+        selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < totalBoxes;
+    }
+
+    // Individual delete functionality
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const deleteItemName = document.getElementById('deleteItemName');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const type = this.getAttribute('data-type');
+            const name = this.getAttribute('data-name');
+            
+            deleteItemName.textContent = name;
+            confirmDeleteBtn.onclick = function() {
+                deleteCalibration(id, type);
+            };
+            
+            deleteModal.show();
+        });
+    });
+
+    // Batch delete functionality
+    deleteSelectedBtn.addEventListener('click', function() {
+        const checkedBoxes = document.querySelectorAll('.calibration-checkbox:checked');
+        const selectedCount = document.getElementById('selectedCount');
+        const batchDeleteModal = new bootstrap.Modal(document.getElementById('batchDeleteModal'));
+        
+        selectedCount.textContent = checkedBoxes.length;
+        
+        document.getElementById('confirmBatchDeleteBtn').onclick = function() {
+            batchDeleteCalibrations(checkedBoxes);
+        };
+        
+        batchDeleteModal.show();
+    });
+
+    function deleteCalibration(id, type) {
+        let deleteUrl;
+        switch(type) {
+            case 'force':
+                deleteUrl = `/calibrate/force/${id}/delete/`;
+                break;
+            case 'pressure':
+                deleteUrl = `/calibrate/pressure/${id}/delete/`;
+                break;
+            case 'torque':
+                deleteUrl = `/calibrate/torque/${id}/delete/`;
+                break;
+        }
+
+        fetch(deleteUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+        });
+    }
+
+    function batchDeleteCalibrations(checkedBoxes) {
+        const deletePromises = [];
+        
+        checkedBoxes.forEach(checkbox => {
+            const id = checkbox.getAttribute('data-id');
+            const type = checkbox.getAttribute('data-type');
+            
+            let deleteUrl;
+            switch(type) {
+                case 'force':
+                    deleteUrl = `/calibrate/force/${id}/delete/`;
+                    break;
+                case 'pressure':
+                    deleteUrl = `/calibrate/pressure/${id}/delete/`;
+                    break;
+                case 'torque':
+                    deleteUrl = `/calibrate/torque/${id}/delete/`;
+                    break;
+            }
+
+            deletePromises.push(
+                fetch(deleteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                    },
+                })
+            );
+        });
+
+        Promise.all(deletePromises)
+            .then(responses => {
+                const allSuccessful = responses.every(response => response.ok);
+                if (allSuccessful) {
+                    location.reload();
+                } else {
+                    alert('เกิดข้อผิดพลาดในการลบข้อมูลบางรายการ');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+            });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
 {% endblock %} 

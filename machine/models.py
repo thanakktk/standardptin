@@ -41,13 +41,27 @@ class CalibrationEquipment(models.Model):
     name = models.CharField(max_length=200, verbose_name="ชื่อเครื่องมือวัดใช้ปรับเทียบ")
     model = models.CharField(max_length=100, blank=True, null=True, verbose_name="รุ่น")
     serial_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขเครื่อง")
-    certificate = models.ForeignKey('cert.Certificate', on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ใบรับรอง")
+    certificate = models.CharField(max_length=200, blank=True, null=True, verbose_name="ใบรับรอง")
     machine_type = models.ForeignKey(MachineType, on_delete=models.CASCADE, verbose_name="ประเภท")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="วันที่สร้าง")
+    created_at = models.DateTimeField(blank=True, null=True, verbose_name="วันที่สร้าง")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="วันที่แก้ไข")
 
     def __str__(self):
         return f"{self.name} - {self.model}"
+
+    def save(self, *args, **kwargs):
+        from django.utils import timezone
+        from datetime import datetime
+        
+        # ถ้าไม่มีการกำหนด created_at ให้ใช้เวลาปัจจุบัน
+        if not self.created_at:
+            self.created_at = timezone.now()
+        
+        # ตรวจสอบว่า created_at ไม่ใช่วันอนาคต
+        if self.created_at and self.created_at > timezone.now():
+            raise ValueError("วันที่สร้างไม่สามารถเป็นวันอนาคตได้")
+        
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "เครื่องมือที่ใช้สอบเทียบ"

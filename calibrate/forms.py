@@ -1,10 +1,11 @@
 from django import forms
 from .models import CalibrationForce, CalibrationPressure, CalibrationTorque
+from django.contrib.auth import get_user_model
 
 class CalibrationForceForm(forms.ModelForm):
     class Meta:
         model = CalibrationForce
-        fields = ['apply_com', 'apply_ten', 'compress', 'tension', 'fullscale', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'priority', 'uuc_id', 'std_id']
+        fields = ['apply_com', 'apply_ten', 'compress', 'tension', 'fullscale', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'priority', 'uuc_id', 'std_id', 'calibrator', 'certificate_issuer']
         widgets = {
             'apply_com': forms.TextInput(attrs={'class': 'form-control'}),
             'apply_ten': forms.TextInput(attrs={'class': 'form-control'}),
@@ -20,12 +21,22 @@ class CalibrationForceForm(forms.ModelForm):
             'priority': forms.Select(attrs={'class': 'form-control'}),
             'uuc_id': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
+            'calibrator': forms.Select(attrs={'class': 'form-control'}),
+            'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ตั้งค่า queryset สำหรับฟิลด์ calibrator และ certificate_issuer
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        self.fields['calibrator'].queryset = users
+        self.fields['certificate_issuer'].queryset = users
 
 class CalibrationPressureForm(forms.ModelForm):
     class Meta:
         model = CalibrationPressure
-        fields = ['set', 'm1', 'm2', 'm3', 'm4', 'avg', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'priority', 'uuc_id', 'std_id']
+        fields = ['set', 'm1', 'm2', 'm3', 'm4', 'avg', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'priority', 'uuc_id', 'std_id', 'calibrator', 'certificate_issuer']
         widgets = {
             'set': forms.TextInput(attrs={'class': 'form-control'}),
             'm1': forms.TextInput(attrs={'class': 'form-control'}),
@@ -42,12 +53,22 @@ class CalibrationPressureForm(forms.ModelForm):
             'priority': forms.Select(attrs={'class': 'form-control'}),
             'uuc_id': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
+            'calibrator': forms.Select(attrs={'class': 'form-control'}),
+            'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ตั้งค่า queryset สำหรับฟิลด์ calibrator และ certificate_issuer
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        self.fields['calibrator'].queryset = users
+        self.fields['certificate_issuer'].queryset = users
 
 class CalibrationTorqueForm(forms.ModelForm):
     class Meta:
         model = CalibrationTorque
-        fields = ['cwset', 'cw0', 'cw90', 'cw180', 'cw270', 'cw_reading', 'cw_avg', 'cw_error', 'cw_tolerance_start', 'cw_tolerance_end', 'ccwset', 'ccw0', 'ccw90', 'ccw180', 'ccw270', 'ccw_reading', 'ccw_avg', 'ccw_error', 'ccw_tolerance_start', 'ccw_tolerance_end', 'update', 'next_due', 'status', 'priority', 'uuc_id', 'std_id']
+        fields = ['cwset', 'cw0', 'cw90', 'cw180', 'cw270', 'cw_reading', 'cw_avg', 'cw_error', 'cw_tolerance_start', 'cw_tolerance_end', 'ccwset', 'ccw0', 'ccw90', 'ccw180', 'ccw270', 'ccw_reading', 'ccw_avg', 'ccw_error', 'ccw_tolerance_start', 'ccw_tolerance_end', 'update', 'next_due', 'status', 'priority', 'uuc_id', 'std_id', 'calibrator', 'certificate_issuer']
         widgets = {
             'cwset': forms.NumberInput(attrs={'class': 'form-control'}),
             'cw0': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -75,4 +96,14 @@ class CalibrationTorqueForm(forms.ModelForm):
             'priority': forms.Select(attrs={'class': 'form-control'}),
             'uuc_id': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
-        } 
+            'calibrator': forms.Select(attrs={'class': 'form-control'}),
+            'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ตั้งค่า queryset สำหรับฟิลด์ calibrator และ certificate_issuer
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        self.fields['calibrator'].queryset = users
+        self.fields['certificate_issuer'].queryset = users 

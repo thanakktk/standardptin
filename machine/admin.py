@@ -21,7 +21,7 @@ class CalibrationEquipmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'model', 'serial_number', 'machine_type', 'certificate', 'created_at')
     list_filter = ('machine_type', 'created_at')
     search_fields = ('name', 'model', 'serial_number')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('updated_at',)
 
 @admin.register(Machine)
 class MachineAdmin(admin.ModelAdmin):

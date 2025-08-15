@@ -99,6 +99,32 @@
                                     </div>
                                 {% endif %}
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.range.id_for_label }}" class="form-label">
+                                    <i class="fas fa-ruler-combined me-1"></i>{{ form.range.label }}
+                                </label>
+                                {{ form.range }}
+                                {% if form.range.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.range.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.res_uuc.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tachometer-alt me-1"></i>{{ form.res_uuc.label }}
+                                </label>
+                                {{ form.res_uuc }}
+                                {% if form.res_uuc.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.res_uuc.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
 
                         <!-- ข้อมูลผู้ผลิตและหน่วยงาน -->
@@ -135,19 +161,7 @@
                                     </div>
                                 {% endif %}
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.calibration_equipment.id_for_label }}" class="form-label">
-                                    <i class="fas fa-cog me-1"></i>{{ form.calibration_equipment.label }}
-                                </label>
-                                {{ form.calibration_equipment }}
-                                {% if form.calibration_equipment.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.calibration_equipment.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
+
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.machine_type.id_for_label }}" class="form-label">
                                     <i class="fas fa-tag me-1"></i>{{ form.machine_type.label }}

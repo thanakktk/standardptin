@@ -6,7 +6,7 @@ from datetime import datetime
 class MachineForm(forms.ModelForm):
     class Meta:
         model = Machine
-        fields = ['organize', 'machine_type', 'name', 'model', 'serial_number', 'range', 'res_uuc', 'unit', 'manufacture', 'calibration_equipment']
+        fields = ['organize', 'machine_type', 'name', 'model', 'serial_number', 'range', 'res_uuc', 'unit', 'manufacture']
         widgets = {
             'organize': forms.Select(attrs={'class': 'form-control'}),
             'machine_type': forms.Select(attrs={'class': 'form-control'}),
@@ -17,7 +17,6 @@ class MachineForm(forms.ModelForm):
             'res_uuc': forms.TextInput(attrs={'class': 'form-control'}),
             'unit': forms.Select(attrs={'class': 'form-control'}),
             'manufacture': forms.Select(attrs={'class': 'form-control'}),
-            'calibration_equipment': forms.Select(attrs={'class': 'form-control'}),
         }
 
 class SendMachineEmailForm(forms.Form):
@@ -84,11 +83,26 @@ class CalibrationDataForm(forms.Form):
 class CalibrationEquipmentForm(forms.ModelForm):
     class Meta:
         model = CalibrationEquipment
-        fields = ['name', 'model', 'serial_number', 'certificate', 'machine_type']
+        fields = ['name', 'model', 'serial_number', 'certificate', 'machine_type', 'created_at']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'model': forms.TextInput(attrs={'class': 'form-control'}),
             'serial_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'certificate': forms.Select(attrs={'class': 'form-control'}),
+            'certificate': forms.TextInput(attrs={'class': 'form-control'}),
             'machine_type': forms.Select(attrs={'class': 'form-control'}),
-        } 
+            'created_at': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+        }
+    
+    def clean_created_at(self):
+        from django.utils import timezone
+        created_at = self.cleaned_data.get('created_at')
+        
+        # ถ้าไม่กรอก ให้ใช้เวลาปัจจุบัน
+        if not created_at:
+            return timezone.now()
+        
+        # ตรวจสอบว่าไม่ใช่วันอนาคต
+        if created_at > timezone.now():
+            raise forms.ValidationError("วันที่สร้างไม่สามารถเป็นวันอนาคตได้")
+        
+        return created_at 

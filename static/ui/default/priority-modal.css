@@ -1,0 +1,228 @@
+/* Priority Modal Styles */
+.priority-modal {
+    font-family: 'Sarabun', sans-serif;
+}
+
+.priority-modal .modal-content {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.priority-modal .modal-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: white;
+    border: none;
+    padding: 1.5rem;
+    border-radius: 16px 16px 0 0;
+}
+
+.priority-modal .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.priority-modal .modal-body {
+    padding: 2rem;
+    background: #f8fafc;
+}
+
+.priority-modal .modal-footer {
+    background: white;
+    border: none;
+    padding: 1.5rem;
+    border-radius: 0 0 16px 16px;
+}
+
+/* Priority Options */
+.priority-options {
+    margin-top: 1rem;
+}
+
+.priority-options .form-check {
+    margin-bottom: 1rem;
+}
+
+.priority-options .form-check-input {
+    display: none;
+}
+
+.priority-options .form-check-label {
+    cursor: pointer;
+    padding: 1.25rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    width: 100%;
+    border: 2px solid #e2e8f0;
+    background: white;
+    display: block;
+    margin: 0;
+}
+
+.priority-options .form-check-label:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.priority-options .form-check-input:checked + .form-check-label {
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    border-color: #3b82f6;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.priority-options .form-check-input:checked + .form-check-label .text-muted {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Priority Icons */
+.priority-options .priority-icon {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.priority-options .form-check-input:checked + .form-check-label .priority-icon {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Priority Content */
+.priority-content {
+    flex: 1;
+}
+
+.priority-content strong {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.priority-content small {
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+/* Alert Styles */
+.priority-modal .alert {
+    border-radius: 12px;
+    border: none;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1e40af;
+    border-left: 4px solid #3b82f6;
+}
+
+.priority-modal .alert i {
+    font-size: 1.1rem;
+}
+
+/* Button Styles */
+.priority-modal .btn {
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.priority-modal .btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.priority-modal .btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+.priority-modal .btn-success {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+}
+
+.priority-modal .btn-success:hover {
+    background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+/* Animation */
+.priority-modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
+}
+
+.priority-modal.show .modal-dialog {
+    transform: none;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .priority-modal .modal-dialog {
+        margin: 1rem;
+    }
+    
+    .priority-modal .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .priority-options .form-check-label {
+        padding: 1rem;
+    }
+    
+    .priority-content strong {
+        font-size: 1rem;
+    }
+    
+    .priority-content small {
+        font-size: 0.8rem;
+    }
+}
+
+/* Loading State */
+.priority-modal .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Success Animation */
+.priority-modal .btn-success:active {
+    transform: scale(0.95);
+}
+
+/* Focus States */
+.priority-options .form-check-label:focus-within {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Custom Scrollbar for Modal */
+.priority-modal .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.priority-modal .modal-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.priority-modal .modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.priority-modal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}

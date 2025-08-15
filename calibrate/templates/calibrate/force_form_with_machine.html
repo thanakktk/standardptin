@@ -54,7 +54,7 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" id="calibrationForm">
                     {% csrf_token %}
                     
                     <!-- ข้อมูลทั่วไป -->
@@ -86,6 +86,19 @@
                             </label>
                             {{ form.priority }}
                         </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.calibrator.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-cog me-1"></i>{{ form.calibrator.label }}
+                            </label>
+                            {{ form.calibrator }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.certificate_issuer.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-tie me-1"></i>{{ form.certificate_issuer.label }}
+                            </label>
+                            {{ form.certificate_issuer }}
+                        </div>
+                    </div>
                         <div class="col-md-12">
                             <label class="form-label">
                                 <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
@@ -278,7 +291,7 @@
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="btn-group">
-                                <button type="submit" class="btn btn-success">
+                                <button type="button" class="btn btn-success" id="submitBtn">
                                     <i class="fas fa-save me-1"></i>บันทึกการปรับเทียบ
                                 </button>
                                 <a href="{% url 'select-machine-for-calibration' %}" class="btn btn-secondary">
@@ -295,6 +308,84 @@
         </div>
     </div>
 </div>
+
+<!-- Modal สำหรับเลือก Priority -->
+<div class="modal fade priority-modal" id="priorityModal" tabindex="-1" aria-labelledby="priorityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="priorityModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    เลือกระดับความเร่งด่วน
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    กรุณาเลือกระดับความเร่งด่วนสำหรับคำขอบันทึกการปรับเทียบนี้
+                </div>
+                
+                <div class="priority-options">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="modalPriority" id="priorityNormal" value="normal" checked>
+                        <label class="form-check-label" for="priorityNormal">
+                            <div class="d-flex align-items-center">
+                                <div class="priority-icon">
+                                    <i class="fas fa-circle text-success"></i>
+                                </div>
+                                <div class="priority-content">
+                                    <strong>ปกติ</strong>
+                                    <small class="text-muted">การปรับเทียบทั่วไป ไม่มีความเร่งด่วน</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="modalPriority" id="priorityUrgent" value="urgent">
+                        <label class="form-check-label" for="priorityUrgent">
+                            <div class="d-flex align-items-center">
+                                <div class="priority-icon">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                </div>
+                                <div class="priority-content">
+                                    <strong>ด่วน</strong>
+                                    <small class="text-muted">มีความเร่งด่วน ต้องดำเนินการเร็ว</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="modalPriority" id="priorityVeryUrgent" value="very_urgent">
+                        <label class="form-check-label" for="priorityVeryUrgent">
+                            <div class="d-flex align-items-center">
+                                <div class="priority-icon">
+                                    <i class="fas fa-exclamation-circle text-danger"></i>
+                                </div>
+                                <div class="priority-content">
+                                    <strong>ด่วนมาก</strong>
+                                    <small class="text-muted">มีความเร่งด่วนสูงสุด ต้องดำเนินการทันที</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>ยกเลิก
+                </button>
+                <button type="button" class="btn btn-success" id="confirmSubmitBtn">
+                    <i class="fas fa-check me-1"></i>ยืนยันและส่งคำขอ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="/static/ui/default/priority-modal.css">
 
 <script>
 // JavaScript สำหรับคำนวณ Error และ Tolerance
@@ -398,6 +489,38 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.classList.contains('remove-equipment-btn')) {
             e.target.closest('.calibration-equipment-row').remove();
         }
+    });
+
+    // JavaScript สำหรับ Modal Priority
+    const submitBtn = document.getElementById('submitBtn');
+    const priorityModal = new bootstrap.Modal(document.getElementById('priorityModal'));
+    const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
+    const prioritySelect = document.getElementById('{{ form.priority.id_for_label }}');
+    const form = document.getElementById('calibrationForm');
+
+    // เมื่อกดปุ่มบันทึก ให้เปิด modal
+    submitBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        priorityModal.show();
+    });
+
+    // เมื่อยืนยันใน modal
+    confirmSubmitBtn.addEventListener('click', function() {
+        const selectedPriority = document.querySelector('input[name="modalPriority"]:checked').value;
+        
+        // อัปเดตค่า priority ในฟอร์ม
+        prioritySelect.value = selectedPriority;
+        
+        // ปิด modal
+        priorityModal.hide();
+        
+        // ส่งฟอร์ม
+        form.submit();
+    });
+
+    // เมื่อกดปุ่มยกเลิกใน modal
+    document.querySelector('[data-bs-dismiss="modal"]').addEventListener('click', function() {
+        priorityModal.hide();
     });
 });
 </script>

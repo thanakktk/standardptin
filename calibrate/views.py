@@ -31,6 +31,15 @@ class CalibrationForceCreateView(LoginRequiredMixin, PermissionRequiredMixin, Cr
     template_name = 'calibrate/force_form.html'
     success_url = reverse_lazy('calibrate-force-list')
     permission_required = 'calibrate.add_calibrationforce'
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        form.fields['calibrator'].queryset = users
+        form.fields['certificate_issuer'].queryset = users
+        return form
 
 class CalibrationForceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = CalibrationForce
@@ -38,6 +47,15 @@ class CalibrationForceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Up
     template_name = 'calibrate/force_form.html'
     success_url = reverse_lazy('calibrate-force-list')
     permission_required = 'calibrate.change_calibrationforce'
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        form.fields['calibrator'].queryset = users
+        form.fields['certificate_issuer'].queryset = users
+        return form
 
 class CalibrationForceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationForce
@@ -56,6 +74,15 @@ class CalibrationPressureCreateView(LoginRequiredMixin, PermissionRequiredMixin,
     template_name = 'calibrate/pressure_form.html'
     success_url = reverse_lazy('calibrate-pressure-list')
     permission_required = 'calibrate.add_calibrationpressure'
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        form.fields['calibrator'].queryset = users
+        form.fields['certificate_issuer'].queryset = users
+        return form
 
 class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = CalibrationPressure
@@ -63,6 +90,15 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
     template_name = 'calibrate/pressure_form.html'
     success_url = reverse_lazy('calibrate-pressure-list')
     permission_required = 'calibrate.change_calibrationpressure'
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        form.fields['calibrator'].queryset = users
+        form.fields['certificate_issuer'].queryset = users
+        return form
 
 class CalibrationPressureDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationPressure
@@ -81,6 +117,15 @@ class CalibrationTorqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, C
     template_name = 'calibrate/torque_form.html'
     success_url = reverse_lazy('calibrate-torque-list')
     permission_required = 'calibrate.add_calibrationtorque'
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        form.fields['calibrator'].queryset = users
+        form.fields['certificate_issuer'].queryset = users
+        return form
 
 class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = CalibrationTorque
@@ -88,6 +133,15 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
     template_name = 'calibrate/torque_form.html'
     success_url = reverse_lazy('calibrate-torque-list')
     permission_required = 'calibrate.change_calibrationtorque'
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        form.fields['calibrator'].queryset = users
+        form.fields['certificate_issuer'].queryset = users
+        return form
 
 class CalibrationTorqueDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationTorque
@@ -100,10 +154,17 @@ def calibration_dashboard(request):
     """หน้าหลักสำหรับเลือกประเภทการปรับเทียบ"""
     from datetime import date, timedelta
     
+    # รับพารามิเตอร์การค้นหาและกรอง
+    name_search = request.GET.get('name_search', '')
+    serial_search = request.GET.get('serial_search', '')
+    calibration_type = request.GET.get('calibration_type', '')
+    status_filter = request.GET.get('status_filter', '')
+    priority_filter = request.GET.get('priority_filter', '')
+    
     # ดึงข้อมูลการปรับเทียบทั้งหมด
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id').all()
-    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id').all()
-    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id').all()
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     
     # รวมข้อมูลการปรับเทียบทั้งหมด
     all_calibrations = []
@@ -122,7 +183,9 @@ def calibration_dashboard(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,  # ใช้ update date แทน
+            'calibration_date': cal.update,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -139,7 +202,9 @@ def calibration_dashboard(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,  # ใช้ update date แทน
+            'calibration_date': cal.update,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -156,26 +221,56 @@ def calibration_dashboard(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,  # ใช้ update date แทน
+            'calibration_date': cal.update,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
+    # กรองข้อมูลตามพารามิเตอร์
+    filtered_calibrations = []
+    for cal in all_calibrations:
+        include_item = True
+        
+        # กรองตามชื่อเครื่องมือ
+        if name_search and name_search.lower() not in cal['machine_name'].lower():
+            include_item = False
+        
+        # กรองตาม Serial Number
+        if serial_search and serial_search.lower() not in cal['serial_number'].lower():
+            include_item = False
+        
+        # กรองตามประเภทการปรับเทียบ
+        if calibration_type and cal['type'] != calibration_type:
+            include_item = False
+        
+        # กรองตามสถานะ
+        if status_filter and cal['status'] != status_filter:
+            include_item = False
+        
+        # กรองตามความเร่งด่วน
+        if priority_filter and cal['priority'] != priority_filter:
+            include_item = False
+        
+        if include_item:
+            filtered_calibrations.append(cal)
+    
     # เรียงลำดับตามวันที่ปรับเทียบล่าสุด
-    all_calibrations.sort(key=lambda x: x['created_at'] if x['created_at'] else date.min, reverse=True)
+    filtered_calibrations.sort(key=lambda x: x['calibration_date'] if x['calibration_date'] else date.min, reverse=True)
     
     # ข้อมูลวันที่สำหรับการคำนวณสถานะ
     today = date.today()
     today_plus_30 = today + timedelta(days=30)
     
     context = {
-        'force_machines': Machine.objects.filter(machine_type__name__icontains='force').count(),
-        'pressure_machines': Machine.objects.filter(machine_type__name__icontains='pressure').count(),
-        'torque_machines': Machine.objects.filter(machine_type__name__icontains='torque').count(),
-        'total_calibrations': (
-            CalibrationForce.objects.count() +
-            CalibrationPressure.objects.count() +
-            CalibrationTorque.objects.count()
+        'force_calibrations_count': CalibrationForce.objects.count(),
+        'pressure_calibrations_count': CalibrationPressure.objects.count(),
+        'torque_calibrations_count': CalibrationTorque.objects.count(),
+        'pending_calibrations_count': (
+            CalibrationForce.objects.filter(status='pending').count() +
+            CalibrationPressure.objects.filter(status='pending').count() +
+            CalibrationTorque.objects.filter(status='pending').count()
         ),
-        'all_calibrations': all_calibrations,
+        'all_calibrations': filtered_calibrations,
         'today': today,
         'today_plus_30': today_plus_30,
     }
@@ -256,6 +351,7 @@ def create_calibration_for_machine(request, machine_id):
         'form': form,
         'machine': machine,
         'calibration_type': machine_type_name,
+        'machines': Machine.objects.filter(deleted=False).order_by('name'),
     }
     return render(request, template, context)
 
@@ -381,12 +477,30 @@ def create_calibration_with_machine(request, machine_id):
         
         if 'force' in machine_type_name:
             form = CalibrationForceForm(initial=initial_data)
+            # เพิ่มตัวเลือกผู้ใช้สำหรับฟิลด์ calibrator และ certificate_issuer
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+            form.fields['calibrator'].queryset = users
+            form.fields['certificate_issuer'].queryset = users
             template = 'calibrate/force_form_with_machine.html'
         elif 'pressure' in machine_type_name:
             form = CalibrationPressureForm(initial=initial_data)
+            # เพิ่มตัวเลือกผู้ใช้สำหรับฟิลด์ calibrator และ certificate_issuer
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+            form.fields['calibrator'].queryset = users
+            form.fields['certificate_issuer'].queryset = users
             template = 'calibrate/pressure_form_with_machine.html'
         elif 'torque' in machine_type_name:
             form = CalibrationTorqueForm(initial=initial_data)
+            # เพิ่มตัวเลือกผู้ใช้สำหรับฟิลด์ calibrator และ certificate_issuer
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+            form.fields['calibrator'].queryset = users
+            form.fields['certificate_issuer'].queryset = users
             template = 'calibrate/torque_form_with_machine.html'
         else:
             messages.error(request, 'ไม่พบประเภทการปรับเทียบที่เหมาะสม')
@@ -396,6 +510,7 @@ def create_calibration_with_machine(request, machine_id):
         'form': form,
         'machine': machine,
         'calibration_type': machine_type_name,
+        'machines': Machine.objects.filter(deleted=False).order_by('name'),
     }
     return render(request, template, context)
 
@@ -559,6 +674,22 @@ def process_torque_calibration(request, machine):
                     calibration.next_due = datetime(year, month, 28).date()
                 print(f"Next Due Date (default): {calibration.next_due}")
             
+            # ข้อมูลเพิ่มเติม
+            status = request.POST.get('status', 'not_set')
+            priority = request.POST.get('priority', 'normal')
+            std_id = request.POST.get('std_id')
+            calibrator_id = request.POST.get('calibrator')
+            certificate_issuer_id = request.POST.get('certificate_issuer')
+            
+            calibration.status = status
+            calibration.priority = priority
+            if std_id and std_id != '':
+                calibration.std_id_id = int(std_id)
+            if calibrator_id and calibrator_id != '':
+                calibration.calibrator_id = int(calibrator_id)
+            if certificate_issuer_id and certificate_issuer_id != '':
+                calibration.certificate_issuer_id = int(certificate_issuer_id)
+            
             print("=== DEBUG: บันทึกข้อมูล ===")
             calibration.save()
             print(f"บันทึกสำเร็จ! ID: {calibration.cal_torque_id}")
@@ -704,11 +835,17 @@ def process_pressure_calibration(request, machine):
             status = request.POST.get('status', 'not_set')
             priority = request.POST.get('priority', 'normal')
             std_id = request.POST.get('std_id')
+            calibrator_id = request.POST.get('calibrator')
+            certificate_issuer_id = request.POST.get('certificate_issuer')
             
             calibration.status = status
             calibration.priority = priority
             if std_id and std_id != '':
                 calibration.std_id_id = int(std_id)
+            if calibrator_id and calibrator_id != '':
+                calibration.calibrator_id = int(calibrator_id)
+            if certificate_issuer_id and certificate_issuer_id != '':
+                calibration.certificate_issuer_id = int(certificate_issuer_id)
             
             print("=== DEBUG: บันทึกข้อมูล ===")
             calibration.save()
@@ -735,9 +872,9 @@ def calibration_report(request):
     from datetime import date, timedelta
     
     # ดึงข้อมูลการปรับเทียบทั้งหมด
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id').all()
-    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id').all()
-    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id').all()
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     
     # รวมข้อมูลการปรับเทียบทั้งหมด
     all_calibrations = []
@@ -756,7 +893,9 @@ def calibration_report(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,  # ใช้ update date แทน
+            'calibration_date': cal.update,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -773,7 +912,9 @@ def calibration_report(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,  # ใช้ update date แทน
+            'calibration_date': cal.update,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -790,11 +931,13 @@ def calibration_report(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,  # ใช้ update date แทน
+            'calibration_date': cal.update,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เรียงลำดับตามวันที่ปรับเทียบล่าสุด
-    all_calibrations.sort(key=lambda x: x['created_at'] if x['created_at'] else date.min, reverse=True)
+    all_calibrations.sort(key=lambda x: x['calibration_date'] if x['calibration_date'] else date.min, reverse=True)
     
     # ข้อมูลวันที่สำหรับการคำนวณสถานะ
     today = date.today()
@@ -830,9 +973,9 @@ def calibration_report_detail(request):
     status_filter = request.GET.get('status_filter', '')
     
     # ดึงข้อมูลการปรับเทียบทั้งหมด
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id').all()
-    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id').all()
-    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id').all()
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     
     # รวมข้อมูลการปรับเทียบทั้งหมด
     all_calibrations = []
@@ -851,7 +994,9 @@ def calibration_report_detail(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -868,7 +1013,9 @@ def calibration_report_detail(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -885,7 +1032,9 @@ def calibration_report_detail(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์
@@ -938,7 +1087,7 @@ def calibration_report_detail(request):
             filtered_calibrations.append(cal)
     
     # เรียงลำดับตามวันที่ปรับเทียบล่าสุด
-    filtered_calibrations.sort(key=lambda x: x['created_at'] if x['created_at'] else date.min, reverse=True)
+    filtered_calibrations.sort(key=lambda x: x['calibration_date'] if x['calibration_date'] else date.min, reverse=True)
     
     # ข้อมูลวันที่สำหรับการคำนวณสถานะ
     today = date.today()
@@ -982,9 +1131,9 @@ def export_to_word(request):
     status_filter = request.GET.get('status_filter', '')
     
     # ดึงข้อมูลการปรับเทียบทั้งหมด
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id').all()
-    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id').all()
-    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id').all()
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     
     # รวมข้อมูลการปรับเทียบทั้งหมด
     all_calibrations = []
@@ -1003,7 +1152,9 @@ def export_to_word(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -1020,7 +1171,9 @@ def export_to_word(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -1037,7 +1190,9 @@ def export_to_word(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)
@@ -1090,7 +1245,7 @@ def export_to_word(request):
             filtered_calibrations.append(cal)
     
     # เรียงลำดับตามวันที่ปรับเทียบล่าสุด
-    filtered_calibrations.sort(key=lambda x: x['created_at'] if x['created_at'] else date.min, reverse=True)
+    filtered_calibrations.sort(key=lambda x: x['calibration_date'] if x['calibration_date'] else date.min, reverse=True)
     
     # สร้าง Word document
     doc = Document()
@@ -1218,9 +1373,9 @@ def export_to_excel(request):
     status_filter = request.GET.get('status_filter', '')
     
     # ดึงข้อมูลการปรับเทียบทั้งหมด
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id').all()
-    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id').all()
-    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id').all()
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     
     # รวมข้อมูลการปรับเทียบทั้งหมด
     all_calibrations = []
@@ -1239,7 +1394,9 @@ def export_to_excel(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -1256,7 +1413,9 @@ def export_to_excel(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -1273,7 +1432,9 @@ def export_to_excel(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'created_at': cal.update,
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)
@@ -1326,7 +1487,7 @@ def export_to_excel(request):
             filtered_calibrations.append(cal)
     
     # เรียงลำดับตามวันที่ปรับเทียบล่าสุด
-    filtered_calibrations.sort(key=lambda x: x['created_at'] if x['created_at'] else date.min, reverse=True)
+    filtered_calibrations.sort(key=lambda x: x['calibration_date'] if x['calibration_date'] else date.min, reverse=True)
     
     # สร้าง Excel workbook
     wb = Workbook()

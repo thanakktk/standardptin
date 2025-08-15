@@ -72,49 +72,78 @@
                                 <i class="fas fa-calendar me-1"></i>{{ form.update.label }}
                             </label>
                             {{ form.update }}
+                            {% if form.update.errors %}
+                                <div class="text-danger small">{{ form.update.errors.0 }}</div>
+                            {% endif %}
                         </div>
                         <div class="col-md-3">
                             <label for="{{ form.next_due.id_for_label }}" class="form-label">
                                 <i class="fas fa-calendar-check me-1"></i>{{ form.next_due.label }}
                             </label>
                             {{ form.next_due }}
+                            {% if form.next_due.errors %}
+                                <div class="text-danger small">{{ form.next_due.errors.0 }}</div>
+                            {% endif %}
                         </div>
                         <div class="col-md-3">
                             <label for="{{ form.status.id_for_label }}" class="form-label">
                                 <i class="fas fa-flag me-1"></i>{{ form.status.label }}
                             </label>
                             {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="text-danger small">{{ form.status.errors.0 }}</div>
+                            {% endif %}
                         </div>
                         <div class="col-md-3">
                             <label for="{{ form.priority.id_for_label }}" class="form-label">
                                 <i class="fas fa-exclamation-triangle me-1"></i>{{ form.priority.label }}
                             </label>
                             {{ form.priority }}
+                            {% if form.priority.errors %}
+                                <div class="text-danger small">{{ form.priority.errors.0 }}</div>
+                            {% endif %}
                         </div>
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label class="form-label">
-                                <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
+                        <div class="col-md-4">
+                            <label for="{{ form.calibrator.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-cog me-1"></i>{{ form.calibrator.label }}
                             </label>
-                            <div id="calibration-equipment-container">
-                                <div class="row mb-2 calibration-equipment-row">
-                                    <div class="col-md-8">
-                                        <select name="uuc_id_1" class="form-control" required>
-                                            <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
-                                            {% for machine in machines %}
-                                                <option value="{{ machine.id }}" {% if object.uuc_id == machine %}selected{% endif %}>{{ machine.name }} - {{ machine.machine_type.name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <button type="button" class="btn btn-success btn-sm add-equipment-btn">
-                                            <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            {{ form.calibrator }}
+                            {% if form.calibrator.errors %}
+                                <div class="text-danger small">{{ form.calibrator.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.certificate_issuer.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-tie me-1"></i>{{ form.certificate_issuer.label }}
+                            </label>
+                            {{ form.certificate_issuer }}
+                            {% if form.certificate_issuer.errors %}
+                                <div class="text-danger small">{{ form.certificate_issuer.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.uuc_id.id_for_label }}" class="form-label">
+                                <i class="fas fa-tools me-1"></i>{{ form.uuc_id.label }}
+                            </label>
+                            {{ form.uuc_id }}
+                            {% if form.uuc_id.errors %}
+                                <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.std_id.id_for_label }}" class="form-label">
+                                <i class="fas fa-ruler me-1"></i>{{ form.std_id.label }}
+                            </label>
+                            {{ form.std_id }}
+                            {% if form.std_id.errors %}
+                                <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -136,164 +165,62 @@
                             <tbody>
                                 <tr>
                                     <td>
-                                        <input type="number" name="set_1" class="form-control form-control-sm" step="0.1" value="{{ object.set|default:'' }}">
+                                        {{ form.set }}
+                                        {% if form.set.errors %}
+                                            <div class="text-danger small">{{ form.set.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m1_1" class="form-control form-control-sm" step="0.1" value="{{ object.m1|default:'' }}">
+                                        {{ form.m1 }}
+                                        {% if form.m1.errors %}
+                                            <div class="text-danger small">{{ form.m1.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m2_1" class="form-control form-control-sm" step="0.1" value="{{ object.m2|default:'' }}">
+                                        {{ form.m2 }}
+                                        {% if form.m2.errors %}
+                                            <div class="text-danger small">{{ form.m2.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m3_1" class="form-control form-control-sm" step="0.1" value="{{ object.m3|default:'' }}">
+                                        {{ form.m3 }}
+                                        {% if form.m3.errors %}
+                                            <div class="text-danger small">{{ form.m3.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m4_1" class="form-control form-control-sm" step="0.1" value="{{ object.m4|default:'' }}">
+                                        {{ form.m4 }}
+                                        {% if form.m4.errors %}
+                                            <div class="text-danger small">{{ form.m4.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="avg_1" class="form-control form-control-sm" step="0.01" readonly value="{{ object.avg|default:'' }}">
-                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
+                                        {{ form.avg }}
+                                        {% if form.avg.errors %}
+                                            <div class="text-danger small">{{ form.avg.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="error_1" class="form-control form-control-sm" step="0.01" readonly value="{{ object.error|default:'' }}">
+                                        {{ form.error }}
+                                        {% if form.error.errors %}
+                                            <div class="text-danger small">{{ form.error.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="text" name="tolerance_1" class="form-control form-control-sm" readonly value="{{ object.tolerance_start|default:'' }} - {{ object.tolerance_end|default:'' }}">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input type="number" name="set_2" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m1_2" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m2_2" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m3_2" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m4_2" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="avg_2" class="form-control form-control-sm" step="0.01" readonly>
-                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
-                                    </td>
-                                    <td>
-                                        <input type="number" name="error_2" class="form-control form-control-sm" step="0.01" readonly>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="tolerance_2" class="form-control form-control-sm" readonly>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input type="number" name="set_3" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m1_3" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m2_3" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m3_3" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m4_3" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="avg_3" class="form-control form-control-sm" step="0.01" readonly>
-                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
-                                    </td>
-                                    <td>
-                                        <input type="number" name="error_3" class="form-control form-control-sm" step="0.01" readonly>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="tolerance_3" class="form-control form-control-sm" readonly>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input type="number" name="set_4" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m1_4" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m2_4" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m3_4" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m4_4" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="avg_4" class="form-control form-control-sm" step="0.01" readonly>
-                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
-                                    </td>
-                                    <td>
-                                        <input type="number" name="error_4" class="form-control form-control-sm" step="0.01" readonly>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="tolerance_4" class="form-control form-control-sm" readonly>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input type="number" name="set_5" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m1_5" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m2_5" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m3_5" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m4_5" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="avg_5" class="form-control form-control-sm" step="0.01" readonly>
-                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
-                                    </td>
-                                    <td>
-                                        <input type="number" name="error_5" class="form-control form-control-sm" step="0.01" readonly>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="tolerance_5" class="form-control form-control-sm" readonly>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input type="number" name="set_6" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m1_6" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m2_6" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m3_6" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m4_6" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="avg_6" class="form-control form-control-sm" step="0.01" readonly>
-                                        <small class="form-text text-muted d-block">คำนวณอัตโนมัติ</small>
-                                    </td>
-                                    <td>
-                                        <input type="number" name="error_6" class="form-control form-control-sm" step="0.01" readonly>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="tolerance_6" class="form-control form-control-sm" readonly>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                {{ form.tolerance_start }}
+                                            </div>
+                                            <div class="col-6">
+                                                {{ form.tolerance_end }}
+                                            </div>
+                                        </div>
+                                        {% if form.tolerance_start.errors %}
+                                            <div class="text-danger small">{{ form.tolerance_start.errors.0 }}</div>
+                                        {% endif %}
+                                        {% if form.tolerance_end.errors %}
+                                            <div class="text-danger small">{{ form.tolerance_end.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             </tbody>
@@ -324,116 +251,83 @@
 </div>
 
 <script>
-// JavaScript สำหรับคำนวณค่าเฉลี่ย
+// JavaScript สำหรับคำนวณ Error และ Tolerance
 document.addEventListener('DOMContentLoaded', function() {
-    const rows = document.querySelectorAll('tbody tr');
+    const setInput = document.getElementById('{{ form.set.id_for_label }}');
+    const m1Input = document.getElementById('{{ form.m1.id_for_label }}');
+    const m2Input = document.getElementById('{{ form.m2.id_for_label }}');
+    const m3Input = document.getElementById('{{ form.m3.id_for_label }}');
+    const m4Input = document.getElementById('{{ form.m4.id_for_label }}');
+    const avgInput = document.getElementById('{{ form.avg.id_for_label }}');
+    const errorInput = document.getElementById('{{ form.error.id_for_label }}');
+    const toleranceStartInput = document.getElementById('{{ form.tolerance_start.id_for_label }}');
+    const toleranceEndInput = document.getElementById('{{ form.tolerance_end.id_for_label }}');
     
-    rows.forEach((row, rowIndex) => {
-        const setInput = row.querySelector('input[name^="set_"]');
-        const m1Input = row.querySelector('input[name^="m1_"]');
-        const m2Input = row.querySelector('input[name^="m2_"]');
-        const m3Input = row.querySelector('input[name^="m3_"]');
-        const m4Input = row.querySelector('input[name^="m4_"]');
-        const avgInput = row.querySelector('input[name^="avg_"]');
-        const errorInput = row.querySelector('input[name^="error_"]');
-        const toleranceInput = row.querySelector('input[name^="tolerance_"]');
-        
-        // ฟังก์ชันคำนวณค่าเฉลี่ย
-        function calculateAverage() {
-            const values = [];
-            [m1Input, m2Input, m3Input, m4Input].forEach(input => {
-                if (input && input.value) {
-                    const value = parseFloat(input.value);
-                    if (!isNaN(value) && value !== 0) {
-                        values.push(value);
-                    }
-                }
-            });
-            
-            if (values.length > 0) {
-                const average = values.reduce((sum, val) => sum + val, 0) / values.length;
-                if (avgInput) {
-                    avgInput.value = average.toFixed(2);
-                }
-                return average;
-            }
-            return 0;
-        }
-        
-        // ฟังก์ชันคำนวณ Error
-        function calculateError() {
-            if (setInput && avgInput) {
-                const setValue = parseFloat(setInput.value) || 0;
-                const avgValue = parseFloat(avgInput.value) || 0;
-                const error = avgValue - setValue;
-                if (errorInput) {
-                    errorInput.value = error.toFixed(2);
-                }
+    // ฟังก์ชันคำนวณ Average
+    function calculateAverage() {
+        if (m1Input && m2Input && m3Input && m4Input) {
+            const m1 = parseFloat(m1Input.value) || 0;
+            const m2 = parseFloat(m2Input.value) || 0;
+            const m3 = parseFloat(m3Input.value) || 0;
+            const m4 = parseFloat(m4Input.value) || 0;
+            const avg = (m1 + m2 + m3 + m4) / 4;
+            if (avgInput) {
+                avgInput.value = avg.toFixed(2);
             }
         }
-        
-        // ฟังก์ชันคำนวณ Tolerance
-        function calculateTolerance() {
-            if (setInput) {
-                const setValue = parseFloat(setInput.value) || 0;
-                const minValue = (setValue - 5).toFixed(2);
-                const maxValue = (setValue + 5).toFixed(2);
-                if (toleranceInput) {
-                    toleranceInput.value = `${minValue} - ${maxValue}`;
-                }
+    }
+    
+    // ฟังก์ชันคำนวณ Error
+    function calculateError() {
+        if (setInput && avgInput) {
+            const set = parseFloat(setInput.value) || 0;
+            const avg = parseFloat(avgInput.value) || 0;
+            const error = avg - set;
+            if (errorInput) {
+                errorInput.value = error.toFixed(2);
             }
         }
-        
-        // เพิ่ม event listener สำหรับทุก input
-        [m1Input, m2Input, m3Input, m4Input].forEach(input => {
-            if (input) {
-                input.addEventListener('input', () => {
-                    calculateAverage();
-                    calculateError();
-                });
-            }
-        });
-        
-        // เพิ่ม event listener สำหรับ set input
+    }
+    
+    // ฟังก์ชันคำนวณ Tolerance
+    function calculateTolerance() {
         if (setInput) {
-            setInput.addEventListener('input', () => {
+            const set = parseFloat(setInput.value) || 0;
+            
+            // คำนวณ Tolerance = ±5 จากค่า Set
+            const minValue = (set - 5).toFixed(2);
+            const maxValue = (set + 5).toFixed(2);
+            if (toleranceStartInput) {
+                toleranceStartInput.value = minValue;
+            }
+            if (toleranceEndInput) {
+                toleranceEndInput.value = maxValue;
+            }
+        }
+    }
+    
+    // เพิ่ม event listener สำหรับทุก input
+    [m1Input, m2Input, m3Input, m4Input].forEach(input => {
+        if (input) {
+            input.addEventListener('input', () => {
+                calculateAverage();
                 calculateError();
-                calculateTolerance();
             });
         }
     });
-
-    // JavaScript สำหรับเพิ่มเครื่องมือที่ใช้สอบเทียบ
-    let equipmentCounter = 1;
     
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('add-equipment-btn')) {
-            equipmentCounter++;
-            const container = document.getElementById('calibration-equipment-container');
-            const newRow = document.createElement('div');
-            newRow.className = 'row mb-2 calibration-equipment-row';
-            newRow.innerHTML = `
-                <div class="col-md-8">
-                    <select name="uuc_id_${equipmentCounter}" class="form-control">
-                        <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
-                        {% for machine in machines %}
-                            <option value="{{ machine.id }}">{{ machine.name }} - {{ machine.machine_type.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
-                        <i class="fas fa-minus"></i> ลบ
-                    </button>
-                </div>
-            `;
-            container.appendChild(newRow);
-        }
-        
-        if (e.target.classList.contains('remove-equipment-btn')) {
-            e.target.closest('.calibration-equipment-row').remove();
-        }
-    });
+    // เพิ่ม event listener สำหรับ set input
+    if (setInput) {
+        setInput.addEventListener('input', () => {
+            calculateError();
+            calculateTolerance();
+        });
+    }
+    
+    // เพิ่ม event listener สำหรับ avg input
+    if (avgInput) {
+        avgInput.addEventListener('input', calculateError);
+    }
 });
 </script>
 {% endblock %} 

@@ -176,6 +176,9 @@ def create_calibration_request(request, pk):
     """สร้างคำร้องขอบันทึกปรับเทียบสำหรับเครื่องมือ"""
     machine = get_object_or_404(Machine, id=pk)
     
+    # รับ priority จาก URL parameter
+    priority = request.GET.get('priority', 'normal')
+    
     # ตรวจสอบประเภทเครื่องมือ
     machine_type_name = machine.machine_type.name.lower()
     
@@ -196,7 +199,7 @@ def create_calibration_request(request, pk):
             calibration = CalibrationForce.objects.create(
                 uuc_id=machine,
                 status='pending',
-                priority='normal'
+                priority=priority
             )
             messages.success(request, f'ส่งคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
             
@@ -215,7 +218,7 @@ def create_calibration_request(request, pk):
             calibration = CalibrationPressure.objects.create(
                 uuc_id=machine,
                 status='pending',
-                priority='normal'
+                priority=priority
             )
             messages.success(request, f'ส่งคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
             
@@ -234,7 +237,7 @@ def create_calibration_request(request, pk):
             calibration = CalibrationTorque.objects.create(
                 uuc_id=machine,
                 status='not_set',
-                priority='normal'
+                priority=priority
             )
             messages.success(request, f'ส่งคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
             
