@@ -27,7 +27,6 @@ class MachineListView(LoginRequiredMixin, ListView):
         date_to = self.request.GET.get('date_to')
         serial_search = self.request.GET.get('serial_search')
         name_search = self.request.GET.get('name_search')
-        status = self.request.GET.get('status')
         
         # กรองตามหน่วยงาน
         if organize_id:
@@ -51,15 +50,19 @@ class MachineListView(LoginRequiredMixin, ListView):
         if name_search:
             queryset = queryset.filter(name__icontains=name_search)
         
-        # กรองตามสถานะ
-        if status:
-            queryset = queryset.filter(status=status)
+
         
         return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['filter_form'] = MachineFilterForm(self.request.GET)
+        
+        # เพิ่มข้อมูลหน่วยงานสำหรับ dropdown
+        from organize.models import Organize
+        context['organizes'] = Organize.objects.all()
+        context['selected_organize_id'] = self.request.GET.get('organize_id', '')
+        
         return context
 
 class MachineCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):

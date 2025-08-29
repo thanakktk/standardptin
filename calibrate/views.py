@@ -24,6 +24,18 @@ class CalibrationForceListView(LoginRequiredMixin, ListView):
     model = CalibrationForce
     template_name = 'calibrate/force_list.html'
     context_object_name = 'calibrations'
+    
+    def get_queryset(self):
+        # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ
+        return CalibrationForce.objects.annotate(
+            priority_order=models.Case(
+                models.When(priority='very_urgent', then=models.Value(1)),
+                models.When(priority='urgent', then=models.Value(2)),
+                models.When(priority='normal', then=models.Value(3)),
+                default=models.Value(4),
+                output_field=models.IntegerField(),
+            )
+        ).order_by('priority_order', '-update')
 
 class CalibrationForceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = CalibrationForce
@@ -67,6 +79,18 @@ class CalibrationPressureListView(LoginRequiredMixin, ListView):
     model = CalibrationPressure
     template_name = 'calibrate/pressure_list.html'
     context_object_name = 'calibrations'
+    
+    def get_queryset(self):
+        # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ
+        return CalibrationPressure.objects.annotate(
+            priority_order=models.Case(
+                models.When(priority='very_urgent', then=models.Value(1)),
+                models.When(priority='urgent', then=models.Value(2)),
+                models.When(priority='normal', then=models.Value(3)),
+                default=models.Value(4),
+                output_field=models.IntegerField(),
+            )
+        ).order_by('priority_order', '-update')
 
 class CalibrationPressureCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = CalibrationPressure
@@ -110,6 +134,18 @@ class CalibrationTorqueListView(LoginRequiredMixin, ListView):
     model = CalibrationTorque
     template_name = 'calibrate/torque_list.html'
     context_object_name = 'calibrations'
+    
+    def get_queryset(self):
+        # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ
+        return CalibrationTorque.objects.annotate(
+            priority_order=models.Case(
+                models.When(priority='very_urgent', then=models.Value(1)),
+                models.When(priority='urgent', then=models.Value(2)),
+                models.When(priority='normal', then=models.Value(3)),
+                default=models.Value(4),
+                output_field=models.IntegerField(),
+            )
+        ).order_by('priority_order', '-update')
 
 class CalibrationTorqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = CalibrationTorque
@@ -161,10 +197,36 @@ def calibration_dashboard(request):
     status_filter = request.GET.get('status_filter', '')
     priority_filter = request.GET.get('priority_filter', '')
     
-    # ดึงข้อมูลการปรับเทียบทั้งหมด
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
-    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
-    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    # ดึงข้อมูลการปรับเทียบทั้งหมด เรียงตามระดับความเร่งด่วน
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').annotate(
+        priority_order=models.Case(
+            models.When(priority='very_urgent', then=models.Value(1)),
+            models.When(priority='urgent', then=models.Value(2)),
+            models.When(priority='normal', then=models.Value(3)),
+            default=models.Value(4),
+            output_field=models.IntegerField(),
+        )
+    ).order_by('priority_order', '-update')
+    
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').annotate(
+        priority_order=models.Case(
+            models.When(priority='very_urgent', then=models.Value(1)),
+            models.When(priority='urgent', then=models.Value(2)),
+            models.When(priority='normal', then=models.Value(3)),
+            default=models.Value(4),
+            output_field=models.IntegerField(),
+        )
+    ).order_by('priority_order', '-update')
+    
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').annotate(
+        priority_order=models.Case(
+            models.When(priority='very_urgent', then=models.Value(1)),
+            models.When(priority='urgent', then=models.Value(2)),
+            models.When(priority='normal', then=models.Value(3)),
+            default=models.Value(4),
+            output_field=models.IntegerField(),
+        )
+    ).order_by('priority_order', '-update')
     
     # รวมข้อมูลการปรับเทียบทั้งหมด
     all_calibrations = []
@@ -254,8 +316,12 @@ def calibration_dashboard(request):
         if include_item:
             filtered_calibrations.append(cal)
     
-    # เรียงลำดับตามวันที่ปรับเทียบล่าสุด
-    filtered_calibrations.sort(key=lambda x: x['calibration_date'] if x['calibration_date'] else date.min, reverse=True)
+    # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ แล้วตามด้วยวันที่ปรับเทียบล่าสุด
+    priority_order = {'very_urgent': 1, 'urgent': 2, 'normal': 3}
+    filtered_calibrations.sort(key=lambda x: (
+        priority_order.get(x['priority'], 4),  # เรียงตามระดับความเร่งด่วน
+        x['calibration_date'] if x['calibration_date'] else date.min  # แล้วตามด้วยวันที่
+    ))
     
     # ข้อมูลวันที่สำหรับการคำนวณสถานะ
     today = date.today()
