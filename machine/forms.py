@@ -88,7 +88,7 @@ class CalibrationEquipmentForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'model': forms.TextInput(attrs={'class': 'form-control'}),
             'serial_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'certificate': forms.TextInput(attrs={'class': 'form-control'}),
+            'certificate': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'กรอกเลขที่ใบรับรอง'}),
             'machine_type': forms.Select(attrs={'class': 'form-control'}),
             'created_at': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
         }

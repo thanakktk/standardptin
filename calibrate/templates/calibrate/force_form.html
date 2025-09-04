@@ -94,15 +94,6 @@
                                 <div class="text-danger small">{{ form.status.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        <div class="col-md-3">
-                            <label for="{{ form.priority.id_for_label }}" class="form-label">
-                                <i class="fas fa-exclamation-triangle me-1"></i>{{ form.priority.label }}
-                            </label>
-                            {{ form.priority }}
-                            {% if form.priority.errors %}
-                                <div class="text-danger small">{{ form.priority.errors.0 }}</div>
-                            {% endif %}
-                        </div>
                     </div>
 
                     <div class="row mb-3">
@@ -136,7 +127,7 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-10">
                             <label for="{{ form.std_id.id_for_label }}" class="form-label">
                                 <i class="fas fa-ruler me-1"></i>{{ form.std_id.label }}
                             </label>
@@ -145,82 +136,107 @@
                                 <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
                             {% endif %}
                         </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <a href="{% url 'calibration-equipment-add' %}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                    <i class="fas fa-plus me-1"></i>เพิ่มเครื่องมือ
+                                </a>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- ตารางการปรับเทียบ -->
                     <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
+                        <table class="table table-bordered">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>STD.Apply Com</th>
-                                    <th>STD.Apply Ten</th>
+                                    <th rowspan="2" class="text-center align-middle">STD.Apply Com</th>
+                                    <th rowspan="2" class="text-center align-middle">STD.Apply Ten</th>
                                     <th colspan="2" class="text-center">UUC.Actual</th>
-                                    <th>Full Scale</th>
-                                    <th>Error</th>
-                                    <th>Tolerance</th>
+                                    <th rowspan="2" class="text-center align-middle">Full Scale</th>
+                                    <th rowspan="2" class="text-center align-middle">Error</th>
+                                    <th colspan="2" class="text-center">Tolerance</th>
                                 </tr>
                                 <tr>
-                                    <th></th>
-                                    <th></th>
-                                    <th>Compress</th>
-                                    <th>Tension</th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
+                                    <th class="text-center">Compress</th>
+                                    <th class="text-center">Tension</th>
+                                    <th class="text-center">Min</th>
+                                    <th class="text-center">Max</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>
-                                        {{ form.apply_com }}
+                                    <td class="text-center">
+                                        <div class="input-group">
+                                            {{ form.apply_com }}
+                                            <span class="input-group-text">N</span>
+                                        </div>
                                         {% if form.apply_com.errors %}
-                                            <div class="text-danger small">{{ form.apply_com.errors.0 }}</div>
+                                            <div class="text-danger small mt-1">{{ form.apply_com.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        {{ form.apply_ten }}
+                                    <td class="text-center">
+                                        <div class="input-group">
+                                            {{ form.apply_ten }}
+                                            <span class="input-group-text">N</span>
+                                        </div>
                                         {% if form.apply_ten.errors %}
-                                            <div class="text-danger small">{{ form.apply_ten.errors.0 }}</div>
+                                            <div class="text-danger small mt-1">{{ form.apply_ten.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        {{ form.compress }}
+                                    <td class="text-center">
+                                        <div class="input-group">
+                                            {{ form.compress }}
+                                            <span class="input-group-text">N</span>
+                                        </div>
                                         {% if form.compress.errors %}
-                                            <div class="text-danger small">{{ form.compress.errors.0 }}</div>
+                                            <div class="text-danger small mt-1">{{ form.compress.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        {{ form.tension }}
+                                    <td class="text-center">
+                                        <div class="input-group">
+                                            {{ form.tension }}
+                                            <span class="input-group-text">N</span>
+                                        </div>
                                         {% if form.tension.errors %}
-                                            <div class="text-danger small">{{ form.tension.errors.0 }}</div>
+                                            <div class="text-danger small mt-1">{{ form.tension.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        {{ form.fullscale }}
+                                    <td class="text-center">
+                                        <div class="input-group">
+                                            {{ form.fullscale }}
+                                            <span class="input-group-text">N</span>
+                                        </div>
                                         {% if form.fullscale.errors %}
-                                            <div class="text-danger small">{{ form.fullscale.errors.0 }}</div>
+                                            <div class="text-danger small mt-1">{{ form.fullscale.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        {{ form.error }}
+                                    <td class="text-center">
+                                        <div class="input-group">
+                                            {{ form.error }}
+                                            <span class="input-group-text">N</span>
+                                        </div>
                                         {% if form.error.errors %}
-                                            <div class="text-danger small">{{ form.error.errors.0 }}</div>
+                                            <div class="text-danger small mt-1">{{ form.error.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        <div class="row">
-                                            <div class="col-6">
-                                                {{ form.tolerance_start }}
-                                            </div>
-                                            <div class="col-6">
-                                                {{ form.tolerance_end }}
-                                            </div>
+                                    <td class="text-center">
+                                        <div class="input-group">
+                                            {{ form.tolerance_start }}
+                                            <span class="input-group-text">N</span>
                                         </div>
                                         {% if form.tolerance_start.errors %}
-                                            <div class="text-danger small">{{ form.tolerance_start.errors.0 }}</div>
+                                            <div class="text-danger small mt-1">{{ form.tolerance_start.errors.0 }}</div>
                                         {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="input-group">
+                                            {{ form.tolerance_end }}
+                                            <span class="input-group-text">N</span>
+                                        </div>
                                         {% if form.tolerance_end.errors %}
-                                            <div class="text-danger small">{{ form.tolerance_end.errors.0 }}</div>
+                                            <div class="text-danger small mt-1">{{ form.tolerance_end.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                 </tr>

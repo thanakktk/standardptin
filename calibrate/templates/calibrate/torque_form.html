@@ -94,15 +94,6 @@
                                 <div class="text-danger small">{{ form.status.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        <div class="col-md-3">
-                            <label for="{{ form.priority.id_for_label }}" class="form-label">
-                                <i class="fas fa-exclamation-triangle me-1"></i>{{ form.priority.label }}
-                            </label>
-                            {{ form.priority }}
-                            {% if form.priority.errors %}
-                                <div class="text-danger small">{{ form.priority.errors.0 }}</div>
-                            {% endif %}
-                        </div>
                     </div>
 
                     <div class="row mb-3">
@@ -136,7 +127,7 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-10">
                             <label for="{{ form.std_id.id_for_label }}" class="form-label">
                                 <i class="fas fa-ruler me-1"></i>{{ form.std_id.label }}
                             </label>
@@ -144,6 +135,14 @@
                             {% if form.std_id.errors %}
                                 <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
                             {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <a href="{% url 'calibration-equipment-add' %}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                    <i class="fas fa-plus me-1"></i>เพิ่มเครื่องมือ
+                                </a>
+                            </div>
                         </div>
                     </div>
 

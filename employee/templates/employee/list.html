@@ -1,35 +1,143 @@
 {% extends 'base.html' %}
+
+{% block title %}รายการพนักงาน - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
 {% block content %}
-<h1>รายการพนักงาน</h1>
-<a href="{% url 'employee-add' %}" class="btn btn-success">เพิ่มพนักงาน</a>
-<table class="table table-bordered mt-3">
-    <thead>
-        <tr>
-            <th>ชื่อ</th>
-            <th>ตำแหน่ง</th>
-            <th>โทรศัพท์</th>
-            <th>อีเมล</th>
-            <th>หน่วยงาน</th>
-            <th>จัดการ</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for e in employees %}
-        <tr>
-            <td>{{ e.name }}</td>
-            <td>{{ e.position }}</td>
-            <td>{{ e.phone }}</td>
-            <td>{{ e.email }}</td>
-            <td>{{ e.organize }}</td>
-            <td>
-                <a href="{% url 'employee-edit' e.pk %}" class="btn btn-primary btn-sm">แก้ไข</a>
-                <a href="{% url 'employee-delete' e.pk %}" class="btn btn-danger btn-sm">ลบ</a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="6">ไม่มีข้อมูล</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
-<a href="/" class="btn btn-secondary">กลับหน้าแรก</a>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-users me-3"></i>
+                    รายการพนักงาน
+                </h1>
+                <p class="page-subtitle">
+                    จัดการข้อมูลพนักงานและผู้ใช้งานระบบ
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'employee-add' %}" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    เพิ่มพนักงาน
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Data Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-table me-2"></i>
+                รายการพนักงาน ({{ employees.count }} รายการ)
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">
+                                <i class="fas fa-hashtag me-1"></i>ID
+                            </th>
+                            <th style="width: 20%">
+                                <i class="fas fa-user me-1"></i>ชื่อ-นามสกุล
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-at me-1"></i>Username
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-envelope me-1"></i>อีเมล
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-phone me-1"></i>โทรศัพท์
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-building me-1"></i>หน่วยงาน
+                            </th>
+                            <th style="width: 10%">
+                                <i class="fas fa-cogs me-1"></i>จัดการ
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in employees %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary">{{ forloop.counter }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ e.get_display_name }}</strong>
+                                {% if e.prefix %}
+                                    <br><small class="text-muted">{{ e.prefix }}</small>
+                                {% endif %}
+                                {% if e.level %}
+                                    <br><small class="badge bg-info">{{ e.level }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <code>{{ e.username }}</code>
+                                {% if e.is_staff %}
+                                    <br><span class="badge bg-warning">Staff</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ e.email|default:"-" }}</td>
+                            <td>
+                                {% if e.phone %}
+                                    {{ e.phone }}
+                                    {% if e.phone_extension %}
+                                        <br><small class="text-muted">ต่อ {{ e.phone_extension }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if e.organize %}
+                                    {{ e.organize.name }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'employee-edit' e.pk %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'employee-delete' e.pk %}" class="btn btn-outline-danger btn-sm" title="ลบ">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-users fa-3x mb-3"></i>
+                                    <h5>ไม่พบข้อมูลพนักงาน</h5>
+                                    <p>กรุณาเพิ่มพนักงานใหม่หรือตรวจสอบข้อมูล</p>
+                                    <a href="{% url 'employee-add' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>เพิ่มพนักงาน
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Home -->
+    <div class="text-center mt-4">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="fas fa-home me-2"></i>กลับหน้าแรก
+        </a>
+    </div>
+</div>
 {% endblock %} 

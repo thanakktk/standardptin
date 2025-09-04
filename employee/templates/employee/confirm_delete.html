@@ -1,9 +1,80 @@
 {% extends 'base.html' %}
+
+{% block title %}ยืนยันการลบพนักงาน - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
 {% block content %}
-<h1>ยืนยันการลบพนักงาน</h1>
-<p>คุณต้องการลบ "{{ object }}" ใช่หรือไม่?</p>
-<form method="post">{% csrf_token %}
-    <button type="submit" class="btn btn-danger">ลบ</button>
-    <a href="{% url 'employee-list' %}" class="btn btn-secondary">ยกเลิก</a>
-</form>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ยืนยันการลบพนักงาน
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-warning me-2"></i>
+                        <strong>คำเตือน:</strong> การลบข้อมูลนี้ไม่สามารถกู้คืนได้
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>ชื่อผู้ใช้:</strong>
+                        </div>
+                        <div class="col-md-9">
+                            {{ object.username }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>ชื่อ-นามสกุล:</strong>
+                        </div>
+                        <div class="col-md-9">
+                            {{ object.get_display_name }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>อีเมล:</strong>
+                        </div>
+                        <div class="col-md-9">
+                            {{ object.email|default:"-" }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>หน่วยงาน:</strong>
+                        </div>
+                        <div class="col-md-9">
+                            {{ object.organize.name|default:"-" }}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <p class="text-center">
+                        <strong>คุณต้องการลบข้อมูลพนักงาน "{{ object.get_display_name }}" ใช่หรือไม่?</strong>
+                    </p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'employee-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>ยกเลิก
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i>ยืนยันการลบ
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %} 

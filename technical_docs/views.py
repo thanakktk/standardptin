@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
+from django.db import models
 import os
 import urllib.parse
 from .models import TechnicalDocument
@@ -12,8 +13,21 @@ from .forms import TechnicalDocumentForm
 def document_list(request):
     """แสดงรายการเอกสารเทคนิคทั้งหมด"""
     documents = TechnicalDocument.objects.all()
+    
+    # รับพารามิเตอร์การค้นหา
+    search_query = request.GET.get('search', '')
+    
+    # กรองข้อมูลตามคำค้นหา
+    if search_query:
+        documents = documents.filter(
+            models.Q(title__icontains=search_query) |
+            models.Q(description__icontains=search_query) |
+            models.Q(original_filename__icontains=search_query)
+        )
+    
     return render(request, 'technical_docs/document_list.html', {
-        'documents': documents
+        'documents': documents,
+        'search_query': search_query
     })
 
 @login_required
