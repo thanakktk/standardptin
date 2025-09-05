@@ -127,21 +127,24 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-10">
-                            <label for="{{ form.std_id.id_for_label }}" class="form-label">
-                                <i class="fas fa-ruler me-1"></i>{{ form.std_id.label }}
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
                             </label>
-                            {{ form.std_id }}
-                            {% if form.std_id.errors %}
-                                <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">&nbsp;</label>
-                            <div>
-                                <a href="{% url 'calibration-equipment-add' %}" class="btn btn-outline-primary btn-sm" target="_blank">
-                                    <i class="fas fa-plus me-1"></i>เพิ่มเครื่องมือ
-                                </a>
+                            <div id="calibration-equipment-container">
+                                <div class="row mb-2 calibration-equipment-row">
+                                    <div class="col-md-10">
+                                        {{ form.std_id }}
+                                        {% if form.std_id.errors %}
+                                            <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-success btn-sm add-equipment-btn">
+                                            <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -151,14 +154,21 @@
                         <table class="table table-sm table-bordered">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Set</th>
+                                    <th>UCC.Set</th>
+                                    <th colspan="4" class="text-center">Actual</th>
+                                    <th>AVG</th>
+                                    <th>Error</th>
+                                    <th>Tolerance</th>
+                                </tr>
+                                <tr>
+                                    <th></th>
                                     <th>M1</th>
                                     <th>M2</th>
                                     <th>M3</th>
                                     <th>M4</th>
-                                    <th>AVG</th>
-                                    <th>Error</th>
-                                    <th>Tolerance</th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -222,6 +232,136 @@
                                         {% endif %}
                                     </td>
                                 </tr>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="set_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m1_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m2_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m3_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m4_2" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="avg_2" class="form-control form-control-sm" step="0.01" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="error_2" class="form-control form-control-sm" step="0.01">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="tolerance_2" class="form-control form-control-sm">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="set_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m1_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m2_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m3_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m4_3" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="avg_3" class="form-control form-control-sm" step="0.01" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="error_3" class="form-control form-control-sm" step="0.01">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="tolerance_3" class="form-control form-control-sm">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="set_4" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m1_4" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m2_4" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m3_4" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m4_4" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="avg_4" class="form-control form-control-sm" step="0.01" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="error_4" class="form-control form-control-sm" step="0.01">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="tolerance_4" class="form-control form-control-sm">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="set_5" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m1_5" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m2_5" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m3_5" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m4_5" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="avg_5" class="form-control form-control-sm" step="0.01" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="error_5" class="form-control form-control-sm" step="0.01">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="tolerance_5" class="form-control form-control-sm">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="number" name="set_6" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m1_6" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m2_6" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m3_6" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="m4_6" class="form-control form-control-sm" step="0.1">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="avg_6" class="form-control form-control-sm" step="0.01" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="error_6" class="form-control form-control-sm" step="0.01">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="tolerance_6" class="form-control form-control-sm">
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -252,81 +392,113 @@
 <script>
 // JavaScript สำหรับคำนวณ Error และ Tolerance
 document.addEventListener('DOMContentLoaded', function() {
-    const setInput = document.getElementById('{{ form.set.id_for_label }}');
-    const m1Input = document.getElementById('{{ form.m1.id_for_label }}');
-    const m2Input = document.getElementById('{{ form.m2.id_for_label }}');
-    const m3Input = document.getElementById('{{ form.m3.id_for_label }}');
-    const m4Input = document.getElementById('{{ form.m4.id_for_label }}');
-    const avgInput = document.getElementById('{{ form.avg.id_for_label }}');
-    const errorInput = document.getElementById('{{ form.error.id_for_label }}');
-    const toleranceStartInput = document.getElementById('{{ form.tolerance_start.id_for_label }}');
-    const toleranceEndInput = document.getElementById('{{ form.tolerance_end.id_for_label }}');
+    const rows = document.querySelectorAll('tbody tr');
     
-    // ฟังก์ชันคำนวณ Average
-    function calculateAverage() {
-        if (m1Input && m2Input && m3Input && m4Input) {
-            const m1 = parseFloat(m1Input.value) || 0;
-            const m2 = parseFloat(m2Input.value) || 0;
-            const m3 = parseFloat(m3Input.value) || 0;
-            const m4 = parseFloat(m4Input.value) || 0;
-            const avg = (m1 + m2 + m3 + m4) / 4;
-            if (avgInput) {
-                avgInput.value = avg.toFixed(2);
+    rows.forEach((row, rowIndex) => {
+        const setInput = row.querySelector('input[name^="set"]');
+        const m1Input = row.querySelector('input[name^="m1"]');
+        const m2Input = row.querySelector('input[name^="m2"]');
+        const m3Input = row.querySelector('input[name^="m3"]');
+        const m4Input = row.querySelector('input[name^="m4"]');
+        const avgInput = row.querySelector('input[name^="avg"]');
+        const errorInput = row.querySelector('input[name^="error"]');
+        const toleranceInput = row.querySelector('input[name^="tolerance"]');
+        
+        // ฟังก์ชันคำนวณ Average
+        function calculateAverage() {
+            if (m1Input && m2Input && m3Input && m4Input) {
+                const m1 = parseFloat(m1Input.value) || 0;
+                const m2 = parseFloat(m2Input.value) || 0;
+                const m3 = parseFloat(m3Input.value) || 0;
+                const m4 = parseFloat(m4Input.value) || 0;
+                const avg = (m1 + m2 + m3 + m4) / 4;
+                if (avgInput) {
+                    avgInput.value = avg.toFixed(2);
+                }
             }
         }
-    }
-    
-    // ฟังก์ชันคำนวณ Error
-    function calculateError() {
-        if (setInput && avgInput) {
-            const set = parseFloat(setInput.value) || 0;
-            const avg = parseFloat(avgInput.value) || 0;
-            const error = avg - set;
-            if (errorInput) {
-                errorInput.value = error.toFixed(2);
+        
+        // ฟังก์ชันคำนวณ Error
+        function calculateError() {
+            if (setInput && avgInput) {
+                const set = parseFloat(setInput.value) || 0;
+                const avg = parseFloat(avgInput.value) || 0;
+                const error = avg - set;
+                if (errorInput) {
+                    errorInput.value = error.toFixed(2);
+                }
             }
         }
-    }
-    
-    // ฟังก์ชันคำนวณ Tolerance
-    function calculateTolerance() {
+        
+        // ฟังก์ชันคำนวณ Tolerance
+        function calculateTolerance() {
+            if (setInput) {
+                const set = parseFloat(setInput.value) || 0;
+                
+                // คำนวณ Tolerance = ±5 จากค่า Set
+                const minValue = (set - 5).toFixed(2);
+                const maxValue = (set + 5).toFixed(2);
+                if (toleranceInput) {
+                    toleranceInput.value = `${minValue} - ${maxValue}`;
+                }
+            }
+        }
+        
+        // เพิ่ม event listener สำหรับทุก input
+        [m1Input, m2Input, m3Input, m4Input].forEach(input => {
+            if (input) {
+                input.addEventListener('input', () => {
+                    calculateAverage();
+                    calculateError();
+                });
+            }
+        });
+        
+        // เพิ่ม event listener สำหรับ set input
         if (setInput) {
-            const set = parseFloat(setInput.value) || 0;
-            
-            // คำนวณ Tolerance = ±5 จากค่า Set
-            const minValue = (set - 5).toFixed(2);
-            const maxValue = (set + 5).toFixed(2);
-            if (toleranceStartInput) {
-                toleranceStartInput.value = minValue;
-            }
-            if (toleranceEndInput) {
-                toleranceEndInput.value = maxValue;
-            }
-        }
-    }
-    
-    // เพิ่ม event listener สำหรับทุก input
-    [m1Input, m2Input, m3Input, m4Input].forEach(input => {
-        if (input) {
-            input.addEventListener('input', () => {
-                calculateAverage();
+            setInput.addEventListener('input', () => {
                 calculateError();
+                calculateTolerance();
             });
         }
+        
+        // เพิ่ม event listener สำหรับ avg input
+        if (avgInput) {
+            avgInput.addEventListener('input', calculateError);
+        }
     });
+
+    // JavaScript สำหรับเพิ่มเครื่องมือที่ใช้สอบเทียบ
+    let equipmentCounter = 1;
     
-    // เพิ่ม event listener สำหรับ set input
-    if (setInput) {
-        setInput.addEventListener('input', () => {
-            calculateError();
-            calculateTolerance();
-        });
-    }
-    
-    // เพิ่ม event listener สำหรับ avg input
-    if (avgInput) {
-        avgInput.addEventListener('input', calculateError);
-    }
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-equipment-btn')) {
+            equipmentCounter++;
+            const container = document.getElementById('calibration-equipment-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-2 calibration-equipment-row';
+            newRow.innerHTML = `
+                <div class="col-md-10">
+                    <select name="std_id_${equipmentCounter}" class="form-control">
+                        <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                        {% for equipment in form.std_id.field.queryset %}
+                            <option value="{{ equipment.id }}">{{ equipment.name }} - {{ equipment.machine_type.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                        <i class="fas fa-minus"></i> ลบ
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        if (e.target.classList.contains('remove-equipment-btn')) {
+            e.target.closest('.calibration-equipment-row').remove();
+        }
+    });
 });
 </script>
 {% endblock %} 

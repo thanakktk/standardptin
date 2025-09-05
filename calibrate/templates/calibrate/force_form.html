@@ -127,48 +127,54 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-10">
-                            <label for="{{ form.std_id.id_for_label }}" class="form-label">
-                                <i class="fas fa-ruler me-1"></i>{{ form.std_id.label }}
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
                             </label>
-                            {{ form.std_id }}
-                            {% if form.std_id.errors %}
-                                <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">&nbsp;</label>
-                            <div>
-                                <a href="{% url 'calibration-equipment-add' %}" class="btn btn-outline-primary btn-sm" target="_blank">
-                                    <i class="fas fa-plus me-1"></i>เพิ่มเครื่องมือ
-                                </a>
+                            <div id="calibration-equipment-container">
+                                <div class="row mb-2 calibration-equipment-row">
+                                    <div class="col-md-10">
+                                        {{ form.std_id }}
+                                        {% if form.std_id.errors %}
+                                            <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-success btn-sm add-equipment-btn">
+                                            <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- ตารางการปรับเทียบ -->
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-sm table-bordered">
                             <thead class="table-dark">
                                 <tr>
-                                    <th rowspan="2" class="text-center align-middle">STD.Apply Com</th>
-                                    <th rowspan="2" class="text-center align-middle">STD.Apply Ten</th>
+                                    <th>STD.Apply Com</th>
+                                    <th>STD.Apply Ten</th>
                                     <th colspan="2" class="text-center">UUC.Actual</th>
-                                    <th rowspan="2" class="text-center align-middle">Full Scale</th>
-                                    <th rowspan="2" class="text-center align-middle">Error</th>
-                                    <th colspan="2" class="text-center">Tolerance</th>
+                                    <th>Full Scale</th>
+                                    <th>Error</th>
+                                    <th>Tolerance</th>
                                 </tr>
                                 <tr>
-                                    <th class="text-center">Compress</th>
-                                    <th class="text-center">Tension</th>
-                                    <th class="text-center">Min</th>
-                                    <th class="text-center">Max</th>
+                                    <th></th>
+                                    <th></th>
+                                    <th>Compress</th>
+                                    <th>Tension</th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="text-center">
-                                        <div class="input-group">
+                                    <td>
+                                        <div class="input-group input-group-sm">
                                             {{ form.apply_com }}
                                             <span class="input-group-text">N</span>
                                         </div>
@@ -176,8 +182,8 @@
                                             <div class="text-danger small mt-1">{{ form.apply_com.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td class="text-center">
-                                        <div class="input-group">
+                                    <td>
+                                        <div class="input-group input-group-sm">
                                             {{ form.apply_ten }}
                                             <span class="input-group-text">N</span>
                                         </div>
@@ -185,8 +191,8 @@
                                             <div class="text-danger small mt-1">{{ form.apply_ten.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td class="text-center">
-                                        <div class="input-group">
+                                    <td>
+                                        <div class="input-group input-group-sm">
                                             {{ form.compress }}
                                             <span class="input-group-text">N</span>
                                         </div>
@@ -194,8 +200,8 @@
                                             <div class="text-danger small mt-1">{{ form.compress.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td class="text-center">
-                                        <div class="input-group">
+                                    <td>
+                                        <div class="input-group input-group-sm">
                                             {{ form.tension }}
                                             <span class="input-group-text">N</span>
                                         </div>
@@ -203,8 +209,8 @@
                                             <div class="text-danger small mt-1">{{ form.tension.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td class="text-center">
-                                        <div class="input-group">
+                                    <td>
+                                        <div class="input-group input-group-sm">
                                             {{ form.fullscale }}
                                             <span class="input-group-text">N</span>
                                         </div>
@@ -212,8 +218,8 @@
                                             <div class="text-danger small mt-1">{{ form.fullscale.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td class="text-center">
-                                        <div class="input-group">
+                                    <td>
+                                        <div class="input-group input-group-sm">
                                             {{ form.error }}
                                             <span class="input-group-text">N</span>
                                         </div>
@@ -221,23 +227,243 @@
                                             <div class="text-danger small mt-1">{{ form.error.errors.0 }}</div>
                                         {% endif %}
                                     </td>
-                                    <td class="text-center">
-                                        <div class="input-group">
+                                    <td>
+                                        <div class="input-group input-group-sm">
                                             {{ form.tolerance_start }}
-                                            <span class="input-group-text">N</span>
+                                            <span class="input-group-text">-</span>
+                                            {{ form.tolerance_end }}
                                         </div>
                                         {% if form.tolerance_start.errors %}
                                             <div class="text-danger small mt-1">{{ form.tolerance_start.errors.0 }}</div>
                                         {% endif %}
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="input-group">
-                                            {{ form.tolerance_end }}
-                                            <span class="input-group-text">N</span>
-                                        </div>
                                         {% if form.tolerance_end.errors %}
                                             <div class="text-danger small mt-1">{{ form.tolerance_end.errors.0 }}</div>
                                         {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="apply_com_2" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="apply_ten_2" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="compress_2" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="tension_2" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="fullscale_2" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="error_2" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="tolerance_start_2" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">-</span>
+                                            <input type="number" name="tolerance_end_2" class="form-control form-control-sm" step="0.01" readonly>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="apply_com_3" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="apply_ten_3" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="compress_3" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="tension_3" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="fullscale_3" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="error_3" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="tolerance_start_3" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">-</span>
+                                            <input type="number" name="tolerance_end_3" class="form-control form-control-sm" step="0.01" readonly>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="apply_com_4" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="apply_ten_4" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="compress_4" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="tension_4" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="fullscale_4" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="error_4" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="tolerance_start_4" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">-</span>
+                                            <input type="number" name="tolerance_end_4" class="form-control form-control-sm" step="0.01" readonly>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="apply_com_5" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="apply_ten_5" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="compress_5" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="tension_5" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="fullscale_5" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="error_5" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="tolerance_start_5" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">-</span>
+                                            <input type="number" name="tolerance_end_5" class="form-control form-control-sm" step="0.01" readonly>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="apply_com_6" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="apply_ten_6" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="compress_6" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="tension_6" class="form-control form-control-sm" step="0.1">
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="fullscale_6" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="error_6" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">N</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="tolerance_start_6" class="form-control form-control-sm" step="0.01" readonly>
+                                            <span class="input-group-text">-</span>
+                                            <input type="number" name="tolerance_end_6" class="form-control form-control-sm" step="0.01" readonly>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -270,78 +496,114 @@
 <script>
 // JavaScript สำหรับคำนวณ Error และ Tolerance
 document.addEventListener('DOMContentLoaded', function() {
-    const applyComInput = document.getElementById('{{ form.apply_com.id_for_label }}');
-    const applyTenInput = document.getElementById('{{ form.apply_ten.id_for_label }}');
-    const compressInput = document.getElementById('{{ form.compress.id_for_label }}');
-    const tensionInput = document.getElementById('{{ form.tension.id_for_label }}');
-    const fullscaleInput = document.getElementById('{{ form.fullscale.id_for_label }}');
-    const errorInput = document.getElementById('{{ form.error.id_for_label }}');
-    const toleranceStartInput = document.getElementById('{{ form.tolerance_start.id_for_label }}');
-    const toleranceEndInput = document.getElementById('{{ form.tolerance_end.id_for_label }}');
+    const rows = document.querySelectorAll('tbody tr');
     
-    // ฟังก์ชันคำนวณ Full Scale
-    function calculateFullScale() {
-        if (compressInput && tensionInput) {
-            const compress = parseFloat(compressInput.value) || 0;
-            const tension = parseFloat(tensionInput.value) || 0;
-            const fullScale = (compress + tension) / 2;
-            if (fullscaleInput) {
-                fullscaleInput.value = fullScale.toFixed(2);
+    rows.forEach((row, rowIndex) => {
+        const applyComInput = row.querySelector('input[name^="apply_com"]');
+        const applyTenInput = row.querySelector('input[name^="apply_ten"]');
+        const compressInput = row.querySelector('input[name^="compress"]');
+        const tensionInput = row.querySelector('input[name^="tension"]');
+        const fullscaleInput = row.querySelector('input[name^="fullscale"]');
+        const errorInput = row.querySelector('input[name^="error"]');
+        const toleranceStartInput = row.querySelector('input[name^="tolerance_start"]');
+        const toleranceEndInput = row.querySelector('input[name^="tolerance_end"]');
+        
+        // ฟังก์ชันคำนวณ Full Scale
+        function calculateFullScale() {
+            if (compressInput && tensionInput) {
+                const compress = parseFloat(compressInput.value) || 0;
+                const tension = parseFloat(tensionInput.value) || 0;
+                const fullScale = (compress + tension) / 2;
+                if (fullscaleInput) {
+                    fullscaleInput.value = fullScale.toFixed(2);
+                }
             }
         }
-    }
-    
-    // ฟังก์ชันคำนวณ Error
-    function calculateError() {
-        if (applyComInput && applyTenInput && compressInput && tensionInput) {
-            const applyCom = parseFloat(applyComInput.value) || 0;
-            const applyTen = parseFloat(applyTenInput.value) || 0;
-            const compress = parseFloat(compressInput.value) || 0;
-            const tension = parseFloat(tensionInput.value) || 0;
-            
-            // คำนวณ Error = Full Scale - Standard
-            const fullScale = (compress + tension) / 2;
-            const standard = (applyCom + applyTen) / 2;
-            const error = fullScale - standard;
-            if (errorInput) {
-                errorInput.value = error.toFixed(2);
+        
+        // ฟังก์ชันคำนวณ Error
+        function calculateError() {
+            if (applyComInput && applyTenInput && compressInput && tensionInput) {
+                const applyCom = parseFloat(applyComInput.value) || 0;
+                const applyTen = parseFloat(applyTenInput.value) || 0;
+                const compress = parseFloat(compressInput.value) || 0;
+                const tension = parseFloat(tensionInput.value) || 0;
+                
+                // คำนวณ Error = Full Scale - Standard
+                const fullScale = (compress + tension) / 2;
+                const standard = (applyCom + applyTen) / 2;
+                const error = fullScale - standard;
+                if (errorInput) {
+                    errorInput.value = error.toFixed(2);
+                }
             }
         }
-    }
-    
-    // ฟังก์ชันคำนวณ Tolerance
-    function calculateTolerance() {
-        if (applyComInput && applyTenInput) {
-            const applyCom = parseFloat(applyComInput.value) || 0;
-            const applyTen = parseFloat(applyTenInput.value) || 0;
-            const standard = (applyCom + applyTen) / 2;
-            
-            // คำนวณ Tolerance = ±5 จากค่า Standard
-            const minValue = (standard - 5).toFixed(2);
-            const maxValue = (standard + 5).toFixed(2);
-            if (toleranceStartInput) {
-                toleranceStartInput.value = minValue;
-            }
-            if (toleranceEndInput) {
-                toleranceEndInput.value = maxValue;
+        
+        // ฟังก์ชันคำนวณ Tolerance
+        function calculateTolerance() {
+            if (applyComInput && applyTenInput) {
+                const applyCom = parseFloat(applyComInput.value) || 0;
+                const applyTen = parseFloat(applyTenInput.value) || 0;
+                const standard = (applyCom + applyTen) / 2;
+                
+                // คำนวณ Tolerance = ±5 จากค่า Standard
+                const minValue = (standard - 5).toFixed(2);
+                const maxValue = (standard + 5).toFixed(2);
+                if (toleranceStartInput) {
+                    toleranceStartInput.value = minValue;
+                }
+                if (toleranceEndInput) {
+                    toleranceEndInput.value = maxValue;
+                }
             }
         }
-    }
-    
-    // เพิ่ม event listener สำหรับทุก input
-    [applyComInput, applyTenInput, compressInput, tensionInput].forEach(input => {
-        if (input) {
-            input.addEventListener('input', () => {
-                calculateFullScale();
-                calculateError();
-            });
-        }
+        
+        // เพิ่ม event listener สำหรับทุก input
+        [applyComInput, applyTenInput, compressInput, tensionInput].forEach(input => {
+            if (input) {
+                input.addEventListener('input', () => {
+                    calculateFullScale();
+                    calculateError();
+                });
+            }
+        });
+        
+        // เพิ่ม event listener สำหรับ input ที่เกี่ยวข้องกับ Tolerance
+        [applyComInput, applyTenInput].forEach(input => {
+            if (input) {
+                input.addEventListener('input', calculateTolerance);
+            }
+        });
     });
+
+    // JavaScript สำหรับเพิ่มเครื่องมือที่ใช้สอบเทียบ
+    let equipmentCounter = 1;
     
-    // เพิ่ม event listener สำหรับ input ที่เกี่ยวข้องกับ Tolerance
-    [applyComInput, applyTenInput].forEach(input => {
-        if (input) {
-            input.addEventListener('input', calculateTolerance);
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-equipment-btn')) {
+            equipmentCounter++;
+            const container = document.getElementById('calibration-equipment-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-2 calibration-equipment-row';
+            newRow.innerHTML = `
+                <div class="col-md-10">
+                    <select name="std_id_${equipmentCounter}" class="form-control">
+                        <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                        {% for equipment in form.std_id.field.queryset %}
+                            <option value="{{ equipment.id }}">{{ equipment.name }} - {{ equipment.machine_type.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                        <i class="fas fa-minus"></i> ลบ
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        if (e.target.classList.contains('remove-equipment-btn')) {
+            e.target.closest('.calibration-equipment-row').remove();
         }
     });
 });
