@@ -11,6 +11,10 @@ from django.contrib import messages
 from django.conf import settings
 from datetime import datetime
 from calibrate.models import CalibrationForce, CalibrationPressure, CalibrationTorque
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+import json
 
 class MachineListView(LoginRequiredMixin, ListView):
     model = Machine
@@ -307,3 +311,114 @@ class CalibrationEquipmentDeleteView(LoginRequiredMixin, PermissionRequiredMixin
     template_name = 'machine/calibration_equipment_confirm_delete.html'
     success_url = reverse_lazy('calibration-equipment-list')
     permission_required = 'machine.delete_calibrationequipment'
+
+@login_required
+@require_http_methods(["POST"])
+def bulk_calibration_request(request):
+    """สร้างคำร้องขอบันทึกปรับเทียบสำหรับเครื่องมือหลายตัว"""
+    try:
+        # รับข้อมูลจาก request
+        machine_ids = request.POST.getlist('machine_ids')
+        priority = request.POST.get('priority', 'normal')
+        
+        if not machine_ids:
+            return JsonResponse({
+                'success': False,
+                'message': 'ไม่พบเครื่องมือที่เลือก'
+            })
+        
+        created_count = 0
+        skipped_count = 0
+        error_messages = []
+        
+        # ประมวลผลแต่ละเครื่องมือ
+        for machine_id in machine_ids:
+            try:
+                machine = get_object_or_404(Machine, id=machine_id)
+                machine_type_name = machine.machine_type.name.lower()
+                
+                # ตรวจสอบประเภทเครื่องมือและสร้างคำร้องขอ
+                if 'force' in machine_type_name:
+                    # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+                    existing_request = CalibrationForce.objects.filter(
+                        uuc_id=machine,
+                        status='pending'
+                    ).first()
+                    
+                    if existing_request:
+                        skipped_count += 1
+                        continue
+                    
+                    # สร้างคำร้องขอใหม่
+                    CalibrationForce.objects.create(
+                        uuc_id=machine,
+                        status='pending',
+                        priority=priority
+                    )
+                    created_count += 1
+                    
+                elif 'pressure' in machine_type_name:
+                    # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+                    existing_request = CalibrationPressure.objects.filter(
+                        uuc_id=machine,
+                        status='pending'
+                    ).first()
+                    
+                    if existing_request:
+                        skipped_count += 1
+                        continue
+                    
+                    # สร้างคำร้องขอใหม่
+                    CalibrationPressure.objects.create(
+                        uuc_id=machine,
+                        status='pending',
+                        priority=priority
+                    )
+                    created_count += 1
+                    
+                elif 'torque' in machine_type_name:
+                    # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+                    existing_request = CalibrationTorque.objects.filter(
+                        uuc_id=machine,
+                        status__in=['pending', 'not_set']
+                    ).first()
+                    
+                    if existing_request:
+                        skipped_count += 1
+                        continue
+                    
+                    # สร้างคำร้องขอใหม่
+                    CalibrationTorque.objects.create(
+                        uuc_id=machine,
+                        status='not_set',
+                        priority=priority
+                    )
+                    created_count += 1
+                    
+                else:
+                    error_messages.append(f'ไม่พบประเภทการปรับเทียบที่เหมาะสมสำหรับ {machine.name}')
+                    
+            except Exception as e:
+                error_messages.append(f'เกิดข้อผิดพลาดกับเครื่องมือ ID {machine_id}: {str(e)}')
+        
+        # สร้างข้อความตอบกลับ
+        message = f'สร้างคำร้องขอสำเร็จ {created_count} รายการ'
+        if skipped_count > 0:
+            message += f', ข้าม {skipped_count} รายการที่มีคำร้องขออยู่แล้ว'
+        if error_messages:
+            message += f', เกิดข้อผิดพลาด {len(error_messages)} รายการ'
+        
+        return JsonResponse({
+            'success': True,
+            'created_count': created_count,
+            'skipped_count': skipped_count,
+            'error_count': len(error_messages),
+            'message': message,
+            'errors': error_messages
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'เกิดข้อผิดพลาดในการประมวลผล: {str(e)}'
+        })

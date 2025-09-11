@@ -3,6 +3,7 @@
 {% block title %}รายการเครื่องมือวัด - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <!-- Page Header -->
 <div class="page-header">
     <div class="container">
@@ -116,16 +117,27 @@
     <!-- Data Table -->
     <div class="card">
         <div class="card-header">
-            <h5 class="mb-0">
-                <i class="fas fa-table me-2"></i>
-                รายการเครื่องมือวัด ({{ machines.count }} รายการ)
-            </h5>
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-table me-2"></i>
+                    รายการเครื่องมือวัด ({{ machines.count }} รายการ)
+                </h5>
+                <div class="bulk-actions" style="display: none;">
+                    <button type="button" class="btn btn-warning btn-sm" id="bulkCalibrationBtn" disabled>
+                        <i class="fas fa-clipboard-list me-1"></i>
+                        ส่งคำร้องขอบันทึกปรับเทียบ (<span id="selectedCount">0</span> รายการ)
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                         <tr>
+                            <th style="width: 3%">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
                             <th style="width: 5%">
                                 <i class="fas fa-hashtag me-1"></i>ID
                             </th>
@@ -157,6 +169,10 @@
                         {% for m in machines %}
                         <tr>
                             <td>
+                                <input type="checkbox" class="form-check-input machine-checkbox" 
+                                       value="{{ m.id }}" data-machine-name="{{ m.name }}">
+                            </td>
+                            <td>
                                 <span class="badge bg-primary">{{ forloop.counter }}</span>
                             </td>
                             <td>
@@ -183,9 +199,6 @@
                                     <a href="{% url 'machine-send-email' m.id %}" class="btn btn-outline-success btn-sm" title="ส่งข้อมูลทางอีเมล">
                                         <i class="fas fa-envelope"></i>
                                     </a>
-                                    <a href="{% url 'machine-calibration' m.id %}" class="btn btn-outline-info btn-sm" title="บันทึกการปรับเทียบ">
-                                        <i class="fas fa-cog"></i>
-                                    </a>
                                     <button type="button" class="btn btn-outline-warning btn-sm calibration-request-btn" 
                                             data-machine-id="{{ m.id }}" 
                                             data-machine-name="{{ m.name }}"
@@ -197,7 +210,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-5">
+                            <td colspan="8" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="fas fa-info-circle fa-3x mb-3"></i>
                                     <h5>ไม่พบข้อมูลเครื่องมือวัด</h5>
@@ -223,7 +236,7 @@
     </div>
 </div>
 
-<!-- Modal สำหรับเลือก Priority -->
+<!-- Modal สำหรับเลือก Priority (รายการเดียว) -->
 <div class="modal fade priority-modal" id="calibrationRequestModal" tabindex="-1" aria-labelledby="calibrationRequestModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -299,15 +312,108 @@
     </div>
 </div>
 
+<!-- Modal สำหรับเลือก Priority (หลายรายการ) -->
+<div class="modal fade priority-modal" id="bulkCalibrationRequestModal" tabindex="-1" aria-labelledby="bulkCalibrationRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkCalibrationRequestModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    เลือกระดับความเร่งด่วน (หลายรายการ)
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    กรุณาเลือกระดับความเร่งด่วนสำหรับคำร้องขอบันทึกการปรับเทียบเครื่องมือที่เลือกไว้
+                </div>
+                
+                <div class="selected-machines mb-3">
+                    <h6>เครื่องมือที่เลือก:</h6>
+                    <div id="selectedMachinesList" class="list-group list-group-flush">
+                        <!-- รายการเครื่องมือที่เลือกจะแสดงที่นี่ -->
+                    </div>
+                </div>
+                
+                <div class="priority-options">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="bulkModalPriority" id="bulkPriorityNormal" value="normal" checked>
+                        <label class="form-check-label" for="bulkPriorityNormal">
+                            <div class="d-flex align-items-center">
+                                <div class="priority-icon">
+                                    <i class="fas fa-circle text-success"></i>
+                                </div>
+                                <div class="priority-content">
+                                    <strong>ปกติ</strong>
+                                    <small class="text-muted">การปรับเทียบทั่วไป ไม่มีความเร่งด่วน</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="bulkModalPriority" id="bulkPriorityUrgent" value="urgent">
+                        <label class="form-check-label" for="bulkPriorityUrgent">
+                            <div class="d-flex align-items-center">
+                                <div class="priority-icon">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                </div>
+                                <div class="priority-content">
+                                    <strong>ด่วน</strong>
+                                    <small class="text-muted">มีความเร่งด่วน ต้องดำเนินการเร็ว</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="bulkModalPriority" id="bulkPriorityVeryUrgent" value="very_urgent">
+                        <label class="form-check-label" for="bulkPriorityVeryUrgent">
+                            <div class="d-flex align-items-center">
+                                <div class="priority-icon">
+                                    <i class="fas fa-exclamation-circle text-danger"></i>
+                                </div>
+                                <div class="priority-content">
+                                    <strong>ด่วนมาก</strong>
+                                    <small class="text-muted">มีความเร่งด่วนสูงสุด ต้องดำเนินการทันที</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>ยกเลิก
+                </button>
+                <button type="button" class="btn btn-success" id="confirmBulkCalibrationRequestBtn">
+                    <i class="fas fa-check me-1"></i>ยืนยันและส่งคำขอ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <link rel="stylesheet" href="/static/ui/default/priority-modal.css">
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // JavaScript สำหรับ Modal Calibration Request
     const calibrationRequestModal = new bootstrap.Modal(document.getElementById('calibrationRequestModal'));
+    const bulkCalibrationRequestModal = new bootstrap.Modal(document.getElementById('bulkCalibrationRequestModal'));
     const confirmCalibrationRequestBtn = document.getElementById('confirmCalibrationRequestBtn');
+    const confirmBulkCalibrationRequestBtn = document.getElementById('confirmBulkCalibrationRequestBtn');
     const machineNameInModal = document.getElementById('machineNameInModal');
+    const selectedMachinesList = document.getElementById('selectedMachinesList');
+    const bulkActions = document.querySelector('.bulk-actions');
+    const bulkCalibrationBtn = document.getElementById('bulkCalibrationBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const machineCheckboxes = document.querySelectorAll('.machine-checkbox');
+    
     let currentMachineId = null;
+    let selectedMachines = [];
 
     // เมื่อกดปุ่มส่งคำร้องขอบันทึกปรับเทียบ
     document.addEventListener('click', function(e) {
@@ -342,6 +448,136 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('[data-bs-dismiss="modal"]').addEventListener('click', function() {
         calibrationRequestModal.hide();
     });
+
+    // ========== Bulk Selection Functions ==========
+    
+    // Select All checkbox
+    selectAllCheckbox.addEventListener('change', function() {
+        const isChecked = this.checked;
+        machineCheckboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+        updateBulkActions();
+    });
+
+    // Individual machine checkboxes
+    machineCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateBulkActions();
+            updateSelectAllState();
+        });
+    });
+
+    // Update bulk actions visibility and state
+    function updateBulkActions() {
+        const checkedBoxes = document.querySelectorAll('.machine-checkbox:checked');
+        selectedMachines = Array.from(checkedBoxes).map(checkbox => ({
+            id: checkbox.value,
+            name: checkbox.getAttribute('data-machine-name')
+        }));
+
+        if (selectedMachines.length > 0) {
+            bulkActions.style.display = 'block';
+            bulkCalibrationBtn.disabled = false;
+            selectedCount.textContent = selectedMachines.length;
+        } else {
+            bulkActions.style.display = 'none';
+            bulkCalibrationBtn.disabled = true;
+            selectedCount.textContent = '0';
+        }
+    }
+
+    // Update select all checkbox state
+    function updateSelectAllState() {
+        const checkedBoxes = document.querySelectorAll('.machine-checkbox:checked');
+        const totalBoxes = machineCheckboxes.length;
+        
+        if (checkedBoxes.length === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (checkedBoxes.length === totalBoxes) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+            selectAllCheckbox.checked = false;
+        }
+    }
+
+    // Bulk calibration button click
+    bulkCalibrationBtn.addEventListener('click', function() {
+        // Update selected machines list in modal
+        selectedMachinesList.innerHTML = '';
+        selectedMachines.forEach(machine => {
+            const listItem = document.createElement('div');
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            listItem.innerHTML = `
+                <span><i class="fas fa-tools me-2"></i>${machine.name}</span>
+                <span class="badge bg-primary rounded-pill">ID: ${machine.id}</span>
+            `;
+            selectedMachinesList.appendChild(listItem);
+        });
+        
+        // Show bulk modal
+        bulkCalibrationRequestModal.show();
+    });
+
+    // Confirm bulk calibration request
+    confirmBulkCalibrationRequestBtn.addEventListener('click', function() {
+        const selectedPriority = document.querySelector('input[name="bulkModalPriority"]:checked').value;
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('priority', selectedPriority);
+        selectedMachines.forEach(machine => {
+            formData.append('machine_ids', machine.id);
+        });
+
+        // Send bulk request
+        fetch('{% url "bulk-calibration-request" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let message = `ส่งคำร้องขอบันทึกปรับเทียบสำเร็จ ${data.created_count} รายการ`;
+                if (data.skipped_count > 0) {
+                    message += `\nข้าม ${data.skipped_count} รายการที่มีคำร้องขออยู่แล้ว`;
+                }
+                if (data.error_count > 0) {
+                    message += `\nเกิดข้อผิดพลาด ${data.error_count} รายการ`;
+                    if (data.errors && data.errors.length > 0) {
+                        message += '\n\nรายละเอียดข้อผิดพลาด:\n' + data.errors.join('\n');
+                    }
+                }
+                alert(message);
+                
+                // Clear selections
+                machineCheckboxes.forEach(checkbox => checkbox.checked = false);
+                updateBulkActions();
+                updateSelectAllState();
+                // Reload page to show updated data
+                window.location.reload();
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('เกิดข้อผิดพลาดในการส่งคำขอ');
+        });
+
+        // Close modal
+        bulkCalibrationRequestModal.hide();
+    });
+
+    // Initialize bulk actions state
+    updateBulkActions();
+    updateSelectAllState();
 });
 </script>
 {% endblock %} 

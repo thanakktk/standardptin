@@ -4,7 +4,8 @@ from .views import (
     CalibrationPressureListView, CalibrationPressureCreateView, CalibrationPressureUpdateView, CalibrationPressureDeleteView,
     CalibrationTorqueListView, CalibrationTorqueCreateView, CalibrationTorqueUpdateView, CalibrationTorqueDeleteView,
     calibration_dashboard, machine_calibration_list, create_calibration_for_machine, calibration_by_type,
-    select_machine_for_calibration, create_calibration_with_machine, calibration_report, calibration_report_detail, export_to_word, export_to_excel
+    select_machine_for_calibration, create_calibration_with_machine, calibration_report, calibration_report_detail, export_to_word, export_to_excel,
+    increase_priority, close_work
 )
 
 urlpatterns = [
@@ -43,4 +44,10 @@ urlpatterns = [
     path('torque/add/', CalibrationTorqueCreateView.as_view(), name='calibrate-torque-add'),
     path('torque/<int:pk>/edit/', CalibrationTorqueUpdateView.as_view(), name='calibrate-torque-edit'),
     path('torque/<int:pk>/delete/', CalibrationTorqueDeleteView.as_view(), name='calibrate-torque-delete'),
+    
+    # เพิ่มระดับความเร่งด่วน
+    path('increase-priority/<str:cal_type>/<int:cal_id>/', increase_priority, name='increase-priority'),
+    
+    # ปิดงาน
+    path('close-work/<str:cal_type>/<int:cal_id>/', close_work, name='close-work'),
 ] 

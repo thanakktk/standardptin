@@ -4,9 +4,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponse
-from .models import CalibrationForce, CalibrationPressure, CalibrationTorque
-from .forms import CalibrationForceForm, CalibrationPressureForm, CalibrationTorqueForm
+from django.http import HttpResponse, JsonResponse
+from .models import CalibrationForce, CalibrationPressure, CalibrationTorque, DialGaugeCalibration, BalanceCalibration, MicrowaveCalibration
+from .forms import CalibrationForceForm, CalibrationPressureForm, CalibrationTorqueForm, DialGaugeCalibrationForm, BalanceCalibrationForm, MicrowaveCalibrationForm
 from machine.models import Machine, MachineType
 from django.db import models
 from docx import Document
@@ -41,7 +41,7 @@ class CalibrationForceCreateView(LoginRequiredMixin, PermissionRequiredMixin, Cr
     model = CalibrationForce
     form_class = CalibrationForceForm
     template_name = 'calibrate/force_form.html'
-    success_url = reverse_lazy('calibrate-force-list')
+    success_url = reverse_lazy('calibrate-dashboard')
     permission_required = 'calibrate.add_calibrationforce'
     
     def get_form(self, form_class=None):
@@ -57,7 +57,7 @@ class CalibrationForceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Up
     model = CalibrationForce
     form_class = CalibrationForceForm
     template_name = 'calibrate/force_form.html'
-    success_url = reverse_lazy('calibrate-force-list')
+    success_url = reverse_lazy('calibrate-dashboard')
     permission_required = 'calibrate.change_calibrationforce'
     
     def get_form(self, form_class=None):
@@ -72,7 +72,7 @@ class CalibrationForceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Up
 class CalibrationForceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationForce
     template_name = 'calibrate/force_confirm_delete.html'
-    success_url = reverse_lazy('calibrate-force-list')
+    success_url = reverse_lazy('calibrate-dashboard')
     permission_required = 'calibrate.delete_calibrationforce'
 
 class CalibrationPressureListView(LoginRequiredMixin, ListView):
@@ -96,7 +96,7 @@ class CalibrationPressureCreateView(LoginRequiredMixin, PermissionRequiredMixin,
     model = CalibrationPressure
     form_class = CalibrationPressureForm
     template_name = 'calibrate/pressure_form.html'
-    success_url = reverse_lazy('calibrate-pressure-list')
+    success_url = reverse_lazy('calibrate-dashboard')
     permission_required = 'calibrate.add_calibrationpressure'
     
     def get_form(self, form_class=None):
@@ -112,7 +112,7 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
     model = CalibrationPressure
     form_class = CalibrationPressureForm
     template_name = 'calibrate/pressure_form.html'
-    success_url = reverse_lazy('calibrate-pressure-list')
+    success_url = reverse_lazy('calibrate-dashboard')
     permission_required = 'calibrate.change_calibrationpressure'
     
     def get_form(self, form_class=None):
@@ -127,7 +127,7 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
 class CalibrationPressureDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationPressure
     template_name = 'calibrate/pressure_confirm_delete.html'
-    success_url = reverse_lazy('calibrate-pressure-list')
+    success_url = reverse_lazy('calibrate-dashboard')
     permission_required = 'calibrate.delete_calibrationpressure'
 
 class CalibrationTorqueListView(LoginRequiredMixin, ListView):
@@ -151,7 +151,7 @@ class CalibrationTorqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, C
     model = CalibrationTorque
     form_class = CalibrationTorqueForm
     template_name = 'calibrate/torque_form.html'
-    success_url = reverse_lazy('calibrate-torque-list')
+    success_url = reverse_lazy('calibrate-dashboard')
     permission_required = 'calibrate.add_calibrationtorque'
     
     def get_form(self, form_class=None):
@@ -167,7 +167,7 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
     model = CalibrationTorque
     form_class = CalibrationTorqueForm
     template_name = 'calibrate/torque_form.html'
-    success_url = reverse_lazy('calibrate-torque-list')
+    success_url = reverse_lazy('calibrate-dashboard')
     permission_required = 'calibrate.change_calibrationtorque'
     
     def get_form(self, form_class=None):
@@ -182,7 +182,7 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
 class CalibrationTorqueDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationTorque
     template_name = 'calibrate/torque_confirm_delete.html'
-    success_url = reverse_lazy('calibrate-torque-list')
+    success_url = reverse_lazy('calibrate-dashboard')
     permission_required = 'calibrate.delete_calibrationtorque'
 
 @login_required
@@ -197,8 +197,10 @@ def calibration_dashboard(request):
     status_filter = request.GET.get('status_filter', '')
     priority_filter = request.GET.get('priority_filter', '')
     
-    # ดึงข้อมูลการปรับเทียบทั้งหมด เรียงตามระดับความเร่งด่วน
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').annotate(
+    # ดึงข้อมูลการปรับเทียบทั้งหมด (ยกเว้นงานที่ปิดแล้ว) เรียงตามระดับความเร่งด่วน
+    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').exclude(
+        status='closed'
+    ).annotate(
         priority_order=models.Case(
             models.When(priority='very_urgent', then=models.Value(1)),
             models.When(priority='urgent', then=models.Value(2)),
@@ -208,7 +210,9 @@ def calibration_dashboard(request):
         )
     ).order_by('priority_order', '-update')
     
-    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').annotate(
+    pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').exclude(
+        status='closed'
+    ).annotate(
         priority_order=models.Case(
             models.When(priority='very_urgent', then=models.Value(1)),
             models.When(priority='urgent', then=models.Value(2)),
@@ -218,7 +222,9 @@ def calibration_dashboard(request):
         )
     ).order_by('priority_order', '-update')
     
-    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').annotate(
+    torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').exclude(
+        status='closed'
+    ).annotate(
         priority_order=models.Case(
             models.When(priority='very_urgent', then=models.Value(1)),
             models.When(priority='urgent', then=models.Value(2)),
@@ -227,6 +233,45 @@ def calibration_dashboard(request):
             output_field=models.IntegerField(),
         )
     ).order_by('priority_order', '-update')
+    
+    # ดึงข้อมูลการปรับเทียบ Dial Gauge
+    dial_gauge_calibrations = DialGaugeCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').exclude(
+        status='closed'
+    ).annotate(
+        priority_order=models.Case(
+            models.When(priority='very_urgent', then=models.Value(1)),
+            models.When(priority='urgent', then=models.Value(2)),
+            models.When(priority='normal', then=models.Value(3)),
+            default=models.Value(4),
+            output_field=models.IntegerField(),
+        )
+    ).order_by('priority_order', '-date_calibration')
+    
+    # ดึงข้อมูลการปรับเทียบ Balance
+    balance_calibrations = BalanceCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').exclude(
+        status='closed'
+    ).annotate(
+        priority_order=models.Case(
+            models.When(priority='very_urgent', then=models.Value(1)),
+            models.When(priority='urgent', then=models.Value(2)),
+            models.When(priority='normal', then=models.Value(3)),
+            default=models.Value(4),
+            output_field=models.IntegerField(),
+        )
+    ).order_by('priority_order', '-date_calibration')
+    
+    # ดึงข้อมูลการปรับเทียบ Microwave
+    microwave_calibrations = MicrowaveCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').exclude(
+        status='closed'
+    ).annotate(
+        priority_order=models.Case(
+            models.When(priority='very_urgent', then=models.Value(1)),
+            models.When(priority='urgent', then=models.Value(2)),
+            models.When(priority='normal', then=models.Value(3)),
+            default=models.Value(4),
+            output_field=models.IntegerField(),
+        )
+    ).order_by('priority_order', '-date_calibration')
     
     # รวมข้อมูลการปรับเทียบทั้งหมด
     all_calibrations = []
@@ -288,6 +333,63 @@ def calibration_dashboard(request):
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
+    # เพิ่มข้อมูล Dial Gauge calibrations
+    for cal in dial_gauge_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'dial_gauge',
+            'type_name': 'การปรับเทียบ Dial Gauge',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+        })
+    
+    # เพิ่มข้อมูล Balance calibrations
+    for cal in balance_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'balance',
+            'type_name': 'การปรับเทียบ Balance',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+        })
+    
+    # เพิ่มข้อมูล Microwave calibrations
+    for cal in microwave_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'microwave',
+            'type_name': 'การปรับเทียบ Microwave',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+        })
+    
     # กรองข้อมูลตามพารามิเตอร์
     filtered_calibrations = []
     for cal in all_calibrations:
@@ -331,10 +433,16 @@ def calibration_dashboard(request):
         'force_calibrations_count': CalibrationForce.objects.count(),
         'pressure_calibrations_count': CalibrationPressure.objects.count(),
         'torque_calibrations_count': CalibrationTorque.objects.count(),
+        'dial_gauge_calibrations_count': DialGaugeCalibration.objects.count(),
+        'balance_calibrations_count': BalanceCalibration.objects.count(),
+        'microwave_calibrations_count': MicrowaveCalibration.objects.count(),
         'pending_calibrations_count': (
             CalibrationForce.objects.filter(status='pending').count() +
             CalibrationPressure.objects.filter(status='pending').count() +
-            CalibrationTorque.objects.filter(status='pending').count()
+            CalibrationTorque.objects.filter(status='pending').count() +
+            DialGaugeCalibration.objects.filter(status='pending').count() +
+            BalanceCalibration.objects.filter(status='pending').count() +
+            MicrowaveCalibration.objects.filter(status='pending').count()
         ),
         'all_calibrations': filtered_calibrations,
         'today': today,
@@ -480,7 +588,7 @@ def create_calibration_with_machine(request, machine_id):
         if 'force' in machine_type_name:
             form = CalibrationForceForm(request.POST)
             template = 'calibrate/force_form_with_machine.html'
-            success_url = reverse_lazy('calibrate-force-list')
+            success_url = reverse_lazy('calibrate-dashboard')
         elif 'pressure' in machine_type_name:
             # สำหรับ Pressure ใช้การประมวลผลข้อมูลแบบพิเศษ
             return process_pressure_calibration(request, machine)
@@ -761,7 +869,7 @@ def process_torque_calibration(request, machine):
             print(f"บันทึกสำเร็จ! ID: {calibration.cal_torque_id}")
             
             messages.success(request, f'บันทึกการปรับเทียบ Torque สำหรับ {machine.name} เรียบร้อยแล้ว')
-            return redirect('calibrate-torque-list')
+            return redirect('calibrate-dashboard')
             
         except Exception as e:
             print(f"=== DEBUG: เกิดข้อผิดพลาด ===")
@@ -918,7 +1026,7 @@ def process_pressure_calibration(request, machine):
             print(f"บันทึกสำเร็จ! ID: {calibration.cal_pressure_id}")
             
             messages.success(request, f'บันทึกการปรับเทียบ Pressure สำหรับ {machine.name} เรียบร้อยแล้ว')
-            return redirect('calibrate-pressure-list')
+            return redirect('calibrate-dashboard')
             
         except Exception as e:
             print(f"=== DEBUG: เกิดข้อผิดพลาด ===")
@@ -1659,3 +1767,127 @@ def export_to_excel(request):
     response['Content-Disposition'] = f'attachment; filename="รายงานปรับเทียบ_{datetime.now().strftime("%Y%m%d")}.xlsx"'
     
     return response
+
+@login_required
+def increase_priority(request, cal_type, cal_id):
+    """เพิ่มระดับความเร่งด่วนของการปรับเทียบ"""
+    # ตรวจสอบสิทธิ์ - เฉพาะเจ้าหน้าที่และ admin
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({
+            'success': False,
+            'message': 'คุณไม่มีสิทธิ์ในการเพิ่มระดับความเร่งด่วน'
+        })
+    
+    try:
+        # รับข้อมูลจาก request
+        import json
+        data = json.loads(request.body)
+        new_priority = data.get('new_priority')
+        
+        if not new_priority:
+            return JsonResponse({
+                'success': False,
+                'message': 'ไม่พบข้อมูลระดับความเร่งด่วนใหม่'
+            })
+        
+        # ตรวจสอบระดับความเร่งด่วนที่ถูกต้อง
+        valid_priorities = ['normal', 'urgent', 'very_urgent']
+        if new_priority not in valid_priorities:
+            return JsonResponse({
+                'success': False,
+                'message': 'ระดับความเร่งด่วนไม่ถูกต้อง'
+            })
+        
+        # ดึงข้อมูลการปรับเทียบตามประเภท
+        if cal_type == 'force':
+            calibration = get_object_or_404(CalibrationForce, cal_force_id=cal_id)
+        elif cal_type == 'pressure':
+            calibration = get_object_or_404(CalibrationPressure, cal_pressure_id=cal_id)
+        elif cal_type == 'torque':
+            calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'ประเภทการปรับเทียบไม่ถูกต้อง'
+            })
+        
+        # ตรวจสอบว่าการเปลี่ยนระดับมีความหมายหรือไม่
+        current_priority = calibration.priority
+        if current_priority == new_priority:
+            return JsonResponse({
+                'success': False,
+                'message': 'ระดับความเร่งด่วนนี้เป็นระดับปัจจุบันอยู่แล้ว'
+            })
+        
+        # อัปเดตระดับความเร่งด่วน
+        calibration.priority = new_priority
+        calibration.save()
+        
+        # สร้างข้อความตอบกลับ
+        priority_names = {
+            'normal': 'ปกติ',
+            'urgent': 'ด่วน',
+            'very_urgent': 'ด่วนมาก'
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'เปลี่ยนระดับความเร่งด่วนเป็น "{priority_names[new_priority]}" สำเร็จ',
+            'old_priority': current_priority,
+            'new_priority': new_priority
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'เกิดข้อผิดพลาด: {str(e)}'
+        })
+
+@login_required
+def close_work(request, cal_type, cal_id):
+    """ปิดงานการปรับเทียบ"""
+    # ตรวจสอบสิทธิ์ - เฉพาะเจ้าหน้าที่และ admin
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({
+            'success': False,
+            'message': 'คุณไม่มีสิทธิ์ในการปิดงาน'
+        })
+    
+    try:
+        # ดึงข้อมูลการปรับเทียบตามประเภท
+        if cal_type == 'force':
+            calibration = get_object_or_404(CalibrationForce, cal_force_id=cal_id)
+        elif cal_type == 'pressure':
+            calibration = get_object_or_404(CalibrationPressure, cal_pressure_id=cal_id)
+        elif cal_type == 'torque':
+            calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'ประเภทการปรับเทียบไม่ถูกต้อง'
+            })
+        
+        # ตรวจสอบสถานะปัจจุบัน
+        current_status = calibration.status
+        if current_status == 'closed':
+            return JsonResponse({
+                'success': False,
+                'message': 'งานนี้ถูกปิดแล้ว'
+            })
+        
+        # อัปเดตสถานะเป็นปิดงาน
+        calibration.status = 'closed'
+        calibration.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'ปิดงานสำเร็จ',
+            'old_status': current_status,
+            'new_status': 'closed'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'เกิดข้อผิดพลาด: {str(e)}'
+        })

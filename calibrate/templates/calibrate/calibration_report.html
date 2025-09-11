@@ -43,7 +43,7 @@
                             <th>ชื่อเครื่องวัด</th>
                             <th>หน่วยผู้ใช้</th>
                             <th>จำนวน</th>
-                            <th>หมายเหตุ</th>
+                            <th>ผลการสอบเทียบ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -67,9 +67,17 @@
                             <td>๑</td>
                             <td>
                                 {% if cal.status == 'cert_issued' or cal.status == 'passed' or cal.status == 'active' %}
-                                    <span class="badge bg-success">ออกใบรับรอง</span>
-                                {% elif cal.status == 'failed' or cal.status == 'pending' or cal.status == 'in_progress' or cal.status == 'not_set' %}
-                                    <span class="badge bg-danger">ไม่ผ่านการปรับเทียบ</span>
+                                    <span class="badge bg-success">ผ่านการสอบ</span>
+                                {% elif cal.status == 'failed' %}
+                                    <span class="badge bg-danger">ไม่ผ่านการสอบ</span>
+                                {% elif cal.status == 'pending' %}
+                                    <span class="badge bg-warning">รอการสอบ</span>
+                                {% elif cal.status == 'in_progress' %}
+                                    <span class="badge bg-info">กำลังสอบ</span>
+                                {% elif cal.status == 'not_set' %}
+                                    <span class="badge bg-secondary">ยังไม่กำหนด</span>
+                                {% elif cal.status == 'closed' %}
+                                    <span class="badge bg-dark">ปิดงาน</span>
                                 {% else %}
                                     <span class="badge bg-secondary">{{ cal.status }}</span>
                                 {% endif %}

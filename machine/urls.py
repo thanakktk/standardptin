@@ -10,6 +10,7 @@ urlpatterns = [
     path('send-filtered-email/', views.send_filtered_email, name='machine-send-filtered-email'),
     path('<int:pk>/calibration/', views.calibration_data, name='machine-calibration'),
     path('<int:pk>/create-calibration-request/', views.create_calibration_request, name='create-calibration-request'),
+    path('bulk-calibration-request/', views.bulk_calibration_request, name='bulk-calibration-request'),
     
     # CalibrationEquipment URLs
     path('calibration-equipment/', views.CalibrationEquipmentListView.as_view(), name='calibration-equipment-list'),

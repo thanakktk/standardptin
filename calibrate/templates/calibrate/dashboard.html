@@ -21,7 +21,7 @@
     <div class="container-fluid">
         <!-- สถิติการปรับเทียบ -->
         <div class="row mb-4">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="stats-card">
                     <div class="stats-icon bg-primary">
                         <i class="fas fa-weight"></i>
@@ -32,7 +32,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="stats-card">
                     <div class="stats-icon bg-success">
                         <i class="fas fa-tachometer-alt"></i>
@@ -43,7 +43,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="stats-card">
                     <div class="stats-icon bg-warning">
                         <i class="fas fa-cog"></i>
@@ -54,14 +54,51 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
+                <div class="stats-card">
+                    <div class="stats-icon bg-secondary">
+                        <i class="fas fa-ruler"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ dial_gauge_calibrations_count }}</h3>
+                        <p>บันทึกการปรับเทียบ Dial Gauge</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card">
+                    <div class="stats-icon bg-dark">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ balance_calibrations_count }}</h3>
+                        <p>บันทึกการปรับเทียบ Balance</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card">
+                    <div class="stats-icon bg-danger">
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ microwave_calibrations_count }}</h3>
+                        <p>บันทึกการปรับเทียบ Microwave</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- สถิติรอการปรับเทียบ -->
+        <div class="row mb-4">
+            <div class="col-md-12">
                 <div class="stats-card">
                     <div class="stats-icon bg-info">
                         <i class="fas fa-clock"></i>
                     </div>
                     <div class="stats-content">
                         <h3>{{ pending_calibrations_count }}</h3>
-                        <p>รอการปรับเทียบ</p>
+                        <p>รอการปรับเทียบทั้งหมด</p>
                     </div>
                 </div>
             </div>
@@ -103,6 +140,9 @@
                                         <option value="force" {% if request.GET.calibration_type == 'force' %}selected{% endif %}>แรง</option>
                                         <option value="pressure" {% if request.GET.calibration_type == 'pressure' %}selected{% endif %}>ความดัน</option>
                                         <option value="torque" {% if request.GET.calibration_type == 'torque' %}selected{% endif %}>แรงบิด</option>
+                                        <option value="dial_gauge" {% if request.GET.calibration_type == 'dial_gauge' %}selected{% endif %}>Dial Gauge</option>
+                                        <option value="balance" {% if request.GET.calibration_type == 'balance' %}selected{% endif %}>Balance</option>
+                                        <option value="microwave" {% if request.GET.calibration_type == 'microwave' %}selected{% endif %}>Microwave</option>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
@@ -189,9 +229,6 @@
                                         <th>ชื่อเครื่องมือ</th>
                                         <th>รุ่น</th>
                                         <th>หมายเลขเครื่อง</th>
-                                        <th>มาตรฐาน</th>
-                                        <th>ผู้สอบเทียบ</th>
-                                        <th>ผู้ออกใบรับรอง</th>
                                         <th>วันที่ปรับเทียบ</th>
                                         <th>วันที่ครบกำหนดถัดไป</th>
                                         <th>สถานะการปรับเทียบ</th>
@@ -214,26 +251,17 @@
                                                 <span class="badge bg-success">{{ cal.type_name }}</span>
                                             {% elif cal.type == 'torque' %}
                                                 <span class="badge bg-warning">{{ cal.type_name }}</span>
+                                            {% elif cal.type == 'dial_gauge' %}
+                                                <span class="badge bg-secondary">{{ cal.type_name }}</span>
+                                            {% elif cal.type == 'balance' %}
+                                                <span class="badge bg-dark">{{ cal.type_name }}</span>
+                                            {% elif cal.type == 'microwave' %}
+                                                <span class="badge bg-danger">{{ cal.type_name }}</span>
                                             {% endif %}
                                         </td>
                                         <td><strong>{{ cal.machine_name }}</strong></td>
                                         <td>{{ cal.machine_model }}</td>
                                         <td><code>{{ cal.serial_number }}</code></td>
-                                        <td>{{ cal.std_name }}</td>
-                                        <td>
-                                            {% if cal.calibrator and cal.calibrator != '-' %}
-                                                <span class="badge bg-info">{{ cal.calibrator }}</span>
-                                            {% else %}
-                                                <span class="text-muted">-</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if cal.certificate_issuer and cal.certificate_issuer != '-' %}
-                                                <span class="badge bg-success">{{ cal.certificate_issuer }}</span>
-                                            {% else %}
-                                                <span class="text-muted">-</span>
-                                            {% endif %}
-                                        </td>
                                         <td>
                                             {% if cal.update_date %}
                                                 {{ cal.update_date|date:"d/m/Y" }}
@@ -282,6 +310,22 @@
                                                     <a href="{% url 'calibrate-force-edit' cal.id %}" class="btn btn-sm btn-outline-primary">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
+                                                    {% if user.is_staff or user.is_superuser %}
+                                                        <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
+                                                                data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                                data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
+                                                                title="เปลี่ยนระดับความเร่งด่วน">
+                                                            <i class="fas fa-arrow-up"></i>
+                                                        </button>
+                                                        {% if cal.status != 'closed' %}
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary close-work-btn" 
+                                                                    data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                                    data-name="{{ cal.machine_name }}" data-current-status="{{ cal.status }}"
+                                                                    title="ปิดงาน">
+                                                                <i class="fas fa-check-circle"></i>
+                                                            </button>
+                                                        {% endif %}
+                                                    {% endif %}
                                                     <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
                                                             data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
                                                             data-name="{{ cal.machine_name }}">
@@ -291,6 +335,22 @@
                                                     <a href="{% url 'calibrate-pressure-edit' cal.id %}" class="btn btn-sm btn-outline-success">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
+                                                    {% if user.is_staff or user.is_superuser %}
+                                                        <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
+                                                                data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                                data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
+                                                                title="เปลี่ยนระดับความเร่งด่วน">
+                                                            <i class="fas fa-arrow-up"></i>
+                                                        </button>
+                                                        {% if cal.status != 'closed' %}
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary close-work-btn" 
+                                                                    data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                                    data-name="{{ cal.machine_name }}" data-current-status="{{ cal.status }}"
+                                                                    title="ปิดงาน">
+                                                                <i class="fas fa-check-circle"></i>
+                                                            </button>
+                                                        {% endif %}
+                                                    {% endif %}
                                                     <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
                                                             data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
                                                             data-name="{{ cal.machine_name }}">
@@ -300,6 +360,22 @@
                                                     <a href="{% url 'calibrate-torque-edit' cal.id %}" class="btn btn-sm btn-outline-warning">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
+                                                    {% if user.is_staff or user.is_superuser %}
+                                                        <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
+                                                                data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                                data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
+                                                                title="เปลี่ยนระดับความเร่งด่วน">
+                                                            <i class="fas fa-arrow-up"></i>
+                                                        </button>
+                                                        {% if cal.status != 'closed' %}
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary close-work-btn" 
+                                                                    data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                                    data-name="{{ cal.machine_name }}" data-current-status="{{ cal.status }}"
+                                                                    title="ปิดงาน">
+                                                                <i class="fas fa-check-circle"></i>
+                                                            </button>
+                                                        {% endif %}
+                                                    {% endif %}
                                                     <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
                                                             data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
                                                             data-name="{{ cal.machine_name }}">
@@ -385,6 +461,127 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
                 <button type="button" class="btn btn-danger" id="confirmBatchDeleteBtn">
                     <i class="fas fa-trash"></i> ลบทั้งหมด
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal สำหรับยืนยันการเพิ่มระดับความเร่งด่วน -->
+<div class="modal fade" id="priorityModal" tabindex="-1" aria-labelledby="priorityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="priorityModalLabel">
+                    <i class="fas fa-cog me-2"></i>เปลี่ยนระดับความเร่งด่วน
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    เลือกระดับความเร่งด่วนสำหรับเครื่องมือ: <strong id="machineNameInModal"></strong>
+                </div>
+                
+                <div class="current-priority mb-3">
+                    <label class="form-label">ระดับความเร่งด่วนปัจจุบัน:</label>
+                    <div id="currentPriorityBadge"></div>
+                </div>
+                
+                <div class="priority-selection">
+                    <label class="form-label">เลือกระดับความเร่งด่วนใหม่:</label>
+                    <div class="priority-options">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="selectedPriority" id="priorityNormal" value="normal">
+                            <label class="form-check-label" for="priorityNormal">
+                                <div class="d-flex align-items-center">
+                                    <div class="priority-icon me-2">
+                                        <i class="fas fa-circle text-secondary"></i>
+                                    </div>
+                                    <div class="priority-content">
+                                        <strong>ปกติ</strong>
+                                        <small class="text-muted d-block">การปรับเทียบทั่วไป ไม่มีความเร่งด่วน</small>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="selectedPriority" id="priorityUrgent" value="urgent">
+                            <label class="form-check-label" for="priorityUrgent">
+                                <div class="d-flex align-items-center">
+                                    <div class="priority-icon me-2">
+                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    </div>
+                                    <div class="priority-content">
+                                        <strong>ด่วน</strong>
+                                        <small class="text-muted d-block">มีความเร่งด่วน ต้องดำเนินการเร็ว</small>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="selectedPriority" id="priorityVeryUrgent" value="very_urgent">
+                            <label class="form-check-label" for="priorityVeryUrgent">
+                                <div class="d-flex align-items-center">
+                                    <div class="priority-icon me-2">
+                                        <i class="fas fa-exclamation-circle text-danger"></i>
+                                    </div>
+                                    <div class="priority-content">
+                                        <strong>ด่วนมาก</strong>
+                                        <small class="text-muted d-block">มีความเร่งด่วนสูงสุด ต้องดำเนินการทันที</small>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>ยกเลิก
+                </button>
+                <button type="button" class="btn btn-warning" id="confirmPriorityBtn">
+                    <i class="fas fa-check me-1"></i>ยืนยันการเปลี่ยนระดับ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal สำหรับยืนยันการปิดงาน -->
+<div class="modal fade" id="closeWorkModal" tabindex="-1" aria-labelledby="closeWorkModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="closeWorkModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>ปิดงาน
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    คุณต้องการปิดงานสำหรับเครื่องมือ: <strong id="closeWorkMachineName"></strong>
+                </div>
+                
+                <div class="current-status mb-3">
+                    <label class="form-label">สถานะปัจจุบัน:</label>
+                    <div id="currentStatusBadge"></div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>หมายเหตุ:</strong> เมื่อปิดงานแล้ว รายการนี้จะไม่แสดงในตารางหลัก แต่จะยังคงแสดงในหน้ารายงานผล
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>ยกเลิก
+                </button>
+                <button type="button" class="btn btn-success" id="confirmCloseWorkBtn">
+                    <i class="fas fa-check-circle me-1"></i>ยืนยันการปิดงาน
                 </button>
             </div>
         </div>
@@ -557,6 +754,177 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         return cookieValue;
+    }
+
+    // ========== Priority Increase Functionality ==========
+    
+    // Priority button click handlers
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.priority-btn')) {
+            const btn = e.target.closest('.priority-btn');
+            const id = btn.getAttribute('data-id');
+            const type = btn.getAttribute('data-type');
+            const name = btn.getAttribute('data-name');
+            const currentPriority = btn.getAttribute('data-current-priority');
+            
+            // Set modal data
+            document.getElementById('machineNameInModal').textContent = name;
+            
+            // Show current priority
+            const currentBadge = document.getElementById('currentPriorityBadge');
+            currentBadge.innerHTML = getPriorityBadge(currentPriority);
+            
+            // Set current priority as selected
+            document.querySelector(`input[name="selectedPriority"][value="${currentPriority}"]`).checked = true;
+            
+            // Set confirm button data
+            const confirmBtn = document.getElementById('confirmPriorityBtn');
+            confirmBtn.setAttribute('data-id', id);
+            confirmBtn.setAttribute('data-type', type);
+            
+            // Show modal
+            const priorityModal = new bootstrap.Modal(document.getElementById('priorityModal'));
+            priorityModal.show();
+        }
+    });
+
+    // Confirm priority change
+    document.getElementById('confirmPriorityBtn').addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        const type = this.getAttribute('data-type');
+        
+        // Get selected priority
+        const selectedPriority = document.querySelector('input[name="selectedPriority"]:checked');
+        if (!selectedPriority) {
+            alert('กรุณาเลือกระดับความเร่งด่วน');
+            return;
+        }
+        
+        const newPriority = selectedPriority.value;
+        
+        // Send request to change priority
+        fetch(`/calibrate/increase-priority/${type}/${id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                'new_priority': newPriority
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('เปลี่ยนระดับความเร่งด่วนสำเร็จ');
+                location.reload();
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('เกิดข้อผิดพลาดในการเปลี่ยนระดับความเร่งด่วน');
+        });
+        
+        // Close modal
+        const priorityModal = bootstrap.Modal.getInstance(document.getElementById('priorityModal'));
+        priorityModal.hide();
+    });
+
+    // Helper functions
+    function getPriorityBadge(priority) {
+        switch(priority) {
+            case 'normal':
+                return '<span class="badge bg-secondary">ปกติ</span>';
+            case 'urgent':
+                return '<span class="badge bg-warning">ด่วน</span>';
+            case 'very_urgent':
+                return '<span class="badge bg-danger">ด่วนมาก</span>';
+            default:
+                return '<span class="badge bg-secondary">ปกติ</span>';
+        }
+    }
+
+    // ========== Close Work Functionality ==========
+    
+    // Close work button click handlers
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.close-work-btn')) {
+            const btn = e.target.closest('.close-work-btn');
+            const id = btn.getAttribute('data-id');
+            const type = btn.getAttribute('data-type');
+            const name = btn.getAttribute('data-name');
+            const currentStatus = btn.getAttribute('data-current-status');
+            
+            // Set modal data
+            document.getElementById('closeWorkMachineName').textContent = name;
+            
+            // Show current status
+            const currentBadge = document.getElementById('currentStatusBadge');
+            currentBadge.innerHTML = getStatusBadge(currentStatus);
+            
+            // Set confirm button data
+            const confirmBtn = document.getElementById('confirmCloseWorkBtn');
+            confirmBtn.setAttribute('data-id', id);
+            confirmBtn.setAttribute('data-type', type);
+            
+            // Show modal
+            const closeWorkModal = new bootstrap.Modal(document.getElementById('closeWorkModal'));
+            closeWorkModal.show();
+        }
+    });
+
+    // Confirm close work
+    document.getElementById('confirmCloseWorkBtn').addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        const type = this.getAttribute('data-type');
+        
+        // Send request to close work
+        fetch(`/calibrate/close-work/${type}/${id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('ปิดงานสำเร็จ');
+                location.reload();
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('เกิดข้อผิดพลาดในการปิดงาน');
+        });
+        
+        // Close modal
+        const closeWorkModal = bootstrap.Modal.getInstance(document.getElementById('closeWorkModal'));
+        closeWorkModal.hide();
+    });
+
+    // Helper function for status badge
+    function getStatusBadge(status) {
+        switch(status) {
+            case 'pending':
+                return '<span class="badge bg-warning">รอปรับเทียบ</span>';
+            case 'in_progress':
+                return '<span class="badge bg-info">กำลังปรับเทียบ</span>';
+            case 'passed':
+                return '<span class="badge bg-success">ผ่านการปรับเทียบ</span>';
+            case 'cert_issued':
+                return '<span class="badge bg-success">ออกใบรับรอง</span>';
+            case 'failed':
+                return '<span class="badge bg-danger">ไม่ผ่านการสอบเทียบ</span>';
+            case 'closed':
+                return '<span class="badge bg-secondary">ปิดงาน</span>';
+            default:
+                return '<span class="badge bg-secondary">' + status + '</span>';
+        }
     }
 });
 </script>

@@ -608,4 +608,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+/* ซ่อนเฉพาะฟิลด์สถานะการปรับเทียบ */
+#id_status {
+    display: none !important;
+}
+
+label[for="id_status"] {
+    display: none !important;
+}
+
+/* ซ่อน div ที่มีฟิลด์ status */
+.col-md-3:has(#id_status) {
+    display: none !important;
+}
+</style>
 {% endblock %} 
