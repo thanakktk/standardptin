@@ -10,7 +10,8 @@ from django.db.models import Q
 from django.contrib import messages
 from django.conf import settings
 from datetime import datetime
-from calibrate.models import CalibrationForce, CalibrationPressure, CalibrationTorque
+from calibrate.models import CalibrationForce, CalibrationPressure, CalibrationTorque, BalanceCalibration
+from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -245,6 +246,26 @@ def create_calibration_request(request, pk):
                 uuc_id=machine,
                 status='not_set',
                 priority=priority
+            )
+            messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            
+        elif 'balance' in machine_type_name:
+            # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+            existing_request = BalanceCalibration.objects.filter(
+                machine=machine,
+                status='pending'
+            ).first()
+            
+            if existing_request:
+                messages.warning(request, f'มีคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} อยู่แล้ว')
+                return redirect('machine-list')
+            
+            # สร้างคำร้องขอใหม่
+            calibration = BalanceCalibration.objects.create(
+                machine=machine,
+                status='pending',
+                priority=priority,
+                date_calibration=timezone.now().date()  # กำหนดวันที่สอบเทียบเป็นวันนี้
             )
             messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
             

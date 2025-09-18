@@ -3,9 +3,10 @@ from .views import (
     CalibrationForceListView, CalibrationForceCreateView, CalibrationForceUpdateView, CalibrationForceDeleteView,
     CalibrationPressureListView, CalibrationPressureCreateView, CalibrationPressureUpdateView, CalibrationPressureDeleteView,
     CalibrationTorqueListView, CalibrationTorqueCreateView, CalibrationTorqueUpdateView, CalibrationTorqueDeleteView,
+    BalanceCalibrationListView, BalanceCalibrationCreateView, BalanceCalibrationUpdateView, BalanceCalibrationDeleteView,
     calibration_dashboard, machine_calibration_list, create_calibration_for_machine, calibration_by_type,
     select_machine_for_calibration, create_calibration_with_machine, calibration_report, calibration_report_detail, export_to_word, export_to_excel,
-    increase_priority, close_work, export_certificate_excel
+    increase_priority, close_work, export_certificate_excel, export_balance_certificate_docx
 )
 
 urlpatterns = [
@@ -44,6 +45,11 @@ urlpatterns = [
     path('torque/add/', CalibrationTorqueCreateView.as_view(), name='calibrate-torque-add'),
     path('torque/<int:pk>/edit/', CalibrationTorqueUpdateView.as_view(), name='calibrate-torque-edit'),
     path('torque/<int:pk>/delete/', CalibrationTorqueDeleteView.as_view(), name='calibrate-torque-delete'),
+
+    path('balance/', BalanceCalibrationListView.as_view(), name='calibrate-balance-list'),
+    path('balance/add/', BalanceCalibrationCreateView.as_view(), name='calibrate-balance-add'),
+    path('balance/<int:pk>/edit/', BalanceCalibrationUpdateView.as_view(), name='calibrate-balance-edit'),
+    path('balance/<int:pk>/delete/', BalanceCalibrationDeleteView.as_view(), name='calibrate-balance-delete'),
     
     # เพิ่มระดับความเร่งด่วน
     path('increase-priority/<str:cal_type>/<int:cal_id>/', increase_priority, name='increase-priority'),
@@ -53,4 +59,5 @@ urlpatterns = [
     
     # Export ใบรับรอง
     path('export-certificate/<int:cal_id>/<str:cal_type>/', export_certificate_excel, name='export-certificate-excel'),
+    path('export-balance-certificate/<int:cal_id>/', export_balance_certificate_docx, name='export-balance-certificate-docx'),
 ] 

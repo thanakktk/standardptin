@@ -330,6 +330,10 @@ class BalanceCalibration(models.Model):
     date_calibration = models.DateField(verbose_name="วันที่สอบเทียบ")
     update = models.DateField(blank=True, null=True, verbose_name="วันที่อัปเดต")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
+    received_date = models.DateField(blank=True, null=True, verbose_name="วันที่รับเครื่องมือ")
+    issue_date = models.DateField(blank=True, null=True, verbose_name="วันที่ออกใบรับรอง")
+    certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
+    procedure_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขขั้นตอนการสอบเทียบ")
     
     # ข้อมูลมาตรฐาน
     unit = models.CharField(max_length=20, default="mg", verbose_name="หน่วย")
@@ -377,6 +381,10 @@ class BalanceReading(models.Model):
     average = models.DecimalField(max_digits=10, decimal_places=5, blank=True, null=True, verbose_name="Avg")
     standard_deviation = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True, verbose_name="SD")
     uncertainty = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True, verbose_name="Uncer")
+    
+    # ข้อมูลเพิ่มเติมสำหรับใบรับรอง
+    conventional_mass = models.DecimalField(max_digits=10, decimal_places=5, blank=True, null=True, verbose_name="Conventional Mass")
+    displayed_value = models.DecimalField(max_digits=10, decimal_places=5, blank=True, null=True, verbose_name="Displayed Value")
 
     def __str__(self):
         return f"Balance Reading {self.uuc_set} - {self.calibration}"

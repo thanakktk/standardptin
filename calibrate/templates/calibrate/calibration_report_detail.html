@@ -51,6 +51,7 @@
                             <option value="force" {% if instrument_type == 'force' %}selected{% endif %}>Force Gauge</option>
                             <option value="pressure" {% if instrument_type == 'pressure' %}selected{% endif %}>Pressure Gauge</option>
                             <option value="torque" {% if instrument_type == 'torque' %}selected{% endif %}>Torque Wrench</option>
+                            <option value="balance" {% if instrument_type == 'balance' %}selected{% endif %}>Balance</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -147,11 +148,13 @@
                                     Pressure Gauge
                                 {% elif cal.type == 'torque' %}
                                     Torque Wrench
+                                {% elif cal.type == 'balance' %}
+                                    Balance
                                 {% else %}
                                     {{ cal.type_name }}
                                 {% endif %}
                             </td>
-                            <td>ฝสอ.ฝูง ๔๐๓ บน.๔</td>
+                            <td>{{ organization.name|default:"ฝสอ.ฝูง ๔๐๓ บน.๔" }}</td>
                             <td>๑</td>
                             <td>
                                 {% if cal.status == 'cert_issued' or cal.status == 'passed' or cal.status == 'active' %}
@@ -188,13 +191,24 @@
                                         <a href="{% url 'calibrate-torque-edit' cal.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                    {% elif cal.type == 'balance' %}
+                                        <a href="{% url 'calibrate-balance-edit' cal.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข Balance">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
                                     {% endif %}
                                     
                                     {% if cal.status == 'cert_issued' or cal.status == 'passed' or cal.status == 'active' %}
-                                        <a href="{% url 'export-certificate-excel' cal.id cal.type %}" 
-                                           class="btn btn-outline-success btn-sm" title="Export ใบรับรองแบบ Excel">
-                                            <i class="fas fa-file-excel"></i>
-                                        </a>
+                                        {% if cal.type == 'balance' %}
+                                            <a href="{% url 'export-balance-certificate-docx' cal.id %}" 
+                                               class="btn btn-outline-success btn-sm" title="Export ใบรับรอง Balance แบบ DOCX">
+                                                <i class="fas fa-file-word"></i>
+                                            </a>
+                                        {% else %}
+                                            <a href="{% url 'export-certificate-excel' cal.id cal.type %}" 
+                                               class="btn btn-outline-success btn-sm" title="Export ใบรับรองแบบ Excel">
+                                                <i class="fas fa-file-excel"></i>
+                                            </a>
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                             </td>

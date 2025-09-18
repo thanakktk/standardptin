@@ -185,6 +185,61 @@ class CalibrationTorqueDeleteView(LoginRequiredMixin, PermissionRequiredMixin, D
     success_url = reverse_lazy('calibrate-dashboard')
     permission_required = 'calibrate.delete_calibrationtorque'
 
+class BalanceCalibrationListView(LoginRequiredMixin, ListView):
+    model = BalanceCalibration
+    template_name = 'calibrate/balance_list.html'
+    context_object_name = 'calibrations'
+    
+    def get_queryset(self):
+        # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ
+        return BalanceCalibration.objects.annotate(
+            priority_order=models.Case(
+                models.When(priority='very_urgent', then=models.Value(1)),
+                models.When(priority='urgent', then=models.Value(2)),
+                models.When(priority='normal', then=models.Value(3)),
+                default=models.Value(4),
+                output_field=models.IntegerField(),
+            )
+        ).order_by('priority_order', '-date_calibration')
+
+class BalanceCalibrationCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = BalanceCalibration
+    form_class = BalanceCalibrationForm
+    template_name = 'calibrate/balance_form.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    permission_required = 'calibrate.add_balancecalibration'
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        form.fields['calibrator'].queryset = users
+        form.fields['certificate_issuer'].queryset = users
+        return form
+
+class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = BalanceCalibration
+    form_class = BalanceCalibrationForm
+    template_name = 'calibrate/balance_form.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    permission_required = 'calibrate.change_balancecalibration'
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        form.fields['calibrator'].queryset = users
+        form.fields['certificate_issuer'].queryset = users
+        return form
+
+class BalanceCalibrationDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = BalanceCalibration
+    template_name = 'calibrate/balance_confirm_delete.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    permission_required = 'calibrate.delete_balancecalibration'
+
 @login_required
 def calibration_dashboard(request):
     """หน้าหลักสำหรับเลือกประเภทการสอบเทียบ"""
@@ -497,13 +552,21 @@ def create_calibration_for_machine(request, machine_id):
             form = CalibrationTorqueForm(request.POST)
             template = 'calibrate/torque_form.html'
             success_url = reverse_lazy('machine-calibration-list', kwargs={'machine_id': machine_id})
+        elif 'balance' in machine_type_name:
+            form = BalanceCalibrationForm(request.POST)
+            template = 'calibrate/balance_form.html'
+            success_url = reverse_lazy('machine-calibration-list', kwargs={'machine_id': machine_id})
         else:
             messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสม')
             return redirect('machine-list')
         
         if form.is_valid():
             calibration = form.save(commit=False)
-            calibration.uuc_id = machine.id
+            # สำหรับ Balance ใช้ field 'machine' แทน 'uuc_id'
+            if 'balance' in machine_type_name:
+                calibration.machine = machine
+            else:
+                calibration.uuc_id = machine.id
             calibration.save()
             messages.success(request, 'บันทึกการสอบเทียบเรียบร้อยแล้ว')
             return redirect(success_url)
@@ -517,6 +580,9 @@ def create_calibration_for_machine(request, machine_id):
         elif 'torque' in machine_type_name:
             form = CalibrationTorqueForm(initial={'uuc_id': machine.id})
             template = 'calibrate/torque_form.html'
+        elif 'balance' in machine_type_name:
+            form = BalanceCalibrationForm(initial={'machine': machine.id})
+            template = 'calibrate/balance_form.html'
         else:
             messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสม')
             return redirect('machine-list')
@@ -595,13 +661,21 @@ def create_calibration_with_machine(request, machine_id):
         elif 'torque' in machine_type_name:
             # สำหรับ Torque ใช้การประมวลผลข้อมูลแบบพิเศษ
             return process_torque_calibration(request, machine)
+        elif 'balance' in machine_type_name:
+            form = BalanceCalibrationForm(request.POST)
+            template = 'calibrate/balance_form_with_machine.html'
+            success_url = reverse_lazy('calibrate-dashboard')
         else:
             messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสม')
             return redirect('select-machine-for-calibration')
         
         if form.is_valid():
             calibration = form.save(commit=False)
-            calibration.uuc_id = machine
+            # สำหรับ Balance ใช้ field 'machine' แทน 'uuc_id'
+            if 'balance' in machine_type_name:
+                calibration.machine = machine
+            else:
+                calibration.uuc_id = machine
             
             # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
             from datetime import datetime, timedelta
@@ -676,6 +750,19 @@ def create_calibration_with_machine(request, machine_id):
             form.fields['calibrator'].queryset = users
             form.fields['certificate_issuer'].queryset = users
             template = 'calibrate/torque_form_with_machine.html'
+        elif 'balance' in machine_type_name:
+            # สำหรับ Balance ใช้ field 'machine' แทน 'uuc_id'
+            balance_initial_data = {
+                'machine': machine,
+            }
+            form = BalanceCalibrationForm(initial=balance_initial_data)
+            # เพิ่มตัวเลือกผู้ใช้สำหรับฟิลด์ calibrator และ certificate_issuer
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+            form.fields['calibrator'].queryset = users
+            form.fields['certificate_issuer'].queryset = users
+            template = 'calibrate/balance_form_with_machine.html'
         else:
             messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสม')
             return redirect('select-machine-for-calibration')
@@ -1049,6 +1136,7 @@ def calibration_report(request):
     force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    balance_calibrations = BalanceCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
     
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
@@ -1106,6 +1194,25 @@ def calibration_report(request):
             'status': cal.status,
             'priority': cal.priority,
             'calibration_date': cal.update,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+        })
+    
+    # เพิ่มข้อมูล Balance calibrations
+    for cal in balance_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'balance',
+            'type_name': 'การสอบเทียบ Balance',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.date_calibration,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
@@ -1146,10 +1253,21 @@ def calibration_report_detail(request):
     name_search = request.GET.get('name_search', '')
     status_filter = request.GET.get('status_filter', '')
     
+    # ดึงข้อมูลหน่วยงาน (Organize) สำหรับที่อยู่
+    from organize.models import Organize
+    try:
+        # หาหน่วยงานหลัก (main unit) หรือหน่วยงานแรก
+        organization = Organize.objects.filter(is_main_unit=True).first()
+        if not organization:
+            organization = Organize.objects.first()
+    except:
+        organization = None
+    
     # ดึงข้อมูลการสอบเทียบทั้งหมด
     force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
+    balance_calibrations = BalanceCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
     
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
@@ -1211,6 +1329,25 @@ def calibration_report_detail(request):
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
         })
     
+    # เพิ่มข้อมูล Balance calibrations
+    for cal in balance_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'balance',
+            'type_name': 'การสอบเทียบ Balance',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.date_calibration,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+        })
+    
     # กรองข้อมูลตามพารามิเตอร์
     filtered_calibrations = []
     for cal in all_calibrations:
@@ -1231,6 +1368,8 @@ def calibration_report_detail(request):
             elif instrument_type == 'pressure' and cal['type'] != 'pressure':
                 include_item = False
             elif instrument_type == 'torque' and cal['type'] != 'torque':
+                include_item = False
+            elif instrument_type == 'balance' and cal['type'] != 'balance':
                 include_item = False
         
         # กรองตามสถานะ
@@ -1274,11 +1413,13 @@ def calibration_report_detail(request):
         'total_calibrations': (
             CalibrationForce.objects.count() +
             CalibrationPressure.objects.count() +
-            CalibrationTorque.objects.count()
+            CalibrationTorque.objects.count() +
+            BalanceCalibration.objects.count()
         ),
         'all_calibrations': filtered_calibrations,
         'today': today,
         'today_plus_30': today_plus_30,
+        'organization': organization,  # เพิ่มข้อมูลหน่วยงาน
         # พารามิเตอร์การกรอง
         'department': department,
         'instrument_type': instrument_type,
@@ -1303,6 +1444,16 @@ def export_to_word(request):
     serial_search = request.GET.get('serial_search', '')
     name_search = request.GET.get('name_search', '')
     status_filter = request.GET.get('status_filter', '')
+    
+    # ดึงข้อมูลหน่วยงาน (Organize) สำหรับที่อยู่
+    from organize.models import Organize
+    try:
+        # หาหน่วยงานหลัก (main unit) หรือหน่วยงานแรก
+        organization = Organize.objects.filter(is_main_unit=True).first()
+        if not organization:
+            organization = Organize.objects.first()
+    except:
+        organization = None
     
     # ดึงข้อมูลการสอบเทียบทั้งหมด
     force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
@@ -1389,6 +1540,8 @@ def export_to_word(request):
             elif instrument_type == 'pressure' and cal['type'] != 'pressure':
                 include_item = False
             elif instrument_type == 'torque' and cal['type'] != 'torque':
+                include_item = False
+            elif instrument_type == 'balance' and cal['type'] != 'balance':
                 include_item = False
         
         # กรองตามสถานะ
@@ -1490,7 +1643,8 @@ def export_to_word(request):
         row_cells[3].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
         
         # หน่วยผู้ใช้
-        row_cells[4].text = 'ฝสอ.ฝูง ๔๐๓ บน.๔'
+        user_unit = organization.name if organization else 'ยังไม่ได้กรอก'
+        row_cells[4].text = user_unit
         row_cells[4].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
         
         # จำนวน
@@ -1545,6 +1699,16 @@ def export_to_excel(request):
     serial_search = request.GET.get('serial_search', '')
     name_search = request.GET.get('name_search', '')
     status_filter = request.GET.get('status_filter', '')
+    
+    # ดึงข้อมูลหน่วยงาน (Organize) สำหรับที่อยู่
+    from organize.models import Organize
+    try:
+        # หาหน่วยงานหลัก (main unit) หรือหน่วยงานแรก
+        organization = Organize.objects.filter(is_main_unit=True).first()
+        if not organization:
+            organization = Organize.objects.first()
+    except:
+        organization = None
     
     # ดึงข้อมูลการสอบเทียบทั้งหมด
     force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
@@ -1631,6 +1795,8 @@ def export_to_excel(request):
             elif instrument_type == 'pressure' and cal['type'] != 'pressure':
                 include_item = False
             elif instrument_type == 'torque' and cal['type'] != 'torque':
+                include_item = False
+            elif instrument_type == 'balance' and cal['type'] != 'balance':
                 include_item = False
         
         # กรองตามสถานะ
@@ -1722,7 +1888,8 @@ def export_to_excel(request):
         ws.cell(row=row, column=4, value=instrument_name).alignment = Alignment(horizontal='center')
         
         # หน่วยผู้ใช้
-        ws.cell(row=row, column=5, value='ฝสอ.ฝูง ๔๐๓ บน.๔').alignment = Alignment(horizontal='center')
+        user_unit = organization.name if organization else 'ยังไม่ได้กรอก'
+        ws.cell(row=row, column=5, value=user_unit).alignment = Alignment(horizontal='center')
         
         # จำนวน
         ws.cell(row=row, column=6, value='๑').alignment = Alignment(horizontal='center')
@@ -1805,6 +1972,8 @@ def increase_priority(request, cal_type, cal_id):
             calibration = get_object_or_404(CalibrationPressure, cal_pressure_id=cal_id)
         elif cal_type == 'torque':
             calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
+        elif cal_type == 'balance':
+            calibration = get_object_or_404(BalanceCalibration, pk=cal_id)
         else:
             return JsonResponse({
                 'success': False,
@@ -1861,6 +2030,8 @@ def close_work(request, cal_type, cal_id):
             calibration = get_object_or_404(CalibrationPressure, cal_pressure_id=cal_id)
         elif cal_type == 'torque':
             calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
+        elif cal_type == 'balance':
+            calibration = get_object_or_404(BalanceCalibration, pk=cal_id)
         else:
             return JsonResponse({
                 'success': False,
@@ -1903,6 +2074,8 @@ def export_certificate_excel(request, cal_id, cal_type):
             calibration = get_object_or_404(CalibrationPressure, cal_pressure_id=cal_id)
         elif cal_type == 'torque':
             calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
+        elif cal_type == 'balance':
+            calibration = get_object_or_404(BalanceCalibration, pk=cal_id)
         else:
             messages.error(request, 'ประเภทการสอบเทียบไม่ถูกต้อง')
             return redirect('calibrate-report-detail')
@@ -1977,6 +2150,191 @@ def export_certificate_excel(request, cal_id, cal_type):
         response['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
         
         wb.save(response)
+        return response
+        
+    except Exception as e:
+        messages.error(request, f'เกิดข้อผิดพลาดในการสร้างใบรับรอง: {str(e)}')
+        return redirect('calibrate-report-detail')
+
+@login_required
+def export_balance_certificate_docx(request, cal_id):
+    """Export ใบรับรอง Balance แบบ DOCX โดยใช้ template"""
+    try:
+        # ดึงข้อมูลการสอบเทียบ Balance
+        calibration = get_object_or_404(BalanceCalibration, pk=cal_id)
+        
+        # ตรวจสอบสถานะว่าผ่านการสอบเทียบหรือไม่
+        if calibration.status not in ['cert_issued', 'passed', 'active']:
+            messages.error(request, 'ไม่สามารถออกใบรับรองได้ เนื่องจากยังไม่ผ่านการสอบเทียบ')
+            return redirect('calibrate-report-detail')
+        
+        # เปิด template
+        template_path = 'Balance_template.docx'
+        doc = Document(template_path)
+        
+        # ข้อมูลเครื่องมือ
+        machine = calibration.machine
+        standard = calibration.std_id
+        
+        # ดึงข้อมูลหน่วยงาน (Organize) สำหรับที่อยู่
+        from organize.models import Organize
+        try:
+            # หาหน่วยงานหลัก (main unit) หรือหน่วยงานแรก
+            organization = Organize.objects.filter(is_main_unit=True).first()
+            if not organization:
+                organization = Organize.objects.first()
+        except:
+            organization = None
+        
+        # สร้าง dictionary สำหรับแทนค่า
+        replacements = {
+            # ข้อมูลเครื่องมือ
+            '{{MODEL}}': machine.model if machine.model else '-',
+            '{{MANUFACTURER}}': str(machine.manufacture) if machine.manufacture else '-',
+            '{{DESCRIPTION}}': machine.name if machine.name else '-',
+            '{{SERIAL_NUMBER}}': machine.serial_number if machine.serial_number else '-',
+            '{{RANGE}}': machine.range if machine.range else '-',
+            '{{GRADUATION}}': machine.res_uuc if machine.res_uuc else '-',
+            '{{OPTION}}': machine.option if machine.option else 'N/A',
+            '{{CUSTOMER_ASSET_ID}}': machine.customer_asset_id if machine.customer_asset_id else '-',
+            
+            # ข้อมูลการสอบเทียบ
+            '{{RECEIVED_DATE}}': calibration.received_date.strftime('%d-%b-%Y') if calibration.received_date else '-',
+            '{{DATE_OF_CALIBRATION}}': calibration.date_calibration.strftime('%d-%b-%Y') if calibration.date_calibration else '-',
+            '{{DUE_DATE}}': calibration.next_due.strftime('%d-%b-%Y') if calibration.next_due else '-',
+            '{{ISSUE_DATE}}': calibration.issue_date.strftime('%d-%b-%Y') if calibration.issue_date else '-',
+            '{{CERTIFICATE_NUMBER}}': calibration.certificate_number if calibration.certificate_number else '-',
+            '{{PROCEDURE}}': calibration.procedure_number if calibration.procedure_number else '-',
+            
+            # ข้อมูลมาตรฐาน
+            '{{STANDARD_ASSET_NO}}': standard.asset_number if standard and standard.asset_number else '-',
+            '{{STANDARD_DESCRIPTION}}': standard.name if standard else '-',
+            '{{STANDARD_MAKER_MODEL}}': standard.description if standard and standard.description else '-',
+            '{{STANDARD_SERIAL}}': standard.name if standard else '-',  # ใช้ name เป็น serial ถ้าไม่มี field แยก
+            '{{STANDARD_CERTIFICATE}}': standard.certificate_number if standard and standard.certificate_number else '-',
+            '{{STANDARD_DUE_DATE}}': standard.due_date.strftime('%d-%b-%Y') if standard and standard.due_date else '-',
+            
+            # ข้อมูลผู้รับผิดชอบ
+            '{{CALIBRATOR}}': str(calibration.calibrator) if calibration.calibrator else '-',
+            '{{APPROVER}}': str(calibration.certificate_issuer) if calibration.certificate_issuer else '-',
+            
+            # ข้อมูลหน่วยงานและที่อยู่
+            '{{CUSTOMER}}': organization.name if organization else 'Physical Lab, Metrology Division, DC&E (Royal Thai Air Force)',
+            '{{CUSTOMER_ADDRESS}}': organization.address if organization and organization.address else '171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210',
+            '{{LOCATION_OF_CALIBRATION}}': organization.name if organization else 'Metrology Division, DC&E (Royal Thai Air Force)',
+            '{{LOCATION_ADDRESS}}': organization.address if organization and organization.address else '171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210',
+        }
+        
+        # ฟังก์ชันสำหรับแทนค่าใน paragraph
+        def replace_in_paragraph(paragraph, replacements):
+            for placeholder, value in replacements.items():
+                if placeholder in paragraph.text:
+                    # แทนที่ข้อความใน paragraph
+                    for run in paragraph.runs:
+                        if placeholder in run.text:
+                            run.text = run.text.replace(placeholder, value)
+        
+        # ฟังก์ชันสำหรับแทนค่าใน text box และ shape
+        def replace_in_shapes(shapes, replacements):
+            for shape in shapes:
+                if hasattr(shape, 'text_frame'):
+                    for paragraph in shape.text_frame.paragraphs:
+                        replace_in_paragraph(paragraph, replacements)
+                if hasattr(shape, 'shapes'):
+                    replace_in_shapes(shape.shapes, replacements)
+        
+        # ฟังก์ชันสำหรับแทนค่าใน document ทั้งหมด
+        def replace_in_document(doc, replacements):
+            # แทนค่าใน paragraphs
+            for paragraph in doc.paragraphs:
+                replace_in_paragraph(paragraph, replacements)
+            
+            # แทนค่าใน tables
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.paragraphs:
+                            replace_in_paragraph(paragraph, replacements)
+            
+            # แทนค่าใน headers และ footers
+            for section in doc.sections:
+                # Header
+                if section.header:
+                    for paragraph in section.header.paragraphs:
+                        replace_in_paragraph(paragraph, replacements)
+                
+                # Footer
+                if section.footer:
+                    for paragraph in section.footer.paragraphs:
+                        replace_in_paragraph(paragraph, replacements)
+                
+                # Text boxes และ shapes
+                if hasattr(section, 'shapes'):
+                    replace_in_shapes(section.shapes, replacements)
+        
+        # เรียกใช้ฟังก์ชันแทนค่าใน document ทั้งหมด
+        replace_in_document(doc, replacements)
+        
+        # เพิ่มข้อมูลผลการสอบเทียบในตาราง (ถ้ามี)
+        readings = calibration.readings.all().order_by('uuc_set')
+        if readings:
+            # หาตารางผลการสอบเทียบใน template
+            for table in doc.tables:
+                # ตรวจสอบว่าตารางนี้เป็นตารางผลการสอบเทียบหรือไม่
+                if len(table.rows) > 0 and len(table.columns) >= 5:
+                    first_row_text = ' '.join([cell.text.strip() for cell in table.rows[0].cells])
+                    if 'Nominal Value' in first_row_text or 'Conventional Mass' in first_row_text or 'UUC.set' in first_row_text:
+                        # ลบแถวเก่า (ยกเว้น header)
+                        for i in range(len(table.rows) - 1, 0, -1):
+                            table._tbl.remove(table.rows[i]._tr)
+                        
+                        # เพิ่มข้อมูลการอ่านค่าใหม่
+                        for reading in readings:
+                            row_cells = table.add_row().cells
+                            
+                            # คำนวณ Error = Displayed Value - Conventional Mass
+                            error_value = None
+                            if reading.displayed_value and reading.conventional_mass:
+                                error_value = float(reading.displayed_value) - float(reading.conventional_mass)
+                            
+                            # เติมข้อมูลในแต่ละคอลัมน์
+                            if len(row_cells) >= 1:
+                                row_cells[0].text = str(reading.uuc_set) if reading.uuc_set else '-'
+                            if len(row_cells) >= 2:
+                                row_cells[1].text = str(reading.conventional_mass) if reading.conventional_mass else '-'
+                            if len(row_cells) >= 3:
+                                row_cells[2].text = str(reading.displayed_value) if reading.displayed_value else '-'
+                            if len(row_cells) >= 4:
+                                row_cells[3].text = f"{error_value:.5f}" if error_value is not None else '-'
+                            if len(row_cells) >= 5:
+                                row_cells[4].text = str(reading.uncertainty) if reading.uncertainty else '-'
+                            
+                            # จัดรูปแบบแถวข้อมูล
+                            for cell in row_cells:
+                                for paragraph in cell.paragraphs:
+                                    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                                    for run in paragraph.runs:
+                                        run.font.name = 'TH Sarabun New'
+                                        run.font.size = Pt(10)
+                        break
+        
+        # สร้าง response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        
+        # สร้างชื่อไฟล์ที่ปลอดภัย
+        machine_name = machine.name if machine else "Balance"
+        safe_filename = f"Balance_Certificate_{machine_name}_{datetime.now().strftime('%Y%m%d')}.docx"
+        
+        response['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
+        
+        # บันทึกเอกสาร
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        response.write(buffer.getvalue())
+        
         return response
         
     except Exception as e:

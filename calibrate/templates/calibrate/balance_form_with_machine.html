@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+
+{% block title %}เพิ่มบันทึกการสอบเทียบ Balance - {{ machine.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-balance-scale fa-lg"></i>
+                    เพิ่มบันทึกการสอบเทียบ Balance
+                </h1>
+                <p class="page-subtitle">
+                    {{ machine.name }} - {{ machine.machine_type.name }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- ข้อมูลเครื่องมือ -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    ข้อมูลเครื่องมือ
+                </h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-3">
+                        <small><strong>ชื่อ:</strong> {{ machine.name }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>รุ่น:</strong> {{ machine.model|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>หมายเลข:</strong> {{ machine.serial_number|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>ช่วงการวัด:</strong> {{ machine.range|default:"-" }}</small>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <small><strong>ความละเอียด:</strong> {{ machine.res_uuc|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>ผู้ผลิต:</strong> {{ machine.manufacture|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>หน่วยงาน:</strong> {{ machine.organize|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>สถานะ:</strong> 
+                            <span class="badge bg-{{ machine.status|yesno:'success,warning,danger' }}">
+                                {{ machine.get_status_display }}
+                            </span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ฟอร์มบันทึกการสอบเทียบ -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    ข้อมูลการสอบเทียบ Balance
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- ข้อมูลทั่วไป -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="{{ form.date_calibration.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>{{ form.date_calibration.label }}
+                            </label>
+                            {{ form.date_calibration }}
+                            {% if form.date_calibration.errors %}
+                                <div class="text-danger small">{{ form.date_calibration.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.received_date.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar-plus me-1"></i>{{ form.received_date.label }}
+                            </label>
+                            {{ form.received_date }}
+                            {% if form.received_date.errors %}
+                                <div class="text-danger small">{{ form.received_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.issue_date.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar-check me-1"></i>{{ form.issue_date.label }}
+                            </label>
+                            {{ form.issue_date }}
+                            {% if form.issue_date.errors %}
+                                <div class="text-danger small">{{ form.issue_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.next_due.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar-times me-1"></i>{{ form.next_due.label }}
+                            </label>
+                            {{ form.next_due }}
+                            {% if form.next_due.errors %}
+                                <div class="text-danger small">{{ form.next_due.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.calibrator.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-cog me-1"></i>{{ form.calibrator.label }}
+                            </label>
+                            {{ form.calibrator }}
+                            {% if form.calibrator.errors %}
+                                <div class="text-danger small">{{ form.calibrator.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.certificate_issuer.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-tie me-1"></i>{{ form.certificate_issuer.label }}
+                            </label>
+                            {{ form.certificate_issuer }}
+                            {% if form.certificate_issuer.errors %}
+                                <div class="text-danger small">{{ form.certificate_issuer.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.machine.id_for_label }}" class="form-label">
+                                <i class="fas fa-tools me-1"></i>{{ form.machine.label }}
+                            </label>
+                            {{ form.machine }}
+                            {% if form.machine.errors %}
+                                <div class="text-danger small">{{ form.machine.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.certificate_number.id_for_label }}" class="form-label">
+                                <i class="fas fa-certificate me-1"></i>{{ form.certificate_number.label }}
+                            </label>
+                            {{ form.certificate_number }}
+                            {% if form.certificate_number.errors %}
+                                <div class="text-danger small">{{ form.certificate_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.procedure_number.id_for_label }}" class="form-label">
+                                <i class="fas fa-list-ol me-1"></i>{{ form.procedure_number.label }}
+                            </label>
+                            {{ form.procedure_number }}
+                            {% if form.procedure_number.errors %}
+                                <div class="text-danger small">{{ form.procedure_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
+                            </label>
+                            <div id="calibration-equipment-container">
+                                <div class="row mb-2 calibration-equipment-row">
+                                    <div class="col-md-10">
+                                        {{ form.std_id }}
+                                        {% if form.std_id.errors %}
+                                            <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-success btn-sm add-equipment-btn">
+                                            <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ข้อมูลการคำนวณ -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="{{ form.drift.id_for_label }}" class="form-label">
+                                <i class="fas fa-chart-line me-1"></i>{{ form.drift.label }}
+                            </label>
+                            {{ form.drift }}
+                            {% if form.drift.errors %}
+                                <div class="text-danger small">{{ form.drift.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.res_push.id_for_label }}" class="form-label">
+                                <i class="fas fa-arrows-alt-v me-1"></i>{{ form.res_push.label }}
+                            </label>
+                            {{ form.res_push }}
+                            {% if form.res_push.errors %}
+                                <div class="text-danger small">{{ form.res_push.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.res_tip.id_for_label }}" class="form-label">
+                                <i class="fas fa-arrows-alt-h me-1"></i>{{ form.res_tip.label }}
+                            </label>
+                            {{ form.res_tip }}
+                            {% if form.res_tip.errors %}
+                                <div class="text-danger small">{{ form.res_tip.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.air_buoyancy.id_for_label }}" class="form-label">
+                                <i class="fas fa-wind me-1"></i>{{ form.air_buoyancy.label }}
+                            </label>
+                            {{ form.air_buoyancy }}
+                            {% if form.air_buoyancy.errors %}
+                                <div class="text-danger small">{{ form.air_buoyancy.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.uncertainty_68.id_for_label }}" class="form-label">
+                                <i class="fas fa-percentage me-1"></i>{{ form.uncertainty_68.label }}
+                            </label>
+                            {{ form.uncertainty_68 }}
+                            {% if form.uncertainty_68.errors %}
+                                <div class="text-danger small">{{ form.uncertainty_68.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.uncertainty_95_k.id_for_label }}" class="form-label">
+                                <i class="fas fa-percentage me-1"></i>{{ form.uncertainty_95_k.label }}
+                            </label>
+                            {{ form.uncertainty_95_k }}
+                            {% if form.uncertainty_95_k.errors %}
+                                <div class="text-danger small">{{ form.uncertainty_95_k.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.final_uncertainty.id_for_label }}" class="form-label">
+                                <i class="fas fa-percentage me-1"></i>{{ form.final_uncertainty.label }}
+                            </label>
+                            {{ form.final_uncertainty }}
+                            {% if form.final_uncertainty.errors %}
+                                <div class="text-danger small">{{ form.final_uncertainty.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-1"></i>บันทึกการสอบเทียบ
+                                </button>
+                                <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>กลับไปรายการ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript สำหรับเพิ่มเครื่องมือที่ใช้สอบเทียบ
+let equipmentCounter = 1;
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('add-equipment-btn')) {
+        equipmentCounter++;
+        const container = document.getElementById('calibration-equipment-container');
+        const newRow = document.createElement('div');
+        newRow.className = 'row mb-2 calibration-equipment-row';
+        newRow.innerHTML = `
+            <div class="col-md-10">
+                <select name="std_id_${equipmentCounter}" class="form-control">
+                    <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                    {% for equipment in form.std_id.field.queryset %}
+                        <option value="{{ equipment.id }}">{{ equipment.name }} - {{ equipment.machine_type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                    <i class="fas fa-minus"></i> ลบ
+                </button>
+            </div>
+        `;
+        container.appendChild(newRow);
+    }
+    
+    if (e.target.classList.contains('remove-equipment-btn')) {
+        e.target.closest('.calibration-equipment-row').remove();
+    }
+});
+</script>
+
+<style>
+/* ซ่อนฟิลด์ที่ไม่ได้ใช้ */
+#id_status, #id_priority, #id_update {
+    display: none !important;
+}
+
+label[for="id_status"], label[for="id_priority"], label[for="id_update"] {
+    display: none !important;
+}
+
+/* ซ่อน div ที่มีฟิลด์เหล่านี้ */
+.col-md-3:has(#id_status), .col-md-3:has(#id_priority), .col-md-3:has(#id_update) {
+    display: none !important;
+}
+</style>
+{% endblock %}
+

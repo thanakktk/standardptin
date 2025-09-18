@@ -87,6 +87,8 @@ class Machine(models.Model):
     calibration_equipment = models.ForeignKey(CalibrationEquipment, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='normal', verbose_name="สถานะ")
     deleted = models.BooleanField(default=False, verbose_name="ลบแล้ว")
+    option = models.CharField(max_length=100, blank=True, null=True, verbose_name="ตัวเลือกเพิ่มเติม")
+    customer_asset_id = models.CharField(max_length=100, blank=True, null=True, verbose_name="รหัสลูกค้า/ทรัพย์สิน")
 
     def __str__(self):
         return self.name

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}รายการบันทึกการสอบเทียบ Balance - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-balance-scale me-3"></i>
+                    รายการบันทึกการสอบเทียบ Balance
+                </h1>
+                <p class="page-subtitle">
+                    จัดการข้อมูลการสอบเทียบเครื่องมือวัด Balance
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'calibrate-balance-add' %}" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    เพิ่มบันทึกการสอบเทียบ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Data Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-table me-2"></i>
+                รายการบันทึกการสอบเทียบ Balance ({{ calibrations.count }} รายการ)
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 8%">
+                                <i class="fas fa-hashtag me-1"></i>ID
+                            </th>
+                            <th style="width: 20%">
+                                <i class="fas fa-cube me-1"></i>เครื่องมือ
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-calendar me-1"></i>วันที่สอบเทียบ
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-calendar-check me-1"></i>วันที่ครบกำหนด
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-user me-1"></i>ผู้สอบเทียบ
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-flag me-1"></i>สถานะการสอบเทียบ
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-cogs me-1"></i>จัดการ
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in calibrations %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-dark">{{ c.id }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ c.machine.name }}</strong>
+                                {% if c.machine.model %}
+                                    <br><small class="text-muted">{{ c.machine.model }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if c.date_calibration %}
+                                    {{ c.date_calibration|date:"d/m/Y" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if c.next_due %}
+                                    {{ c.next_due|date:"d/m/Y" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if c.calibrator %}
+                                    {{ c.calibrator.get_full_name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if c.status == 'pending' %}
+                                    <span class="badge bg-warning">รอสอบเทียบ</span>
+                                {% elif c.status == 'in_progress' %}
+                                    <span class="badge bg-info">กำลังสอบเทียบ</span>
+                                {% elif c.status == 'passed' %}
+                                    <span class="badge bg-success">ผ่านการสอบเทียบ</span>
+                                {% elif c.status == 'cert_issued' %}
+                                    <span class="badge bg-primary">ออกใบรับรอง</span>
+                                {% elif c.status == 'failed' %}
+                                    <span class="badge bg-danger">ไม่ผ่านการสอบเทียบ</span>
+                                {% elif c.status == 'closed' %}
+                                    <span class="badge bg-secondary">ปิดงาน</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ c.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'calibrate-balance-edit' c.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'calibrate-balance-delete' c.id %}" class="btn btn-outline-danger btn-sm" title="ลบ">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-balance-scale fa-3x mb-3"></i>
+                                    <h5>ไม่พบข้อมูลการสอบเทียบ Balance</h5>
+                                    <p>กรุณาเพิ่มบันทึกการสอบเทียบใหม่</p>
+                                    <a href="{% url 'calibrate-balance-add' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>เพิ่มบันทึกการสอบเทียบ
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-balance-scale fa-2x text-dark mb-2"></i>
+                    <h6>บันทึกการสอบเทียบ Balance</h6>
+                    <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัด Balance</p>
+                    <a href="{% url 'calibrate-balance-add' %}" class="btn btn-outline-dark btn-sm">
+                        <i class="fas fa-plus me-1"></i>เพิ่มใหม่
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-weight fa-2x text-primary mb-2"></i>
+                    <h6>บันทึกการสอบเทียบแรง</h6>
+                    <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัดแรง</p>
+                    <a href="{% url 'calibrate-force-list' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-right me-1"></i>ดูรายการ
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-tachometer-alt fa-2x text-success mb-2"></i>
+                    <h6>บันทึกการสอบเทียบความดัน</h6>
+                    <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัดความดัน</p>
+                    <a href="{% url 'calibrate-pressure-list' %}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-arrow-right me-1"></i>ดูรายการ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Home -->
+    <div class="text-center mt-4">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="fas fa-home me-2"></i>กลับหน้าแรก
+        </a>
+    </div>
+</div>
+{% endblock %}

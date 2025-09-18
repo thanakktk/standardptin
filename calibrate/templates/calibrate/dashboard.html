@@ -210,6 +210,9 @@
                             <a href="{% url 'calibrate-torque-list' %}" class="btn btn-outline-warning btn-sm">
                                 <i class="fas fa-cog me-1"></i>แรงบิด
                             </a>
+                            <a href="{% url 'calibrate-balance-list' %}" class="btn btn-outline-dark btn-sm">
+                                <i class="fas fa-balance-scale me-1"></i>Balance
+                            </a>
                             <button type="button" class="btn btn-outline-danger btn-sm" id="deleteSelectedBtn" style="display: none;">
                                 <i class="fas fa-trash me-1"></i>ลบที่เลือก
                             </button>
@@ -358,6 +361,31 @@
                                                     </button>
                                                 {% elif cal.type == 'torque' %}
                                                     <a href="{% url 'calibrate-torque-edit' cal.id %}" class="btn btn-sm btn-outline-warning">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    {% if user.is_staff or user.is_superuser %}
+                                                        <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
+                                                                data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                                data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
+                                                                title="เปลี่ยนระดับความเร่งด่วน">
+                                                            <i class="fas fa-arrow-up"></i>
+                                                        </button>
+                                                        {% if cal.status != 'closed' %}
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary close-work-btn" 
+                                                                    data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                                    data-name="{{ cal.machine_name }}" data-current-status="{{ cal.status }}"
+                                                                    title="ปิดงาน">
+                                                                <i class="fas fa-check-circle"></i>
+                                                            </button>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
+                                                            data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
+                                                            data-name="{{ cal.machine_name }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                {% elif cal.type == 'balance' %}
+                                                    <a href="{% url 'calibrate-balance-edit' cal.id %}" class="btn btn-sm btn-outline-dark">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                     {% if user.is_staff or user.is_superuser %}
@@ -673,6 +701,9 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'torque':
                 deleteUrl = `/calibrate/torque/${id}/delete/`;
                 break;
+            case 'balance':
+                deleteUrl = `/calibrate/balance/${id}/delete/`;
+                break;
         }
 
         fetch(deleteUrl, {
@@ -712,6 +743,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 case 'torque':
                     deleteUrl = `/calibrate/torque/${id}/delete/`;
+                    break;
+                case 'balance':
+                    deleteUrl = `/calibrate/balance/${id}/delete/`;
                     break;
             }
 
