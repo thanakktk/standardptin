@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}หน้าหลักการปรับเทียบ{% endblock %}
+{% block title %}หน้าหลักการสอบเทียบ{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,9 +9,9 @@
             <div class="col-md-8">
                 <h1 class="page-title">
                     <i class="fas fa-clipboard-check fa-lg"></i>
-                    หน้าหลักการปรับเทียบ
+                    หน้าหลักการสอบเทียบ
                 </h1>
-                <p class="page-subtitle">จัดการบันทึกการปรับเทียบเครื่องมือวัด</p>
+                <p class="page-subtitle">จัดการบันทึกการสอบเทียบเครื่องมือวัด</p>
             </div>
         </div>
     </div>
@@ -19,7 +19,7 @@
 
 <div class="main-content">
     <div class="container-fluid">
-        <!-- สถิติการปรับเทียบ -->
+        <!-- สถิติการสอบเทียบ -->
         <div class="row mb-4">
             <div class="col-md-2">
                 <div class="stats-card">
@@ -28,7 +28,7 @@
                     </div>
                     <div class="stats-content">
                         <h3>{{ force_calibrations_count }}</h3>
-                        <p>บันทึกการปรับเทียบแรง</p>
+                        <p>บันทึกการสอบเทียบแรง</p>
                     </div>
                 </div>
             </div>
@@ -39,7 +39,7 @@
                     </div>
                     <div class="stats-content">
                         <h3>{{ pressure_calibrations_count }}</h3>
-                        <p>บันทึกการปรับเทียบความดัน</p>
+                        <p>บันทึกการสอบเทียบความดัน</p>
                     </div>
                 </div>
             </div>
@@ -50,7 +50,7 @@
                     </div>
                     <div class="stats-content">
                         <h3>{{ torque_calibrations_count }}</h3>
-                        <p>บันทึกการปรับเทียบแรงบิด</p>
+                        <p>บันทึกการสอบเทียบแรงบิด</p>
                     </div>
                 </div>
             </div>
@@ -61,7 +61,7 @@
                     </div>
                     <div class="stats-content">
                         <h3>{{ dial_gauge_calibrations_count }}</h3>
-                        <p>บันทึกการปรับเทียบ Dial Gauge</p>
+                        <p>บันทึกการสอบเทียบ Dial Gauge</p>
                     </div>
                 </div>
             </div>
@@ -72,7 +72,7 @@
                     </div>
                     <div class="stats-content">
                         <h3>{{ balance_calibrations_count }}</h3>
-                        <p>บันทึกการปรับเทียบ Balance</p>
+                        <p>บันทึกการสอบเทียบ Balance</p>
                     </div>
                 </div>
             </div>
@@ -83,13 +83,13 @@
                     </div>
                     <div class="stats-content">
                         <h3>{{ microwave_calibrations_count }}</h3>
-                        <p>บันทึกการปรับเทียบ Microwave</p>
+                        <p>บันทึกการสอบเทียบ Microwave</p>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- สถิติรอการปรับเทียบ -->
+        <!-- สถิติรอการสอบเทียบ -->
         <div class="row mb-4">
             <div class="col-md-12">
                 <div class="stats-card">
@@ -98,7 +98,7 @@
                     </div>
                     <div class="stats-content">
                         <h3>{{ pending_calibrations_count }}</h3>
-                        <p>รอการปรับเทียบทั้งหมด</p>
+                        <p>รอการสอบเทียบทั้งหมด</p>
                     </div>
                 </div>
             </div>
@@ -133,7 +133,7 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">
-                                        <i class="fas fa-tag me-1"></i>ประเภทการปรับเทียบ
+                                        <i class="fas fa-tag me-1"></i>ประเภทการสอบเทียบ
                                     </label>
                                     <select class="form-control" name="calibration_type">
                                         <option value="">ทั้งหมด</option>
@@ -151,9 +151,9 @@
                                     </label>
                                     <select class="form-control" name="status_filter">
                                         <option value="">ทั้งหมด</option>
-                                        <option value="pending" {% if request.GET.status_filter == 'pending' %}selected{% endif %}>รอปรับเทียบ</option>
-                                        <option value="in_progress" {% if request.GET.status_filter == 'in_progress' %}selected{% endif %}>กำลังปรับเทียบ</option>
-                                        <option value="passed" {% if request.GET.status_filter == 'passed' %}selected{% endif %}>ผ่านการปรับเทียบ</option>
+                                        <option value="pending" {% if request.GET.status_filter == 'pending' %}selected{% endif %}>รอสอบเทียบ</option>
+                                        <option value="in_progress" {% if request.GET.status_filter == 'in_progress' %}selected{% endif %}>กำลังสอบเทียบ</option>
+                                        <option value="passed" {% if request.GET.status_filter == 'passed' %}selected{% endif %}>ผ่านการสอบเทียบ</option>
                                         <option value="cert_issued" {% if request.GET.status_filter == 'cert_issued' %}selected{% endif %}>ออกใบรับรอง</option>
                                         <option value="failed" {% if request.GET.status_filter == 'failed' %}selected{% endif %}>ไม่ผ่านการสอบเทียบ</option>
                                     </select>
@@ -191,14 +191,14 @@
             </div>
         </div>
 
-        <!-- ตารางแสดงรายการการปรับเทียบทั้งหมด -->
+        <!-- ตารางแสดงรายการการสอบเทียบทั้งหมด -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">
                             <i class="fas fa-list me-2"></i>
-                            รายการบันทึกการปรับเทียบทั้งหมด ({{ all_calibrations|length }} รายการ)
+                            รายการบันทึกการสอบเทียบทั้งหมด ({{ all_calibrations|length }} รายการ)
                         </h5>
                         <div class="btn-group" role="group">
                             <a href="{% url 'calibrate-force-list' %}" class="btn btn-outline-primary btn-sm">
@@ -225,13 +225,13 @@
                                             <input type="checkbox" id="selectAll" class="form-check-input">
                                         </th>
                                         <th>ลำดับ</th>
-                                        <th>ประเภทการปรับเทียบ</th>
+                                        <th>ประเภทการสอบเทียบ</th>
                                         <th>ชื่อเครื่องมือ</th>
                                         <th>รุ่น</th>
                                         <th>หมายเลขเครื่อง</th>
-                                        <th>วันที่ปรับเทียบ</th>
+                                        <th>วันที่สอบเทียบ</th>
                                         <th>วันที่ครบกำหนดถัดไป</th>
-                                        <th>สถานะการปรับเทียบ</th>
+                                        <th>สถานะการสอบเทียบ</th>
                                         <th>ระดับความเร่งด่วน</th>
                                         <th>จัดการ</th>
                                     </tr>
@@ -278,11 +278,11 @@
                                         </td>
                                         <td>
                                             {% if cal.status == 'pending' %}
-                                                <span class="badge bg-warning">รอปรับเทียบ</span>
+                                                <span class="badge bg-warning">รอสอบเทียบ</span>
                                             {% elif cal.status == 'in_progress' %}
-                                                <span class="badge bg-info">กำลังปรับเทียบ</span>
+                                                <span class="badge bg-info">กำลังสอบเทียบ</span>
                                             {% elif cal.status == 'passed' %}
-                                                <span class="badge bg-success">ผ่านการปรับเทียบ</span>
+                                                <span class="badge bg-success">ผ่านการสอบเทียบ</span>
                                             {% elif cal.status == 'cert_issued' %}
                                                 <span class="badge bg-primary">ออกใบรับรอง</span>
                                             {% elif cal.status == 'failed' %}
@@ -392,8 +392,8 @@
                         {% else %}
                         <div class="text-center py-4">
                             <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">ยังไม่มีบันทึกการปรับเทียบ</h5>
-                            <p class="text-muted">เริ่มต้นด้วยการเพิ่มบันทึกการปรับเทียบใหม่</p>
+                            <h5 class="text-muted">ยังไม่มีบันทึกการสอบเทียบ</h5>
+                            <p class="text-muted">เริ่มต้นด้วยการเพิ่มบันทึกการสอบเทียบใหม่</p>
                         </div>
                         {% endif %}
                     </div>
@@ -407,9 +407,9 @@
                 <div class="alert alert-info">
                     <h6><i class="fas fa-info-circle"></i> คำแนะนำการใช้งาน</h6>
                     <ul class="mb-0">
-                        <li>ตารางแสดงรายการบันทึกการปรับเทียบทั้งหมดในระบบ</li>
-                        <li>สามารถเพิ่มบันทึกการปรับเทียบใหม่ได้จากปุ่มด้านบน</li>
-                        <li>สถานะจะแสดงสีตามระยะเวลาการปรับเทียบถัดไป</li>
+                        <li>ตารางแสดงรายการบันทึกการสอบเทียบทั้งหมดในระบบ</li>
+                        <li>สามารถเพิ่มบันทึกการสอบเทียบใหม่ได้จากปุ่มด้านบน</li>
+                        <li>สถานะจะแสดงสีตามระยะเวลาการสอบเทียบถัดไป</li>
                         <li>ระดับความเร่งด่วนช่วยจัดลำดับความสำคัญ</li>
                         <li>สามารถแก้ไขหรือลบบันทึกได้จากปุ่มจัดการ</li>
                     </ul>
@@ -430,7 +430,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>คุณต้องการลบบันทึกการปรับเทียบ <strong id="deleteItemName"></strong> ใช่หรือไม่?</p>
+                <p>คุณต้องการลบบันทึกการสอบเทียบ <strong id="deleteItemName"></strong> ใช่หรือไม่?</p>
                 <p class="text-danger"><small>การดำเนินการนี้ไม่สามารถยกเลิกได้</small></p>
             </div>
             <div class="modal-footer">
@@ -454,7 +454,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>คุณต้องการลบบันทึกการปรับเทียบที่เลือก <strong id="selectedCount"></strong> รายการ ใช่หรือไม่?</p>
+                <p>คุณต้องการลบบันทึกการสอบเทียบที่เลือก <strong id="selectedCount"></strong> รายการ ใช่หรือไม่?</p>
                 <p class="text-danger"><small>การดำเนินการนี้ไม่สามารถยกเลิกได้</small></p>
             </div>
             <div class="modal-footer">
@@ -500,7 +500,7 @@
                                     </div>
                                     <div class="priority-content">
                                         <strong>ปกติ</strong>
-                                        <small class="text-muted d-block">การปรับเทียบทั่วไป ไม่มีความเร่งด่วน</small>
+                                        <small class="text-muted d-block">การสอบเทียบทั่วไป ไม่มีความเร่งด่วน</small>
                                     </div>
                                 </div>
                             </label>
@@ -911,11 +911,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function getStatusBadge(status) {
         switch(status) {
             case 'pending':
-                return '<span class="badge bg-warning">รอปรับเทียบ</span>';
+                return '<span class="badge bg-warning">รอสอบเทียบ</span>';
             case 'in_progress':
-                return '<span class="badge bg-info">กำลังปรับเทียบ</span>';
+                return '<span class="badge bg-info">กำลังสอบเทียบ</span>';
             case 'passed':
-                return '<span class="badge bg-success">ผ่านการปรับเทียบ</span>';
+                return '<span class="badge bg-success">ผ่านการสอบเทียบ</span>';
             case 'cert_issued':
                 return '<span class="badge bg-success">ออกใบรับรอง</span>';
             case 'failed':

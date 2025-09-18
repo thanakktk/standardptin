@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}รายงานปรับเทียบ{% endblock %}
+{% block title %}รายงานสอบเทียบ{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -9,9 +9,9 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="page-title">
-                    <i class="fas fa-chart-bar me-2"></i>รายงานปรับเทียบ
+                    <i class="fas fa-chart-bar me-2"></i>รายงานสอบเทียบ
                 </h1>
-                <p class="page-subtitle">รายงานผลการปรับเทียบเครื่องมือวัดทั้งหมด</p>
+                <p class="page-subtitle">รายงานผลการสอบเทียบเครื่องมือวัดทั้งหมด</p>
             </div>
         </div>
     </div>
@@ -22,7 +22,7 @@
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <h5 class="mb-0">
-                        <i class="fas fa-table me-2"></i>รายงานผลการปรับเทียบ
+                        <i class="fas fa-table me-2"></i>รายงานผลการสอบเทียบ
                     </h5>
                 </div>
                 <div class="col-md-4 text-md-end">
@@ -86,7 +86,7 @@
                         {% empty %}
                         <tr>
                             <td colspan="7" class="text-center text-muted">
-                                <i class="fas fa-info-circle me-2"></i>ไม่พบข้อมูลการปรับเทียบ
+                                <i class="fas fa-info-circle me-2"></i>ไม่พบข้อมูลการสอบเทียบ
                             </td>
                         </tr>
                         {% endfor %}

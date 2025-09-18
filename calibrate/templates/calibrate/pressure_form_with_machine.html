@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}บันทึกการปรับเทียบความดัน - {{ machine.name }}{% endblock %}
+{% block title %}บันทึกการสอบเทียบความดัน - {{ machine.name }}{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,7 +9,7 @@
             <div class="col-md-8">
                 <h1 class="page-title">
                     <i class="fas fa-tachometer-alt fa-lg"></i>
-                    บันทึกการปรับเทียบความดัน
+                    บันทึกการสอบเทียบความดัน
                 </h1>
                 <p class="page-subtitle">{{ machine.name }} - {{ machine.machine_type.name }}</p>
             </div>
@@ -45,12 +45,12 @@
             </div>
         </div>
 
-        <!-- ฟอร์มบันทึกการปรับเทียบ -->
+        <!-- ฟอร์มบันทึกการสอบเทียบ -->
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title">
                     <i class="fas fa-clipboard-list me-2"></i>
-                    ข้อมูลการปรับเทียบความดัน
+                    ข้อมูลการสอบเทียบความดัน
                 </h5>
             </div>
             <div class="card-body">
@@ -123,7 +123,7 @@
                         </div>
                     </div>
 
-                    <!-- ตารางการปรับเทียบ -->
+                    <!-- ตารางการสอบเทียบ -->
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered">
                             <thead class="table-dark">
@@ -415,12 +415,12 @@
                         <div class="col-12">
                             <div class="btn-group">
                                 <button type="button" class="btn btn-success" id="submitBtn">
-                                    <i class="fas fa-save me-1"></i>บันทึกการปรับเทียบ
+                                    <i class="fas fa-save me-1"></i>บันทึกการสอบเทียบ
                                 </button>
                                 <a href="{% url 'select-machine-for-calibration' %}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left me-1"></i>กลับไปเลือกเครื่องมือ
                                 </a>
-                                <a href="{% url 'calibrate-pressure-list' %}" class="btn btn-info">
+                                <a href="{% url 'calibrate-dashboard' %}" class="btn btn-info">
                                     <i class="fas fa-list me-1"></i>ดูรายการทั้งหมด
                                 </a>
                             </div>
@@ -446,7 +446,7 @@
             <div class="modal-body">
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    กรุณาเลือกระดับความเร่งด่วนสำหรับคำขอบันทึกการปรับเทียบนี้
+                    กรุณาเลือกระดับความเร่งด่วนสำหรับคำขอบันทึกการสอบเทียบนี้
                 </div>
                 
                 <div class="priority-options">
@@ -459,7 +459,7 @@
                                 </div>
                                 <div class="priority-content">
                                     <strong>ปกติ</strong>
-                                    <small class="text-muted">การปรับเทียบทั่วไป ไม่มีความเร่งด่วน</small>
+                                    <small class="text-muted">การสอบเทียบทั่วไป ไม่มีความเร่งด่วน</small>
                                 </div>
                             </div>
                         </label>

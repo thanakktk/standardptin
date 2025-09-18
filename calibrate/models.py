@@ -4,9 +4,9 @@ from django.conf import settings
 
 class CalibrationForce(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'รอปรับเทียบ'),
-        ('in_progress', 'กำลังปรับเทียบ'),
-        ('passed', 'ผ่านการปรับเทียบ'),
+        ('pending', 'รอสอบเทียบ'),
+        ('in_progress', 'กำลังสอบเทียบ'),
+        ('passed', 'ผ่านการสอบเทียบ'),
         ('cert_issued', 'ออกใบรับรอง'),
         ('failed', 'ไม่ผ่านการสอบเทียบ'),
         ('closed', 'ปิดงาน'),
@@ -30,7 +30,7 @@ class CalibrationForce(models.Model):
     tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด")
     update = models.DateField(blank=True, null=True, verbose_name="วันที่สอบเทียบ")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะปรับเทียบ")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะสอบเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
     std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
@@ -43,9 +43,9 @@ class CalibrationForce(models.Model):
 
 class CalibrationPressure(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'รอปรับเทียบ'),
-        ('in_progress', 'กำลังปรับเทียบ'),
-        ('passed', 'ผ่านการปรับเทียบ'),
+        ('pending', 'รอสอบเทียบ'),
+        ('in_progress', 'กำลังสอบเทียบ'),
+        ('passed', 'ผ่านการสอบเทียบ'),
         ('cert_issued', 'ออกใบรับรอง'),
         ('failed', 'ไม่ผ่านการสอบเทียบ'),
         ('closed', 'ปิดงาน'),
@@ -70,7 +70,7 @@ class CalibrationPressure(models.Model):
     tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด")
     update = models.DateField(blank=True, null=True, verbose_name="วันที่สอบเทียบ")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะปรับเทียบ")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะสอบเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
     std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
@@ -109,9 +109,9 @@ class CalibrationPressure(models.Model):
 
 class CalibrationTorque(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'รอปรับเทียบ'),
-        ('in_progress', 'กำลังปรับเทียบ'),
-        ('passed', 'ผ่านการปรับเทียบ'),
+        ('pending', 'รอสอบเทียบ'),
+        ('in_progress', 'กำลังสอบเทียบ'),
+        ('passed', 'ผ่านการสอบเทียบ'),
         ('cert_issued', 'ออกใบรับรอง'),
         ('failed', 'ไม่ผ่านการสอบเทียบ'),
         ('closed', 'ปิดงาน'),
@@ -216,9 +216,9 @@ class UUCStdMap(models.Model):
 class DialGaugeCalibration(models.Model):
     """ข้อมูลการสอบเทียบ Dial Gauge"""
     STATUS_CHOICES = [
-        ('pending', 'รอปรับเทียบ'),
-        ('in_progress', 'กำลังปรับเทียบ'),
-        ('passed', 'ผ่านการปรับเทียบ'),
+        ('pending', 'รอสอบเทียบ'),
+        ('in_progress', 'กำลังสอบเทียบ'),
+        ('passed', 'ผ่านการสอบเทียบ'),
         ('cert_issued', 'ออกใบรับรอง'),
         ('failed', 'ไม่ผ่านการสอบเทียบ'),
         ('closed', 'ปิดงาน'),
@@ -246,7 +246,7 @@ class DialGaugeCalibration(models.Model):
     acc_std = models.DecimalField(max_digits=10, decimal_places=8, verbose_name="ความแม่นยำมาตรฐาน (inch)")
     
     # สถานะและความสำคัญ
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะปรับเทียบ")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะสอบเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     
     # ข้อมูลการคำนวณ
@@ -306,9 +306,9 @@ class DialGaugeReading(models.Model):
 class BalanceCalibration(models.Model):
     """ข้อมูลการสอบเทียบ Balance"""
     STATUS_CHOICES = [
-        ('pending', 'รอปรับเทียบ'),
-        ('in_progress', 'กำลังปรับเทียบ'),
-        ('passed', 'ผ่านการปรับเทียบ'),
+        ('pending', 'รอสอบเทียบ'),
+        ('in_progress', 'กำลังสอบเทียบ'),
+        ('passed', 'ผ่านการสอบเทียบ'),
         ('cert_issued', 'ออกใบรับรอง'),
         ('failed', 'ไม่ผ่านการสอบเทียบ'),
         ('closed', 'ปิดงาน'),
@@ -335,7 +335,7 @@ class BalanceCalibration(models.Model):
     unit = models.CharField(max_length=20, default="mg", verbose_name="หน่วย")
     
     # สถานะและความสำคัญ
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะปรับเทียบ")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะสอบเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     
     # ข้อมูลการคำนวณ
@@ -388,9 +388,9 @@ class BalanceReading(models.Model):
 class MicrowaveCalibration(models.Model):
     """ข้อมูลการสอบเทียบ Microwave"""
     STATUS_CHOICES = [
-        ('pending', 'รอปรับเทียบ'),
-        ('in_progress', 'กำลังปรับเทียบ'),
-        ('passed', 'ผ่านการปรับเทียบ'),
+        ('pending', 'รอสอบเทียบ'),
+        ('in_progress', 'กำลังสอบเทียบ'),
+        ('passed', 'ผ่านการสอบเทียบ'),
         ('cert_issued', 'ออกใบรับรอง'),
         ('failed', 'ไม่ผ่านการสอบเทียบ'),
         ('closed', 'ปิดงาน'),
@@ -415,7 +415,7 @@ class MicrowaveCalibration(models.Model):
     certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
     
     # สถานะและความสำคัญ
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะปรับเทียบ")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะสอบเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     
     def __str__(self):

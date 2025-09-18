@@ -67,7 +67,7 @@ class MachineFilterForm(forms.Form):
     )
 
 class CalibrationDataForm(forms.Form):
-    # ข้อมูลสำหรับบันทึกการปรับเทียบ
+    # ข้อมูลสำหรับบันทึกการสอบเทียบ
     name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}))
     model = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}))
     serial_number = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}))

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการปรับเทียบแรงบิด - {{ object.uuc_id.name|default:'เครื่องมือ' }}{% endblock %}
+{% block title %}{{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการสอบเทียบแรงบิด - {{ object.uuc_id.name|default:'เครื่องมือ' }}{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,13 +9,13 @@
             <div class="col-md-8">
                 <h1 class="page-title">
                     <i class="fas fa-cog fa-lg"></i>
-                    {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการปรับเทียบแรงบิด
+                    {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการสอบเทียบแรงบิด
                 </h1>
                 <p class="page-subtitle">
                     {% if object.uuc_id %}
                         {{ object.uuc_id.name }} - {{ object.uuc_id.machine_type.name }}
                     {% else %}
-                        เลือกเครื่องมือเพื่อบันทึกการปรับเทียบ
+                        เลือกเครื่องมือเพื่อบันทึกการสอบเทียบ
                     {% endif %}
                 </p>
             </div>
@@ -53,12 +53,12 @@
         </div>
         {% endif %}
 
-        <!-- ฟอร์มบันทึกการปรับเทียบ -->
+        <!-- ฟอร์มบันทึกการสอบเทียบ -->
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title">
                     <i class="fas fa-clipboard-list me-2"></i>
-                    ข้อมูลการปรับเทียบแรงบิด
+                    ข้อมูลการสอบเทียบแรงบิด
                 </h5>
             </div>
             <div class="card-body">
@@ -149,9 +149,9 @@
                         </div>
                     </div>
 
-                    <!-- ตารางการปรับเทียบ CW -->
+                    <!-- ตารางการสอบเทียบ CW -->
                     <h6 class="mt-4 mb-3">
-                        <i class="fas fa-arrow-right me-2"></i>ข้อมูลการปรับเทียบ CW (Clockwise)
+                        <i class="fas fa-arrow-right me-2"></i>ข้อมูลการสอบเทียบ CW (Clockwise)
                     </h6>
                     <div class="table-responsive mb-4">
                         <table class="table table-sm table-bordered">
@@ -297,9 +297,9 @@
                         </table>
                     </div>
 
-                    <!-- ตารางการปรับเทียบ CCW -->
+                    <!-- ตารางการสอบเทียบ CCW -->
                     <h6 class="mt-4 mb-3">
-                        <i class="fas fa-arrow-left me-2"></i>ข้อมูลการปรับเทียบ CCW (Counter-Clockwise)
+                        <i class="fas fa-arrow-left me-2"></i>ข้อมูลการสอบเทียบ CCW (Counter-Clockwise)
                     </h6>
                     <div class="table-responsive mb-4">
                         <table class="table table-sm table-bordered">
@@ -449,9 +449,9 @@
                         <div class="col-12">
                             <div class="btn-group">
                                 <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-save me-1"></i>บันทึกการปรับเทียบ
+                                    <i class="fas fa-save me-1"></i>บันทึกการสอบเทียบ
                                 </button>
-                                <a href="{% url 'calibrate-torque-list' %}" class="btn btn-secondary">
+                                <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left me-1"></i>กลับไปรายการ
                                 </a>
                                 {% if object.pk %}
@@ -656,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-/* ซ่อนเฉพาะฟิลด์สถานะการปรับเทียบ */
+/* ซ่อนเฉพาะฟิลด์สถานะการสอบเทียบ */
 #id_status {
     display: none !important;
 }

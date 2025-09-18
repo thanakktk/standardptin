@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}การปรับเทียบ - {{ machine.name }}{% endblock %}
+{% block title %}การสอบเทียบ - {{ machine.name }}{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,13 +9,13 @@
             <div class="col-md-8">
                 <h1 class="page-title">
                     <i class="fas fa-tools fa-lg"></i>
-                    การปรับเทียบเครื่องมือ
+                    การสอบเทียบเครื่องมือ
                 </h1>
                 <p class="page-subtitle">{{ machine.name }} - {{ machine.machine_type.name }}</p>
             </div>
             <div class="col-md-4 text-end">
                 <a href="{% url 'machine-calibration-add' machine.id %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> เพิ่มบันทึกการปรับเทียบ
+                    <i class="fas fa-plus"></i> เพิ่มบันทึกการสอบเทียบ
                 </a>
             </div>
         </div>
@@ -68,14 +68,14 @@
             </div>
         </div>
 
-        <!-- รายการการปรับเทียบ -->
+        <!-- รายการการสอบเทียบ -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title">
                             <i class="fas fa-clipboard-list"></i>
-                            รายการการปรับเทียบ
+                            รายการการสอบเทียบ
                         </h5>
                     </div>
                     <div class="card-body">
@@ -85,7 +85,7 @@
                                     <thead class="table-dark">
                                         <tr>
                                             <th>ลำดับ</th>
-                                            <th>วันที่ปรับเทียบ</th>
+                                            <th>วันที่สอบเทียบ</th>
                                             {% if calibration_type == 'force' %}
                                                 <th>แรงกด (Compression)</th>
                                                 <th>แรงดึง (Tension)</th>
@@ -176,10 +176,10 @@
                         {% else %}
                             <div class="text-center py-4">
                                 <i class="fas fa-clipboard fa-3x text-muted mb-3"></i>
-                                <h5 class="text-muted">ยังไม่มีบันทึกการปรับเทียบ</h5>
-                                <p class="text-muted">เริ่มต้นบันทึกการปรับเทียบสำหรับเครื่องมือนี้</p>
+                                <h5 class="text-muted">ยังไม่มีบันทึกการสอบเทียบ</h5>
+                                <p class="text-muted">เริ่มต้นบันทึกการสอบเทียบสำหรับเครื่องมือนี้</p>
                                 <a href="{% url 'machine-calibration-add' machine.id %}" class="btn btn-primary">
-                                    <i class="fas fa-plus"></i> เพิ่มบันทึกการปรับเทียบ
+                                    <i class="fas fa-plus"></i> เพิ่มบันทึกการสอบเทียบ
                                 </a>
                             </div>
                         {% endif %}

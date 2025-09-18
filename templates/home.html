@@ -67,7 +67,7 @@
                     <i class="fas fa-clipboard-check"></i>
                 </div>
                 <div class="stats-number">{{ calibration_count|default:"0" }}</div>
-                <div class="stats-label">บันทึกการปรับเทียบ</div>
+                <div class="stats-label">บันทึกการสอบเทียบ</div>
                 {% if calibration_count > 0 %}
                     <small class="text-muted">{{ recent_calibrations.count }} รายการล่าสุด</small>
                 {% endif %}
@@ -120,7 +120,7 @@
                         <div class="col-md-3 mb-3">
                                                                 <a href="{% url 'calibrate-force-add' %}" class="btn btn-success w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
                                 <i class="fas fa-clipboard-plus fa-2x mb-2"></i>
-                                <span>บันทึกการปรับเทียบ</span>
+                                <span>บันทึกการสอบเทียบ</span>
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
@@ -173,7 +173,7 @@
                                     <div class="mb-3">
                                         <i class="fas fa-clipboard-check fa-3x text-success"></i>
                                     </div>
-                                    <h5 class="card-title">บันทึกการปรับเทียบ</h5>
+                                    <h5 class="card-title">บันทึกการสอบเทียบ</h5>
                                     <p class="card-text text-muted">บันทึกและจัดการข้อมูลการสอบเทียบ</p>
                                     <a href="{% url 'calibrate-dashboard' %}" class="btn btn-outline-success">
                                         <i class="fas fa-arrow-right me-1"></i>เข้าสู่ระบบ
@@ -278,7 +278,7 @@
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="fas fa-clipboard-check me-2"></i>
-                        การปรับเทียบล่าสุด
+                        การสอบเทียบล่าสุด
                     </h6>
                 </div>
                 <div class="card-body">
@@ -295,7 +295,7 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-muted text-center mb-0">ยังไม่มีข้อมูลการปรับเทียบ</p>
+                        <p class="text-muted text-center mb-0">ยังไม่มีข้อมูลการสอบเทียบ</p>
                     {% endif %}
                 </div>
             </div>

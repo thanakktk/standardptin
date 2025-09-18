@@ -38,7 +38,7 @@ class Manufacture(models.Model):
 
 class CalibrationEquipment(models.Model):
     """เครื่องมือที่ใช้สอบเทียบ"""
-    name = models.CharField(max_length=200, verbose_name="ชื่อเครื่องมือวัดใช้ปรับเทียบ")
+    name = models.CharField(max_length=200, verbose_name="ชื่อเครื่องมือวัดใช้สอบเทียบ")
     model = models.CharField(max_length=100, blank=True, null=True, verbose_name="รุ่น")
     serial_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขเครื่อง")
     certificate = models.CharField(max_length=200, blank=True, null=True, verbose_name="ใบรับรอง")

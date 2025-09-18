@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>ยืนยันการลบบันทึกการปรับเทียบความดัน (Pressure)</h1>
+<h1>ยืนยันการลบบันทึกการสอบเทียบความดัน (Pressure)</h1>
 <p>คุณต้องการลบ "{{ object }}" ใช่หรือไม่?</p>
 <form method="post">{% csrf_token %}
     <button type="submit" class="btn btn-danger">ลบ</button>

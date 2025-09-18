@@ -13,16 +13,16 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='calibrationforce',
             name='status',
-            field=models.CharField(choices=[('pending', 'รอปรับเทียบ'), ('in_progress', 'กำลังปรับเทียบ'), ('passed', 'ผ่านการปรับเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='pending', max_length=20, verbose_name='สถานะปรับเทียบ'),
+            field=models.CharField(choices=[('pending', 'รอสอบเทียบ'), ('in_progress', 'กำลังสอบเทียบ'), ('passed', 'ผ่านการสอบเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='pending', max_length=20, verbose_name='สถานะสอบเทียบ'),
         ),
         migrations.AlterField(
             model_name='calibrationpressure',
             name='status',
-            field=models.CharField(choices=[('pending', 'รอปรับเทียบ'), ('in_progress', 'กำลังปรับเทียบ'), ('passed', 'ผ่านการปรับเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='pending', max_length=20, verbose_name='สถานะปรับเทียบ'),
+            field=models.CharField(choices=[('pending', 'รอสอบเทียบ'), ('in_progress', 'กำลังสอบเทียบ'), ('passed', 'ผ่านการสอบเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='pending', max_length=20, verbose_name='สถานะสอบเทียบ'),
         ),
         migrations.AlterField(
             model_name='calibrationtorque',
             name='status',
-            field=models.CharField(choices=[('pending', 'รอปรับเทียบ'), ('in_progress', 'กำลังปรับเทียบ'), ('passed', 'ผ่านการปรับเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='not_set', max_length=20, verbose_name='สถานะปรับเเทียบ'),
+            field=models.CharField(choices=[('pending', 'รอสอบเทียบ'), ('in_progress', 'กำลังสอบเทียบ'), ('passed', 'ผ่านการสอบเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='not_set', max_length=20, verbose_name='สถานะปรับเเทียบ'),
         ),
     ]

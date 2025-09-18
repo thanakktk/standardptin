@@ -116,7 +116,7 @@ def send_machine_email(request, pk):
 
 @login_required
 def calibration_data(request, pk):
-    """บันทึกการปรับเทียบ - redirect ไปยังระบบการปรับเทียบใหม่"""
+    """บันทึกการสอบเทียบ - redirect ไปยังระบบการสอบเทียบใหม่"""
     machine = get_object_or_404(Machine, pk=pk)
     return redirect('machine-calibration-list', machine_id=pk)
 
@@ -180,7 +180,7 @@ def send_filtered_email(request):
 
 @login_required
 def create_calibration_request(request, pk):
-    """สร้างคำร้องขอบันทึกปรับเทียบสำหรับเครื่องมือ"""
+    """สร้างคำร้องขอบันทึกสอบเทียบสำหรับเครื่องมือ"""
     machine = get_object_or_404(Machine, id=pk)
     
     # รับ priority จาก URL parameter
@@ -190,7 +190,7 @@ def create_calibration_request(request, pk):
     machine_type_name = machine.machine_type.name.lower()
     
     try:
-        # สร้างบันทึกการปรับเทียบตามประเภทเครื่องมือ
+        # สร้างบันทึกการสอบเทียบตามประเภทเครื่องมือ
         if 'force' in machine_type_name:
             # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
             existing_request = CalibrationForce.objects.filter(
@@ -199,7 +199,7 @@ def create_calibration_request(request, pk):
             ).first()
             
             if existing_request:
-                messages.warning(request, f'มีคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} อยู่แล้ว')
+                messages.warning(request, f'มีคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} อยู่แล้ว')
                 return redirect('machine-list')
             
             # สร้างคำร้องขอใหม่
@@ -208,7 +208,7 @@ def create_calibration_request(request, pk):
                 status='pending',
                 priority=priority
             )
-            messages.success(request, f'ส่งคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
             
         elif 'pressure' in machine_type_name:
             # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
@@ -218,7 +218,7 @@ def create_calibration_request(request, pk):
             ).first()
             
             if existing_request:
-                messages.warning(request, f'มีคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} อยู่แล้ว')
+                messages.warning(request, f'มีคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} อยู่แล้ว')
                 return redirect('machine-list')
             
             # สร้างคำร้องขอใหม่
@@ -227,7 +227,7 @@ def create_calibration_request(request, pk):
                 status='pending',
                 priority=priority
             )
-            messages.success(request, f'ส่งคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
             
         elif 'torque' in machine_type_name:
             # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
@@ -237,7 +237,7 @@ def create_calibration_request(request, pk):
             ).first()
             
             if existing_request:
-                messages.warning(request, f'มีคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} อยู่แล้ว')
+                messages.warning(request, f'มีคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} อยู่แล้ว')
                 return redirect('machine-list')
             
             # สร้างคำร้องขอใหม่
@@ -246,10 +246,10 @@ def create_calibration_request(request, pk):
                 status='not_set',
                 priority=priority
             )
-            messages.success(request, f'ส่งคำร้องขอบันทึกปรับเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
             
         else:
-            messages.error(request, 'ไม่พบประเภทการปรับเทียบที่เหมาะสมสำหรับเครื่องมือนี้')
+            messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสมสำหรับเครื่องมือนี้')
             return redirect('machine-list')
         
         return redirect('machine-list')
@@ -315,7 +315,7 @@ class CalibrationEquipmentDeleteView(LoginRequiredMixin, PermissionRequiredMixin
 @login_required
 @require_http_methods(["POST"])
 def bulk_calibration_request(request):
-    """สร้างคำร้องขอบันทึกปรับเทียบสำหรับเครื่องมือหลายตัว"""
+    """สร้างคำร้องขอบันทึกสอบเทียบสำหรับเครื่องมือหลายตัว"""
     try:
         # รับข้อมูลจาก request
         machine_ids = request.POST.getlist('machine_ids')
@@ -396,7 +396,7 @@ def bulk_calibration_request(request):
                     created_count += 1
                     
                 else:
-                    error_messages.append(f'ไม่พบประเภทการปรับเทียบที่เหมาะสมสำหรับ {machine.name}')
+                    error_messages.append(f'ไม่พบประเภทการสอบเทียบที่เหมาะสมสำหรับ {machine.name}')
                     
             except Exception as e:
                 error_messages.append(f'เกิดข้อผิดพลาดกับเครื่องมือ ID {machine_id}: {str(e)}')
@@ -416,6 +416,81 @@ def bulk_calibration_request(request):
             'message': message,
             'errors': error_messages
         })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'เกิดข้อผิดพลาดในการประมวลผล: {str(e)}'
+        })
+
+@login_required
+@require_http_methods(["POST"])
+def bulk_send_email(request):
+    """ส่งอีเมลข้อมูลเครื่องมือหลายตัว"""
+    try:
+        # รับข้อมูลจาก request
+        machine_ids = request.POST.getlist('machine_ids')
+        message = request.POST.get('message', '')
+        
+        if not machine_ids:
+            return JsonResponse({
+                'success': False,
+                'message': 'ไม่พบเครื่องมือที่เลือก'
+            })
+        
+        # ดึงข้อมูลเครื่องมือ
+        machines = Machine.objects.filter(id__in=machine_ids, deleted=False)
+        
+        if not machines.exists():
+            return JsonResponse({
+                'success': False,
+                'message': 'ไม่พบเครื่องมือที่ถูกต้อง'
+            })
+        
+        # สร้างเนื้อหาอีเมล
+        subject = f"ข้อมูลเครื่องมือวัด ({machines.count()} รายการ)"
+        body = f"รายการข้อมูลเครื่องมือวัดที่เลือก:\n\n"
+        
+        for machine in machines:
+            body += f"ID: {machine.id}\n"
+            body += f"ชื่อเครื่องมือ: {machine.name}\n"
+            body += f"รุ่น: {machine.model or '-'}\n"
+            body += f"Serial Number: {machine.serial_number or '-'}\n"
+            body += f"ประเภท: {machine.machine_type}\n"
+            body += f"หน่วยนับ: {machine.unit or '-'}\n"
+            body += f"ผู้ผลิต: {machine.manufacture or '-'}\n"
+            body += f"ช่วงการวัด: {machine.range or '-'}\n"
+            body += f"ความละเอียด: {machine.res_uuc or '-'}\n"
+            if machine.organize:
+                body += f"หน่วยงาน: {machine.organize.name}\n"
+            body += f"วันที่อัปเดต: {machine.update}\n"
+            body += "-" * 50 + "\n"
+        
+        # เพิ่มข้อความเพิ่มเติมถ้ามี
+        if message.strip():
+            body += f"\nข้อความเพิ่มเติม:\n{message}\n"
+        
+        # ส่งอีเมล
+        try:
+            send_mail(
+                subject,
+                body,
+                settings.DEFAULT_FROM_EMAIL,
+                [request.user.email],
+                fail_silently=False,
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'sent_count': machines.count(),
+                'message': f'ส่งอีเมลข้อมูลเครื่องมือสำเร็จ {machines.count()} รายการ'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'เกิดข้อผิดพลาดในการส่งอีเมล: {str(e)}'
+            })
         
     except Exception as e:
         return JsonResponse({

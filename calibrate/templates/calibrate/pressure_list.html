@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}รายการบันทึกการปรับเทียบความดัน - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+{% block title %}รายการบันทึกการสอบเทียบความดัน - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
@@ -10,7 +10,7 @@
             <div class="col-md-8">
                 <h1 class="page-title">
                     <i class="fas fa-tachometer-alt me-3"></i>
-                    รายการบันทึกการปรับเทียบความดัน (Pressure)
+                    รายการบันทึกการสอบเทียบความดัน (Pressure)
                 </h1>
                 <p class="page-subtitle">
                     จัดการข้อมูลการสอบเทียบเครื่องมือวัดความดัน
@@ -19,7 +19,7 @@
             <div class="col-md-4 text-md-end">
                 <a href="{% url 'calibrate-pressure-add' %}" class="btn btn-success btn-lg">
                     <i class="fas fa-plus me-2"></i>
-                    เพิ่มบันทึกการปรับเทียบ
+                    เพิ่มบันทึกการสอบเทียบ
                 </a>
             </div>
         </div>
@@ -32,7 +32,7 @@
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-table me-2"></i>
-                รายการบันทึกการปรับเทียบความดัน ({{ calibrations.count }} รายการ)
+                รายการบันทึกการสอบเทียบความดัน ({{ calibrations.count }} รายการ)
             </h5>
         </div>
         <div class="card-body">
@@ -59,7 +59,7 @@
                                 <i class="fas fa-exclamation-triangle me-1"></i>Error
                             </th>
                             <th style="width: 15%">
-                                <i class="fas fa-flag me-1"></i>สถานะการปรับเทียบ
+                                <i class="fas fa-flag me-1"></i>สถานะการสอบเทียบ
                             </th>
                             <th style="width: 12%">
                                 <i class="fas fa-cogs me-1"></i>จัดการ
@@ -93,11 +93,11 @@
                             </td>
                             <td>
                                 {% if c.status == 'pending' %}
-                                    <span class="badge bg-warning">รอปรับเทียบ</span>
+                                    <span class="badge bg-warning">รอสอบเทียบ</span>
                                 {% elif c.status == 'in_progress' %}
-                                    <span class="badge bg-info">กำลังปรับเทียบ</span>
+                                    <span class="badge bg-info">กำลังสอบเทียบ</span>
                                 {% elif c.status == 'passed' %}
-                                    <span class="badge bg-success">ผ่านการปรับเทียบ</span>
+                                    <span class="badge bg-success">ผ่านการสอบเทียบ</span>
                                 {% elif c.status == 'cert_issued' %}
                                     <span class="badge bg-primary">ออกใบรับรอง</span>
                                 {% elif c.status == 'failed' %}
@@ -124,10 +124,10 @@
                             <td colspan="8" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="fas fa-info-circle fa-3x mb-3"></i>
-                                    <h5>ไม่พบข้อมูลการปรับเทียบความดัน</h5>
-                                    <p>กรุณาเพิ่มบันทึกการปรับเทียบใหม่</p>
+                                    <h5>ไม่พบข้อมูลการสอบเทียบความดัน</h5>
+                                    <p>กรุณาเพิ่มบันทึกการสอบเทียบใหม่</p>
                                     <a href="{% url 'calibrate-pressure-add' %}" class="btn btn-primary">
-                                        <i class="fas fa-plus me-2"></i>เพิ่มบันทึกการปรับเทียบ
+                                        <i class="fas fa-plus me-2"></i>เพิ่มบันทึกการสอบเทียบ
                                     </a>
                                 </div>
                             </td>
@@ -145,7 +145,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
                     <i class="fas fa-compress fa-2x text-primary mb-2"></i>
-                    <h6>บันทึกการปรับเทียบแรง</h6>
+                    <h6>บันทึกการสอบเทียบแรง</h6>
                     <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัดแรง</p>
                     <a href="{% url 'calibrate-force-list' %}" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-arrow-right me-1"></i>ดูรายการ
@@ -157,7 +157,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
                     <i class="fas fa-tachometer-alt fa-2x text-success mb-2"></i>
-                    <h6>บันทึกการปรับเทียบความดัน</h6>
+                    <h6>บันทึกการสอบเทียบความดัน</h6>
                     <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัดความดัน</p>
                     <a href="{% url 'calibrate-pressure-add' %}" class="btn btn-outline-success btn-sm">
                         <i class="fas fa-plus me-1"></i>เพิ่มใหม่
@@ -169,7 +169,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
                     <i class="fas fa-cog fa-2x text-warning mb-2"></i>
-                    <h6>บันทึกการปรับเทียบแรงบิด</h6>
+                    <h6>บันทึกการสอบเทียบแรงบิด</h6>
                     <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัดแรงบิด</p>
                     <a href="{% url 'calibrate-torque-list' %}" class="btn btn-outline-warning btn-sm">
                         <i class="fas fa-arrow-right me-1"></i>ดูรายการ

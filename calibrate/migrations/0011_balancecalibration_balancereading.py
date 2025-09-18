@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('update', models.DateField(blank=True, null=True, verbose_name='วันที่อัปเดต')),
                 ('next_due', models.DateField(blank=True, null=True, verbose_name='วันที่ครบกำหนดสอบเทียบถัดไป')),
                 ('unit', models.CharField(default='mg', max_length=20, verbose_name='หน่วย')),
-                ('status', models.CharField(choices=[('pending', 'รอปรับเทียบ'), ('in_progress', 'กำลังปรับเทียบ'), ('passed', 'ผ่านการปรับเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='pending', max_length=20, verbose_name='สถานะปรับเทียบ')),
+                ('status', models.CharField(choices=[('pending', 'รอสอบเทียบ'), ('in_progress', 'กำลังสอบเทียบ'), ('passed', 'ผ่านการสอบเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='pending', max_length=20, verbose_name='สถานะสอบเทียบ')),
                 ('priority', models.CharField(choices=[('normal', 'ปกติ'), ('urgent', 'ด่วน'), ('very_urgent', 'ด่วนมาก')], default='normal', max_length=20, verbose_name='ระดับความเร่งด่วน')),
                 ('drift', models.DecimalField(blank=True, decimal_places=6, max_digits=10, null=True, verbose_name='Drift')),
                 ('res_push', models.DecimalField(blank=True, decimal_places=6, max_digits=10, null=True, verbose_name='RES.ดัน')),

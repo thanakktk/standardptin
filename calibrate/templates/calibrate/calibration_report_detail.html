@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}รายงานผลปรับเทียบ{% endblock %}
+{% block title %}รายงานผลสอบเทียบ{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -9,9 +9,9 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="page-title">
-                    <i class="fas fa-chart-line me-2"></i>รายงานผลปรับเทียบ
+                    <i class="fas fa-chart-line me-2"></i>รายงานผลสอบเทียบ
                 </h1>
-                <p class="page-subtitle">รายงานผลการปรับเทียบเครื่องมือวัดแบบละเอียด</p>
+                <p class="page-subtitle">รายงานผลการสอบเทียบเครื่องมือวัดแบบละเอียด</p>
             </div>
             <div class="col-md-4 text-md-end">
                 <button class="btn btn-primary" onclick="exportToWord()">
@@ -85,12 +85,13 @@
                 <div class="row mt-3">
                     <div class="col-md-3">
                         <label for="status_filter" class="form-label">
-                                                            <i class="fas fa-flag me-1"></i>สถานะการปรับเทียบ
+                                                            <i class="fas fa-flag me-1"></i>สถานะการสอบเทียบ
                         </label>
                         <select class="form-select" id="status_filter" name="status_filter">
-                                                            <option value="">เลือกสถานะการปรับเทียบ</option>
-                            <option value="cert_issued" {% if status_filter == 'cert_issued' %}selected{% endif %}>ออกใบรับรอง</option>
-                            <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>ไม่ผ่านการปรับเทียบ</option>
+                            <option value="">เลือกสถานะการสอบเทียบ</option>
+                            <option value="passed" {% if status_filter == 'passed' %}selected{% endif %}>ผ่านการสอบเทียบ</option>
+                            <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>ไม่ผ่านการสอบเทียบ</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>รอการสอบเทียบ</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -113,7 +114,7 @@
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0">
-                <i class="fas fa-table me-2"></i>รายงานผลการปรับเทียบแบบละเอียด
+                <i class="fas fa-table me-2"></i>รายงานผลการสอบเทียบแบบละเอียด
             </h5>
         </div>
         <div class="card-body">
@@ -128,7 +129,7 @@
                             <th>หน่วยผู้ใช้</th>
                             <th>จำนวน</th>
                             <th>ผลการสอบเทียบ</th>
-                            <th>วันที่ปรับเทียบ</th>
+                            <th>วันที่สอบเทียบ</th>
                             <th>วันที่ครบกำหนด</th>
                             <th>การดำเนินการ</th>
                         </tr>
@@ -154,19 +155,13 @@
                             <td>๑</td>
                             <td>
                                 {% if cal.status == 'cert_issued' or cal.status == 'passed' or cal.status == 'active' %}
-                                    <span class="badge bg-success">ผ่านการสอบ</span>
+                                    <span class="badge bg-success">ผ่านการสอบเทียบ</span>
                                 {% elif cal.status == 'failed' %}
-                                    <span class="badge bg-danger">ไม่ผ่านการสอบ</span>
-                                {% elif cal.status == 'pending' %}
-                                    <span class="badge bg-warning">รอการสอบ</span>
-                                {% elif cal.status == 'in_progress' %}
-                                    <span class="badge bg-info">กำลังสอบ</span>
-                                {% elif cal.status == 'not_set' %}
-                                    <span class="badge bg-secondary">ยังไม่กำหนด</span>
-                                {% elif cal.status == 'closed' %}
-                                    <span class="badge bg-dark">ปิดงาน</span>
+                                    <span class="badge bg-danger">ไม่ผ่านการสอบเทียบ</span>
+                                {% elif cal.status == 'pending' or cal.status == 'in_progress' or cal.status == 'not_set' %}
+                                    <span class="badge bg-warning">รอการสอบเทียบ</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">{{ cal.status }}</span>
+                                    <span class="badge bg-secondary">รอการสอบเทียบ</span>
                                 {% endif %}
                             </td>
                             <td>{{ cal.update_date|date:"d/m/Y"|default:"-" }}</td>
@@ -194,13 +189,20 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     {% endif %}
+                                    
+                                    {% if cal.status == 'cert_issued' or cal.status == 'passed' or cal.status == 'active' %}
+                                        <a href="{% url 'export-certificate-excel' cal.id cal.type %}" 
+                                           class="btn btn-outline-success btn-sm" title="Export ใบรับรองแบบ Excel">
+                                            <i class="fas fa-file-excel"></i>
+                                        </a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
                             <td colspan="10" class="text-center text-muted">
-                                <i class="fas fa-info-circle me-2"></i>ไม่พบข้อมูลการปรับเทียบ
+                                <i class="fas fa-info-circle me-2"></i>ไม่พบข้อมูลการสอบเทียบ
                             </td>
                         </tr>
                         {% endfor %}
@@ -210,41 +212,6 @@
         </div>
     </div>
 
-    <!-- Summary Statistics -->
-    <div class="row mt-4">
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body text-center">
-                    <h4 class="mb-0">{{ all_calibrations|length }}</h4>
-                    <small>รายการทั้งหมด</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body text-center">
-                    <h4 class="mb-0">{{ all_calibrations|length }}</h4>
-                    <small>ผ่านการปรับเทียบ</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body text-center">
-                    <h4 class="mb-0">0</h4>
-                    <small>กำลังปรับเทียบ</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-danger text-white">
-                <div class="card-body text-center">
-                    <h4 class="mb-0">0</h4>
-                    <small>ไม่ผ่านการสอบเทียบ</small>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>

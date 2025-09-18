@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
             name='CalibrationEquipment',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=200, verbose_name='ชื่อเครื่องมือวัดใช้ปรับเทียบ')),
+                ('name', models.CharField(max_length=200, verbose_name='ชื่อเครื่องมือวัดใช้สอบเทียบ')),
                 ('model', models.CharField(blank=True, max_length=100, null=True, verbose_name='รุ่น')),
                 ('serial_number', models.CharField(blank=True, max_length=100, null=True, verbose_name='หมายเลขเครื่อง')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='วันที่สร้าง')),

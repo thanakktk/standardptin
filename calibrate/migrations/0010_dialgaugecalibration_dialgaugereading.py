@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('next_due', models.DateField(blank=True, null=True, verbose_name='วันที่ครบกำหนดสอบเทียบถัดไป')),
                 ('res_uuc', models.DecimalField(decimal_places=6, max_digits=10, verbose_name='ความละเอียด UUC (inch)')),
                 ('acc_std', models.DecimalField(decimal_places=8, max_digits=10, verbose_name='ความแม่นยำมาตรฐาน (inch)')),
-                ('status', models.CharField(choices=[('pending', 'รอปรับเทียบ'), ('in_progress', 'กำลังปรับเทียบ'), ('passed', 'ผ่านการปรับเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='pending', max_length=20, verbose_name='สถานะปรับเทียบ')),
+                ('status', models.CharField(choices=[('pending', 'รอสอบเทียบ'), ('in_progress', 'กำลังสอบเทียบ'), ('passed', 'ผ่านการสอบเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='pending', max_length=20, verbose_name='สถานะสอบเทียบ')),
                 ('priority', models.CharField(choices=[('normal', 'ปกติ'), ('urgent', 'ด่วน'), ('very_urgent', 'ด่วนมาก')], default='normal', max_length=20, verbose_name='ระดับความเร่งด่วน')),
                 ('type_a_sd', models.DecimalField(blank=True, decimal_places=6, max_digits=10, null=True, verbose_name='Type A (SD)')),
                 ('type_b_res_uuc', models.DecimalField(blank=True, decimal_places=6, max_digits=10, null=True, verbose_name='Type B Res.UUC')),

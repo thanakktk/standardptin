@@ -14,7 +14,7 @@ class ReportTemplate(models.Model):
     template_type = models.CharField(
         max_length=50,
         choices=[
-            ('calibration', 'รายงานการปรับเทียบ'),
+            ('calibration', 'รายงานการสอบเทียบ'),
             ('machine', 'รายงานเครื่องมือ'),
             ('employee', 'รายงานพนักงาน'),
             ('organization', 'รายงานหน่วยงาน'),

@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=200, verbose_name='ชื่อเทมเพลต')),
                 ('description', models.TextField(blank=True, verbose_name='คำอธิบาย')),
-                ('template_type', models.CharField(choices=[('calibration', 'รายงานการปรับเทียบ'), ('machine', 'รายงานเครื่องมือ'), ('employee', 'รายงานพนักงาน'), ('organization', 'รายงานหน่วยงาน'), ('summary', 'รายงานสรุป')], max_length=50, verbose_name='ประเภทเทมเพลต')),
+                ('template_type', models.CharField(choices=[('calibration', 'รายงานการสอบเทียบ'), ('machine', 'รายงานเครื่องมือ'), ('employee', 'รายงานพนักงาน'), ('organization', 'รายงานหน่วยงาน'), ('summary', 'รายงานสรุป')], max_length=50, verbose_name='ประเภทเทมเพลต')),
                 ('is_active', models.BooleanField(default=True, verbose_name='ใช้งาน')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='วันที่สร้าง')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='วันที่แก้ไข')),

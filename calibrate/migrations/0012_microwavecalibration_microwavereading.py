@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('update', models.DateField(blank=True, null=True, verbose_name='วันที่อัปเดต')),
                 ('next_due', models.DateField(blank=True, null=True, verbose_name='วันที่ครบกำหนดสอบเทียบถัดไป')),
                 ('certificate_number', models.CharField(blank=True, max_length=100, null=True, verbose_name='หมายเลขใบรับรอง')),
-                ('status', models.CharField(choices=[('pending', 'รอปรับเทียบ'), ('in_progress', 'กำลังปรับเทียบ'), ('passed', 'ผ่านการปรับเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='pending', max_length=20, verbose_name='สถานะปรับเทียบ')),
+                ('status', models.CharField(choices=[('pending', 'รอสอบเทียบ'), ('in_progress', 'กำลังสอบเทียบ'), ('passed', 'ผ่านการสอบเทียบ'), ('cert_issued', 'ออกใบรับรอง'), ('failed', 'ไม่ผ่านการสอบเทียบ'), ('closed', 'ปิดงาน')], default='pending', max_length=20, verbose_name='สถานะสอบเทียบ')),
                 ('priority', models.CharField(choices=[('normal', 'ปกติ'), ('urgent', 'ด่วน'), ('very_urgent', 'ด่วนมาก')], default='normal', max_length=20, verbose_name='ระดับความเร่งด่วน')),
                 ('calibrator', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='microwave_calibrations', to=settings.AUTH_USER_MODEL, verbose_name='ผู้สอบเทียบ')),
                 ('certificate_issuer', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='microwave_certificates', to=settings.AUTH_USER_MODEL, verbose_name='ผู้ออกใบรับรอง')),

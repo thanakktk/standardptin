@@ -11,6 +11,7 @@ urlpatterns = [
     path('<int:pk>/calibration/', views.calibration_data, name='machine-calibration'),
     path('<int:pk>/create-calibration-request/', views.create_calibration_request, name='create-calibration-request'),
     path('bulk-calibration-request/', views.bulk_calibration_request, name='bulk-calibration-request'),
+    path('bulk-send-email/', views.bulk_send_email, name='bulk-send-email'),
     
     # CalibrationEquipment URLs
     path('calibration-equipment/', views.CalibrationEquipmentListView.as_view(), name='calibration-equipment-list'),

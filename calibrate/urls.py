@@ -5,27 +5,27 @@ from .views import (
     CalibrationTorqueListView, CalibrationTorqueCreateView, CalibrationTorqueUpdateView, CalibrationTorqueDeleteView,
     calibration_dashboard, machine_calibration_list, create_calibration_for_machine, calibration_by_type,
     select_machine_for_calibration, create_calibration_with_machine, calibration_report, calibration_report_detail, export_to_word, export_to_excel,
-    increase_priority, close_work
+    increase_priority, close_work, export_certificate_excel
 )
 
 urlpatterns = [
-    # หน้าหลักการปรับเทียบ
+    # หน้าหลักการสอบเทียบ
     path('', calibration_dashboard, name='calibrate-dashboard'),
     
-    # รายงานปรับเทียบ
+    # รายงานสอบเทียบ
     path('report/', calibration_report, name='calibrate-report'),
     path('report/detail/', calibration_report_detail, name='calibrate-report-detail'),
     path('export/word/', export_to_word, name='export-calibration-word'),
     path('export/excel/', export_to_excel, name='export-calibration-excel'),
     
-    # หน้าดึงข้อมูลเครื่องมือเพื่อบันทึกการปรับเทียบ
+    # หน้าดึงข้อมูลเครื่องมือเพื่อบันทึกการสอบเทียบ
     path('select-machine/', select_machine_for_calibration, name='select-machine-for-calibration'),
     path('create-with-machine/<int:machine_id>/', create_calibration_with_machine, name='create-calibration-with-machine'),
     
-    # การปรับเทียบตามประเภท
+    # การสอบเทียบตามประเภท
     path('type/<str:calibration_type>/', calibration_by_type, name='calibrate-by-type'),
     
-    # การปรับเทียบของเครื่องมือเฉพาะ
+    # การสอบเทียบของเครื่องมือเฉพาะ
     path('machine/<int:machine_id>/', machine_calibration_list, name='machine-calibration-list'),
     path('machine/<int:machine_id>/add/', create_calibration_for_machine, name='machine-calibration-add'),
     
@@ -50,4 +50,7 @@ urlpatterns = [
     
     # ปิดงาน
     path('close-work/<str:cal_type>/<int:cal_id>/', close_work, name='close-work'),
+    
+    # Export ใบรับรอง
+    path('export-certificate/<int:cal_id>/<str:cal_type>/', export_certificate_excel, name='export-certificate-excel'),
 ] 

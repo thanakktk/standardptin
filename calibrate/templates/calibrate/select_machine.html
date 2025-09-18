@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}เลือกเครื่องมือเพื่อบันทึกการปรับเทียบ{% endblock %}
+{% block title %}เลือกเครื่องมือเพื่อบันทึกการสอบเทียบ{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,9 +9,9 @@
             <div class="col-md-8">
                 <h1 class="page-title">
                     <i class="fas fa-search fa-lg"></i>
-                    เลือกเครื่องมือเพื่อบันทึกการปรับเทียบ
+                    เลือกเครื่องมือเพื่อบันทึกการสอบเทียบ
                 </h1>
-                <p class="page-subtitle">เลือกเครื่องมือที่ต้องการบันทึกการปรับเทียบ</p>
+                <p class="page-subtitle">เลือกเครื่องมือที่ต้องการบันทึกการสอบเทียบ</p>
             </div>
         </div>
     </div>
@@ -114,7 +114,7 @@
                                     <td>
                                         <a href="{% url 'create-calibration-with-machine' machine.id %}" 
                                            class="btn btn-success btn-sm">
-                                            <i class="fas fa-plus me-1"></i>บันทึกการปรับเทียบ
+                                            <i class="fas fa-plus me-1"></i>บันทึกการสอบเทียบ
                                         </a>
                                     </td>
                                 </tr>
@@ -139,7 +139,7 @@
         <div class="row mt-4">
             <div class="col-12">
                 <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-1"></i>กลับไปหน้าหลักการปรับเทียบ
+                    <i class="fas fa-arrow-left me-1"></i>กลับไปหน้าหลักการสอบเทียบ
                 </a>
             </div>
         </div>
