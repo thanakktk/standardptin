@@ -1,7 +1,8 @@
 from django import forms
 from .models import CalibrationForce, CalibrationPressure, CalibrationTorque, DialGaugeCalibration, DialGaugeReading, BalanceCalibration, BalanceReading, MicrowaveCalibration, MicrowaveReading
 from django.contrib.auth import get_user_model
-from machine.models import CalibrationEquipment, Machine, MachineType
+from machine.models import Machine, MachineType
+from std.models import Standard
 
 class CalibrationForceForm(forms.ModelForm):
     class Meta:
@@ -34,7 +35,7 @@ class CalibrationForceForm(forms.ModelForm):
         self.fields['certificate_issuer'].queryset = users
         
         # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
         self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
 
 class CalibrationPressureForm(forms.ModelForm):
@@ -69,7 +70,7 @@ class CalibrationPressureForm(forms.ModelForm):
         self.fields['certificate_issuer'].queryset = users
         
         # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
         self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
 
 class CalibrationTorqueForm(forms.ModelForm):
@@ -115,7 +116,7 @@ class CalibrationTorqueForm(forms.ModelForm):
         self.fields['certificate_issuer'].queryset = users
         
         # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
         self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
 
 class DialGaugeCalibrationForm(forms.ModelForm):
@@ -160,7 +161,7 @@ class DialGaugeCalibrationForm(forms.ModelForm):
         self.fields['machine'].empty_label = "เลือก Dial Gauge"
         
         # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
         self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
 
 class DialGaugeReadingForm(forms.ModelForm):
@@ -188,16 +189,18 @@ class BalanceCalibrationForm(forms.ModelForm):
     """ฟอร์มสำหรับการสอบเทียบ Balance"""
     class Meta:
         model = BalanceCalibration
-        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'update', 'next_due', 'unit', 'status', 'drift', 'res_push', 'res_tip', 'air_buoyancy', 'uncertainty_68', 'uncertainty_95_k', 'final_uncertainty']
+        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'received_date', 'issue_date', 'next_due', 'certificate_number', 'procedure_number', 'status', 'drift', 'res_push', 'res_tip', 'air_buoyancy', 'uncertainty_68', 'uncertainty_95_k', 'final_uncertainty']
         widgets = {
             'machine': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
-            'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'required': True}),
+            'received_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'issue_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'unit': forms.TextInput(attrs={'class': 'form-control'}),
+            'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'procedure_number': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'drift': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
             'res_push': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
@@ -225,7 +228,7 @@ class BalanceCalibrationForm(forms.ModelForm):
         self.fields['machine'].empty_label = "เลือก Balance"
         
         # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
         self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
 
 class BalanceReadingForm(forms.ModelForm):
@@ -284,7 +287,7 @@ class MicrowaveCalibrationForm(forms.ModelForm):
         self.fields['machine'].empty_label = "เลือก Microwave"
         
         # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
         self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
 
 class MicrowaveReadingForm(forms.ModelForm):

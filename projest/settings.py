@@ -142,14 +142,35 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Email Configuration
+# ใช้ File Backend - เก็บอีเมลเป็นไฟล์ (เหมาะสำหรับ development)
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'  # เก็บอีเมลในโฟลเดอร์นี้
+# For production - use SMTP backend to send real emails (uncomment when ready)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# ใช้ Gmail SMTP แบบง่าย
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'pakka.sort@gmail.com'         # อีเมล Gmail ของคุณ
-EMAIL_HOST_PASSWORD = 'uzqljseesuyhbjpa'  
-# EMAIL_HOST_PASSWORD = 'jvkf nkzt lcyy jixz'  # ใส่ App Password ที่สร้างจาก Google
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = 'ccdd0127@gmail.com'
+EMAIL_HOST_PASSWORD = 'qsmeoqfqamvtfofq'  # App Password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Email timeout settings to prevent connection issues
+EMAIL_TIMEOUT = 60
+EMAIL_CONNECTION_TIMEOUT = 30
+
+# Additional SMTP settings for better compatibility
+EMAIL_USE_LOCALTIME = True
+EMAIL_SUBJECT_PREFIX = '[Django Project] '
+
+# Additional SMTP settings for better reliability
+EMAIL_SUBJECT_PREFIX = '[Django Project] '
+EMAIL_USE_LOCALTIME = True
+
+# Fallback email backend for development (uncomment if needed)
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'

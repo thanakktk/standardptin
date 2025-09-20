@@ -2278,14 +2278,16 @@ def export_balance_certificate_docx(request, cal_id):
         # เพิ่มข้อมูลผลการสอบเทียบในตาราง (ถ้ามี)
         readings = calibration.readings.all().order_by('uuc_set')
         if readings:
-            # หาตารางผลการสอบเทียบใน template
+            # หาตารางผลการสอบเทียบใน template (ตารางที่ 7 - Calibration Results)
+            table_count = 0
             for table in doc.tables:
-                # ตรวจสอบว่าตารางนี้เป็นตารางผลการสอบเทียบหรือไม่
-                if len(table.rows) > 0 and len(table.columns) >= 5:
-                    first_row_text = ' '.join([cell.text.strip() for cell in table.rows[0].cells])
-                    if 'Nominal Value' in first_row_text or 'Conventional Mass' in first_row_text or 'UUC.set' in first_row_text:
-                        # ลบแถวเก่า (ยกเว้น header)
-                        for i in range(len(table.rows) - 1, 0, -1):
+                table_count += 1
+                # ตรวจสอบว่าตารางนี้เป็นตารางผลการสอบเทียบหรือไม่ (ตารางที่ 7)
+                if table_count == 7 and len(table.rows) > 1 and len(table.columns) >= 5:
+                    second_row_text = ' '.join([cell.text.strip() for cell in table.rows[1].cells])
+                    if 'Nominal Value' in second_row_text or 'Conventional Mass' in second_row_text:
+                        # ลบแถวเก่า (ยกเว้น header 2 แถวแรก)
+                        for i in range(len(table.rows) - 1, 1, -1):
                             table._tbl.remove(table.rows[i]._tr)
                         
                         # เพิ่มข้อมูลการอ่านค่าใหม่
