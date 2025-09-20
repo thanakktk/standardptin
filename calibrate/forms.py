@@ -66,6 +66,7 @@ class CalibrationPressureForm(forms.ModelForm):
         # ตั้งค่า queryset สำหรับฟิลด์ calibrator และ certificate_issuer
         User = get_user_model()
         users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        self.fields['uuc_id'].label_from_instance = lambda obj: f"{obj.name} - {obj.model} - {obj.serial_number}"
         self.fields['calibrator'].queryset = users
         self.fields['certificate_issuer'].queryset = users
         

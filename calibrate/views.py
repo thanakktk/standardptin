@@ -2342,3 +2342,40 @@ def export_balance_certificate_docx(request, cal_id):
     except Exception as e:
         messages.error(request, f'เกิดข้อผิดพลาดในการสร้างใบรับรอง: {str(e)}')
         return redirect('calibrate-report-detail')
+
+from docxtpl import DocxTemplate
+def export_certificate(request, pk):
+    calibration = CalibrationForce.objects.get(pk=pk)
+
+    doc = DocxTemplate("Balance_template.docx")
+
+    context = {
+        "MODEL": calibration.uuc_id.name if calibration.uuc_id else "",
+        "MANUFACTURER": calibration.uuc_id.manufacturer if hasattr(calibration.uuc_id, "manufacturer") else "",
+        "DESCRIPTION": calibration.uuc_id.name if calibration.uuc_id else "",
+        "SERIAL_NUMBER": getattr(calibration.uuc_id, "serial_number", ""),
+        "RANGE": getattr(calibration.uuc_id, "range", ""),
+        "GRADUATION": getattr(calibration.uuc_id, "graduation", ""),
+        "OPTION": getattr(calibration.uuc_id, "option", ""),
+        "CERTIFICATE_NUMBER": getattr(calibration, "certificate_number", ""),
+        "CUSTOMER_ASSET_ID": getattr(calibration, "customer_asset_id", ""),
+        "PROCEDURE": getattr(calibration, "procedure", ""),
+        "RECEIVED_DATE": calibration.update,
+        "DATE_OF_CALIBRATION": calibration.update,
+        "DUE_DATE": calibration.next_due,
+        "ISSUE_DATE": calibration.update,
+        "CALIBRATOR": calibration.calibrator.get_full_name() if calibration.calibrator else "",
+        "APPROVER": calibration.certificate_issuer.get_full_name() if calibration.certificate_issuer else "",
+        "CUSTOMER_ADDRESS": getattr(calibration.uuc_id, "address", ""),
+        "LOCATION_OF_CALIBRATION": "กบร.ทร.",
+        "LOCATION_ADDRESS": "Somewhere Navy Base",
+    }
+
+    doc.render(context)
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    response["Content-Disposition"] = f'attachment; filename="certificate_{calibration.pk}.docx"'
+    doc.save(response)
+    return response
