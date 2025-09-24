@@ -94,7 +94,7 @@
                                 <div class="text-danger small">{{ form.status.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3" style="display: none;">
                             <label for="{{ form.machine.id_for_label }}" class="form-label">
                                 <i class="fas fa-tools me-1"></i>{{ form.machine.label }}
                             </label>
@@ -126,9 +126,14 @@
                         </div>
                         <div class="col-md-4">
                             <label for="{{ form.std_id.id_for_label }}" class="form-label">
-                                <i class="fas fa-tools me-1"></i>{{ form.std_id.label }}
+                                <i class="fas fa-wrench me-1"></i>{{ form.std_id.label }}
                             </label>
-                            {{ form.std_id }}
+                            <select class="form-control" id="{{ form.std_id.id_for_label }}" name="{{ form.std_id.html_name }}">
+                                <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                {% for choice in form.std_id.field.queryset %}
+                                    <option value="{{ choice.pk }}" {% if form.std_id.value == choice.pk %}selected{% endif %}>{{ choice.name }}</option>
+                                {% endfor %}
+                            </select>
                             {% if form.std_id.errors %}
                                 <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
                             {% endif %}
@@ -209,6 +214,34 @@
                                                     <div class="text-danger small">{{ form.tolerance_limit.errors.0 }}</div>
                                                 {% endif %}
                                             </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0100" name="uuc_set_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0100" name="actual_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000" name="error_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0003" name="uncertainty_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0090 – 0.0110" name="tolerance_limit_2"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0200" name="uuc_set_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0200" name="actual_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000" name="error_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0003" name="uncertainty_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0190 – 0.0210" name="tolerance_limit_3"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0500" name="uuc_set_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0500" name="actual_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000" name="error_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0003" name="uncertainty_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0490 – 0.0510" name="tolerance_limit_4"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.1000" name="uuc_set_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.1000" name="actual_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000" name="error_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0003" name="uncertainty_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0990 – 0.1010" name="tolerance_limit_5"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -333,11 +366,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Add event listeners
-    if (uucSet && actual) {
-        [uucSet, actual].forEach(input => {
-            input.addEventListener('input', calculateDialGaugeError);
-        });
+    // Add event listeners for all rows
+    for (let i = 1; i <= 5; i++) {
+        const uucSet = document.querySelector(`input[name="uuc_set${i > 1 ? '_' + i : ''}"]`);
+        const actual = document.querySelector(`input[name="actual${i > 1 ? '_' + i : ''}"]`);
+        const error = document.querySelector(`input[name="error${i > 1 ? '_' + i : ''}"]`);
+        const toleranceLimit = document.querySelector(`input[name="tolerance_limit${i > 1 ? '_' + i : ''}"]`);
+        
+        if (uucSet && actual) {
+            [uucSet, actual].forEach(input => {
+                input.addEventListener('input', function() {
+                    calculateDialGaugeErrorForRow(i);
+                });
+            });
+        }
+    }
+    
+    // Helper function for each row
+    function calculateDialGaugeErrorForRow(rowNum) {
+        const uucSet = document.querySelector(`input[name="uuc_set${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const actual = document.querySelector(`input[name="actual${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const error = document.querySelector(`input[name="error${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const toleranceLimit = document.querySelector(`input[name="tolerance_limit${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        
+        if (uucSet && actual && error) {
+            const uucValue = parseFloat(uucSet.value) || 0;
+            const actualValue = parseFloat(actual.value) || 0;
+            const errorValue = actualValue - uucValue;
+            error.value = errorValue.toFixed(4);
+            
+            if (toleranceLimit) {
+                const minTolerance = (uucValue - 0.0010).toFixed(4);
+                const maxTolerance = (uucValue + 0.0010).toFixed(4);
+                toleranceLimit.value = `${minTolerance} – ${maxTolerance}`;
+            }
+        }
     }
 });
 </script>
@@ -355,6 +418,26 @@ label[for="id_status"] {
 /* ซ่อน div ที่มีฟิลด์ status */
 .col-md-3:has(#id_status) {
     display: none !important;
+}
+
+/* ปรับปรุงการแสดงผลของ date input */
+input[type="date"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
 }
 </style>
 {% endblock %}

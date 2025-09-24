@@ -328,6 +328,32 @@ def calibration_dashboard(request):
         )
     ).order_by('priority_order', '-date_calibration')
     
+    # ดึงข้อมูลการสอบเทียบ High Frequency
+    high_frequency_calibrations = HighFrequencyCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').exclude(
+        status='closed'
+    ).annotate(
+        priority_order=models.Case(
+            models.When(priority='very_urgent', then=models.Value(1)),
+            models.When(priority='urgent', then=models.Value(2)),
+            models.When(priority='normal', then=models.Value(3)),
+            default=models.Value(4),
+            output_field=models.IntegerField(),
+        )
+    ).order_by('priority_order', '-date_calibration')
+    
+    # ดึงข้อมูลการสอบเทียบ Low Frequency
+    low_frequency_calibrations = LowFrequencyCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').exclude(
+        status='closed'
+    ).annotate(
+        priority_order=models.Case(
+            models.When(priority='very_urgent', then=models.Value(1)),
+            models.When(priority='urgent', then=models.Value(2)),
+            models.When(priority='normal', then=models.Value(3)),
+            default=models.Value(4),
+            output_field=models.IntegerField(),
+        )
+    ).order_by('priority_order', '-date_calibration')
+    
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
     
@@ -408,7 +434,7 @@ def calibration_dashboard(request):
             'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
         })
     
     # เพิ่มข้อมูล Balance calibrations
@@ -448,7 +474,47 @@ def calibration_dashboard(request):
             'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
+        })
+    
+    # เพิ่มข้อมูล High Frequency calibrations
+    for cal in high_frequency_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'high_frequency',
+            'type_name': 'การสอบเทียบ High Frequency',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.date_calibration,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
+        })
+    
+    # เพิ่มข้อมูล Low Frequency calibrations
+    for cal in low_frequency_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'low_frequency',
+            'type_name': 'การสอบเทียบ Low Frequency',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.date_calibration,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์
@@ -562,14 +628,30 @@ def create_calibration_for_machine(request, machine_id):
             form = BalanceCalibrationForm(request.POST)
             template = 'calibrate/balance_form.html'
             success_url = reverse_lazy('machine-calibration-list', kwargs={'machine_id': machine_id})
+        elif 'microwave' in machine_type_name:
+            form = MicrowaveCalibrationForm(request.POST)
+            template = 'calibrate/microwave_form.html'
+            success_url = reverse_lazy('machine-calibration-list', kwargs={'machine_id': machine_id})
+        elif 'high frequency' in machine_type_name:
+            form = HighFrequencyCalibrationForm(request.POST)
+            template = 'calibrate/high_frequency_form.html'
+            success_url = reverse_lazy('machine-calibration-list', kwargs={'machine_id': machine_id})
+        elif 'low frequency' in machine_type_name:
+            form = LowFrequencyCalibrationForm(request.POST)
+            template = 'calibrate/low_frequency_form.html'
+            success_url = reverse_lazy('machine-calibration-list', kwargs={'machine_id': machine_id})
+        elif 'dial gauge' in machine_type_name:
+            form = DialGaugeCalibrationForm(request.POST)
+            template = 'calibrate/dial_gauge_form.html'
+            success_url = reverse_lazy('machine-calibration-list', kwargs={'machine_id': machine_id})
         else:
-            messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสม')
+            messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสมสำหรับเครื่องมือนี้')
             return redirect('machine-list')
         
         if form.is_valid():
             calibration = form.save(commit=False)
-            # สำหรับ Balance ใช้ field 'machine' แทน 'uuc_id'
-            if 'balance' in machine_type_name:
+            # สำหรับ Balance, Microwave, High Frequency, Low Frequency, Dial Gauge ใช้ field 'machine' แทน 'uuc_id'
+            if any(x in machine_type_name for x in ['balance', 'microwave', 'high frequency', 'low frequency', 'dial gauge']):
                 calibration.machine = machine
             else:
                 calibration.uuc_id = machine.id
@@ -589,8 +671,20 @@ def create_calibration_for_machine(request, machine_id):
         elif 'balance' in machine_type_name:
             form = BalanceCalibrationForm(initial={'machine': machine.id})
             template = 'calibrate/balance_form.html'
+        elif 'microwave' in machine_type_name:
+            form = MicrowaveCalibrationForm(initial={'machine': machine.id})
+            template = 'calibrate/microwave_form.html'
+        elif 'high frequency' in machine_type_name:
+            form = HighFrequencyCalibrationForm(initial={'machine': machine.id})
+            template = 'calibrate/high_frequency_form.html'
+        elif 'low frequency' in machine_type_name:
+            form = LowFrequencyCalibrationForm(initial={'machine': machine.id})
+            template = 'calibrate/low_frequency_form.html'
+        elif 'dial gauge' in machine_type_name:
+            form = DialGaugeCalibrationForm(initial={'machine': machine.id})
+            template = 'calibrate/dial_gauge_form.html'
         else:
-            messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสม')
+            messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสมสำหรับเครื่องมือนี้')
             return redirect('machine-list')
     
     context = {
@@ -671,14 +765,30 @@ def create_calibration_with_machine(request, machine_id):
             form = BalanceCalibrationForm(request.POST)
             template = 'calibrate/balance_form_with_machine.html'
             success_url = reverse_lazy('calibrate-dashboard')
+        elif 'microwave' in machine_type_name:
+            form = MicrowaveCalibrationForm(request.POST)
+            template = 'calibrate/microwave_form_with_machine.html'
+            success_url = reverse_lazy('calibrate-dashboard')
+        elif 'high frequency' in machine_type_name:
+            form = HighFrequencyCalibrationForm(request.POST)
+            template = 'calibrate/high_frequency_form_with_machine.html'
+            success_url = reverse_lazy('calibrate-dashboard')
+        elif 'low frequency' in machine_type_name:
+            form = LowFrequencyCalibrationForm(request.POST)
+            template = 'calibrate/low_frequency_form_with_machine.html'
+            success_url = reverse_lazy('calibrate-dashboard')
+        elif 'dial gauge' in machine_type_name:
+            form = DialGaugeCalibrationForm(request.POST)
+            template = 'calibrate/dial_gauge_form_with_machine.html'
+            success_url = reverse_lazy('calibrate-dashboard')
         else:
-            messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสม')
+            messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสมสำหรับเครื่องมือนี้')
             return redirect('select-machine-for-calibration')
         
         if form.is_valid():
             calibration = form.save(commit=False)
-            # สำหรับ Balance ใช้ field 'machine' แทน 'uuc_id'
-            if 'balance' in machine_type_name:
+            # สำหรับ Balance, Microwave, High Frequency, Low Frequency, Dial Gauge ใช้ field 'machine' แทน 'uuc_id'
+            if any(x in machine_type_name for x in ['balance', 'microwave', 'high frequency', 'low frequency', 'dial gauge']):
                 calibration.machine = machine
             else:
                 calibration.uuc_id = machine
@@ -769,8 +879,60 @@ def create_calibration_with_machine(request, machine_id):
             form.fields['calibrator'].queryset = users
             form.fields['certificate_issuer'].queryset = users
             template = 'calibrate/balance_form_with_machine.html'
+        elif 'microwave' in machine_type_name:
+            # สำหรับ Microwave ใช้ field 'machine' แทน 'uuc_id'
+            microwave_initial_data = {
+                'machine': machine,
+            }
+            form = MicrowaveCalibrationForm(initial=microwave_initial_data)
+            # เพิ่มตัวเลือกผู้ใช้สำหรับฟิลด์ calibrator และ certificate_issuer
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+            form.fields['calibrator'].queryset = users
+            form.fields['certificate_issuer'].queryset = users
+            template = 'calibrate/microwave_form_with_machine.html'
+        elif 'high frequency' in machine_type_name:
+            # สำหรับ High Frequency ใช้ field 'machine' แทน 'uuc_id'
+            high_freq_initial_data = {
+                'machine': machine,
+            }
+            form = HighFrequencyCalibrationForm(initial=high_freq_initial_data)
+            # เพิ่มตัวเลือกผู้ใช้สำหรับฟิลด์ calibrator และ certificate_issuer
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+            form.fields['calibrator'].queryset = users
+            form.fields['certificate_issuer'].queryset = users
+            template = 'calibrate/high_frequency_form_with_machine.html'
+        elif 'low frequency' in machine_type_name:
+            # สำหรับ Low Frequency ใช้ field 'machine' แทน 'uuc_id'
+            low_freq_initial_data = {
+                'machine': machine,
+            }
+            form = LowFrequencyCalibrationForm(initial=low_freq_initial_data)
+            # เพิ่มตัวเลือกผู้ใช้สำหรับฟิลด์ calibrator และ certificate_issuer
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+            form.fields['calibrator'].queryset = users
+            form.fields['certificate_issuer'].queryset = users
+            template = 'calibrate/low_frequency_form_with_machine.html'
+        elif 'dial gauge' in machine_type_name:
+            # สำหรับ Dial Gauge ใช้ field 'machine' แทน 'uuc_id'
+            dial_gauge_initial_data = {
+                'machine': machine,
+            }
+            form = DialGaugeCalibrationForm(initial=dial_gauge_initial_data)
+            # เพิ่มตัวเลือกผู้ใช้สำหรับฟิลด์ calibrator และ certificate_issuer
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+            form.fields['calibrator'].queryset = users
+            form.fields['certificate_issuer'].queryset = users
+            template = 'calibrate/dial_gauge_form_with_machine.html'
         else:
-            messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสม')
+            messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสมสำหรับเครื่องมือนี้')
             return redirect('select-machine-for-calibration')
     
     context = {
@@ -2420,4 +2582,66 @@ class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ Low Frequency - {self.object.machine.name}'
+        return context
+
+class MicrowaveCalibrationUpdateView(LoginRequiredMixin, UpdateView):
+    model = MicrowaveCalibration
+    form_class = MicrowaveCalibrationForm
+    template_name = 'calibrate/microwave_form.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'แก้ไขการสอบเทียบ Microwave - {self.object.machine.name}'
+        return context
+
+class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
+    model = DialGaugeCalibration
+    form_class = DialGaugeCalibrationForm
+    template_name = 'calibrate/dial_gauge_form.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'แก้ไขการสอบเทียบ Dial Gauge - {self.object.machine.name}'
+        return context
+
+class HighFrequencyCalibrationDeleteView(LoginRequiredMixin, DeleteView):
+    model = HighFrequencyCalibration
+    template_name = 'calibrate/high_frequency_confirm_delete.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'ลบการสอบเทียบ High Frequency - {self.object.machine.name}'
+        return context
+
+class LowFrequencyCalibrationDeleteView(LoginRequiredMixin, DeleteView):
+    model = LowFrequencyCalibration
+    template_name = 'calibrate/low_frequency_confirm_delete.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'ลบการสอบเทียบ Low Frequency - {self.object.machine.name}'
+        return context
+
+class MicrowaveCalibrationDeleteView(LoginRequiredMixin, DeleteView):
+    model = MicrowaveCalibration
+    template_name = 'calibrate/microwave_confirm_delete.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'ลบการสอบเทียบ Microwave - {self.object.machine.name}'
+        return context
+
+class DialGaugeCalibrationDeleteView(LoginRequiredMixin, DeleteView):
+    model = DialGaugeCalibration
+    template_name = 'calibrate/dial_gauge_confirm_delete.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'ลบการสอบเทียบ Dial Gauge - {self.object.machine.name}'
         return context

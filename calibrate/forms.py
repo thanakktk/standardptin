@@ -335,7 +335,15 @@ class HighFrequencyCalibrationForm(forms.ModelForm):
         model = HighFrequencyCalibration
         fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'next_due', 'certificate_number', 'status', 'priority',
                  'freq_uuc_range', 'freq_uuc_setting', 'freq_measured_value', 'freq_uncertainty', 'freq_tolerance_limit',
-                 'volt_uuc_range', 'volt_uuc_setting', 'volt_measured_value', 'volt_uncertainty', 'volt_tolerance_limit']
+                 'freq_uuc_range_2', 'freq_uuc_setting_2', 'freq_measured_value_2', 'freq_uncertainty_2', 'freq_tolerance_limit_2',
+                 'freq_uuc_range_3', 'freq_uuc_setting_3', 'freq_measured_value_3', 'freq_uncertainty_3', 'freq_tolerance_limit_3',
+                 'freq_uuc_range_4', 'freq_uuc_setting_4', 'freq_measured_value_4', 'freq_uncertainty_4', 'freq_tolerance_limit_4',
+                 'freq_uuc_range_5', 'freq_uuc_setting_5', 'freq_measured_value_5', 'freq_uncertainty_5', 'freq_tolerance_limit_5',
+                 'volt_uuc_range', 'volt_uuc_setting', 'volt_measured_value', 'volt_uncertainty', 'volt_tolerance_limit',
+                 'volt_uuc_range_2', 'volt_uuc_setting_2', 'volt_measured_value_2', 'volt_uncertainty_2', 'volt_tolerance_limit_2',
+                 'volt_uuc_range_3', 'volt_uuc_setting_3', 'volt_measured_value_3', 'volt_uncertainty_3', 'volt_tolerance_limit_3',
+                 'volt_uuc_range_4', 'volt_uuc_setting_4', 'volt_measured_value_4', 'volt_uncertainty_4', 'volt_tolerance_limit_4',
+                 'volt_uuc_range_5', 'volt_uuc_setting_5', 'volt_measured_value_5', 'volt_uncertainty_5', 'volt_tolerance_limit_5']
         widgets = {
             'machine': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
@@ -352,12 +360,60 @@ class HighFrequencyCalibrationForm(forms.ModelForm):
             'freq_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 MHz'}),
             'freq_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 MHz'}),
             'freq_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 9.0085 – 10.0015 MHz'}),
+            # Frequency fields row 2
+            'freq_uuc_range_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 20 MHz'}),
+            'freq_uuc_setting_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 20.0000 MHz'}),
+            'freq_measured_value_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 20.0000 MHz'}),
+            'freq_uncertainty_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 MHz'}),
+            'freq_tolerance_limit_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 19.0085 – 20.0015 MHz'}),
+            # Frequency fields row 3
+            'freq_uuc_range_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 MHz'}),
+            'freq_uuc_setting_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50.0000 MHz'}),
+            'freq_measured_value_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50.0000 MHz'}),
+            'freq_uncertainty_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 MHz'}),
+            'freq_tolerance_limit_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 49.0085 – 50.0015 MHz'}),
+            # Frequency fields row 4
+            'freq_uuc_range_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 100 MHz'}),
+            'freq_uuc_setting_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 100.0000 MHz'}),
+            'freq_measured_value_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 100.0000 MHz'}),
+            'freq_uncertainty_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 MHz'}),
+            'freq_tolerance_limit_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 99.0085 – 100.0015 MHz'}),
+            # Frequency fields row 5
+            'freq_uuc_range_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 200 MHz'}),
+            'freq_uuc_setting_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 200.0000 MHz'}),
+            'freq_measured_value_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 200.0000 MHz'}),
+            'freq_uncertainty_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 MHz'}),
+            'freq_tolerance_limit_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 199.0085 – 200.0015 MHz'}),
             # Voltage fields
             'volt_uuc_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10 VDC'}),
             'volt_uuc_setting': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 1.0000 V'}),
             'volt_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 1.0001 V'}),
             'volt_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น -0.0001 V'}),
             'volt_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.9997 – 1.0007 V'}),
+            # Voltage fields row 2
+            'volt_uuc_range_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 20 VDC'}),
+            'volt_uuc_setting_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 2.0000 V'}),
+            'volt_measured_value_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 2.0001 V'}),
+            'volt_uncertainty_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น -0.0001 V'}),
+            'volt_tolerance_limit_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 1.9997 – 2.0007 V'}),
+            # Voltage fields row 3
+            'volt_uuc_range_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 VDC'}),
+            'volt_uuc_setting_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 5.0000 V'}),
+            'volt_measured_value_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 5.0001 V'}),
+            'volt_uncertainty_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น -0.0001 V'}),
+            'volt_tolerance_limit_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 4.9997 – 5.0007 V'}),
+            # Voltage fields row 4
+            'volt_uuc_range_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 100 VDC'}),
+            'volt_uuc_setting_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 V'}),
+            'volt_measured_value_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0001 V'}),
+            'volt_uncertainty_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น -0.0001 V'}),
+            'volt_tolerance_limit_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 9.9997 – 10.0007 V'}),
+            # Voltage fields row 5
+            'volt_uuc_range_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 200 VDC'}),
+            'volt_uuc_setting_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 20.0000 V'}),
+            'volt_measured_value_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 20.0001 V'}),
+            'volt_uncertainty_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น -0.0001 V'}),
+            'volt_tolerance_limit_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 19.9997 – 20.0007 V'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -384,9 +440,9 @@ class LowFrequencyCalibrationForm(forms.ModelForm):
     class Meta:
         model = LowFrequencyCalibration
         fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'next_due', 'certificate_number', 'status', 'priority',
-                 'dc_uuc_range', 'dc_uuc_setting', 'dc_measured_value', 'dc_uncertainty', 'dc_tolerance_limit',
-                 'ac_uuc_range', 'ac_uuc_setting', 'ac_measured_value', 'ac_uncertainty', 'ac_tolerance_limit',
-                 'res_uuc_range', 'res_uuc_setting', 'res_measured_value', 'res_uncertainty', 'res_tolerance_limit']
+                 'dc_uuc_range', 'dc_uuc_setting', 'dc_measured_value', 'dc_uncertainty', 'dc_tolerance_limit', 'dc_error', 'dc_pass_fail', 'dc_remarks',
+                 'ac_uuc_range', 'ac_uuc_setting', 'ac_measured_value', 'ac_uncertainty', 'ac_tolerance_limit', 'ac_error', 'ac_pass_fail', 'ac_remarks',
+                 'res_uuc_range', 'res_uuc_setting', 'res_measured_value', 'res_uncertainty', 'res_tolerance_limit', 'res_error', 'res_pass_fail', 'res_remarks']
         widgets = {
             'machine': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
@@ -403,18 +459,27 @@ class LowFrequencyCalibrationForm(forms.ModelForm):
             'dc_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 mV'}),
             'dc_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 mV'}),
             'dc_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 49.0035 – 50.0065 mV'}),
+            'dc_error': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 mV'}),
+            'dc_pass_fail': forms.Select(attrs={'class': 'form-control'}, choices=[('', 'เลือก'), ('pass', 'ผ่าน'), ('fail', 'ไม่ผ่าน')]),
+            'dc_remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'หมายเหตุ...'}),
             # AC Voltage fields
             'ac_uuc_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 mV'}),
             'ac_uuc_setting': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 mV'}),
             'ac_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 mV'}),
             'ac_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 mV'}),
             'ac_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 45.0080 – 50.0020 mV'}),
+            'ac_error': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 mV'}),
+            'ac_pass_fail': forms.Select(attrs={'class': 'form-control'}, choices=[('', 'เลือก'), ('pass', 'ผ่าน'), ('fail', 'ไม่ผ่าน')]),
+            'ac_remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'หมายเหตุ...'}),
             # Resistance fields
             'res_uuc_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 500 Ω'}),
             'res_uuc_setting': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 500 Ω'}),
             'res_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 500 Ω'}),
             'res_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 Ω'}),
             'res_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 499.0077 – 500.0033 Ω'}),
+            'res_error': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 Ω'}),
+            'res_pass_fail': forms.Select(attrs={'class': 'form-control'}, choices=[('', 'เลือก'), ('pass', 'ผ่าน'), ('fail', 'ไม่ผ่าน')]),
+            'res_remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'หมายเหตุ...'}),
         }
     
     def __init__(self, *args, **kwargs):

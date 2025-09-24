@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>ยืนยันการลบบันทึกการสอบเทียบ Low Frequency</h1>
+<p>คุณต้องการลบ "{{ object }}" ใช่หรือไม่?</p>
+<form method="post">{% csrf_token %}
+    <button type="submit" class="btn btn-danger">ลบ</button>
+    <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary">ยกเลิก</a>
+</form>
+{% endblock %}

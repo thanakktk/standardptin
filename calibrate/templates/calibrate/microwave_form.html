@@ -94,7 +94,7 @@
                                 <div class="text-danger small">{{ form.status.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3" style="display: none;">
                             <label for="{{ form.machine.id_for_label }}" class="form-label">
                                 <i class="fas fa-tools me-1"></i>{{ form.machine.label }}
                             </label>
@@ -126,9 +126,14 @@
                         </div>
                         <div class="col-md-4">
                             <label for="{{ form.std_id.id_for_label }}" class="form-label">
-                                <i class="fas fa-tools me-1"></i>{{ form.std_id.label }}
+                                <i class="fas fa-wrench me-1"></i>{{ form.std_id.label }}
                             </label>
-                            {{ form.std_id }}
+                            <select class="form-control" id="{{ form.std_id.id_for_label }}" name="{{ form.std_id.html_name }}">
+                                <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                {% for choice in form.std_id.field.queryset %}
+                                    <option value="{{ choice.pk }}" {% if form.std_id.value == choice.pk %}selected{% endif %}>{{ choice.name }}</option>
+                                {% endfor %}
+                            </select>
                             {% if form.std_id.errors %}
                                 <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
                             {% endif %}
@@ -200,6 +205,34 @@
                                                 {% endif %}
                                             </td>
                                         </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1.0 GHz" name="dc_uuc_range_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น -10 dBm" name="dc_uuc_setting_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.9998 GHz" name="dc_measured_value_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น -0.0002 GHz" name="dc_uncertainty_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.9000 – 1.1000 GHz" name="dc_tolerance_limit_2"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 2.0 GHz" name="dc_uuc_range_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น -5 dBm" name="dc_uuc_setting_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1.9998 GHz" name="dc_measured_value_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น -0.0002 GHz" name="dc_uncertainty_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1.9000 – 2.1000 GHz" name="dc_tolerance_limit_3"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 5.0 GHz" name="dc_uuc_range_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0 dBm" name="dc_uuc_setting_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 4.9998 GHz" name="dc_measured_value_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น -0.0002 GHz" name="dc_uncertainty_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 4.9000 – 5.1000 GHz" name="dc_tolerance_limit_4"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 10.0 GHz" name="dc_uuc_range_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น +5 dBm" name="dc_uuc_setting_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 9.9998 GHz" name="dc_measured_value_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น -0.0002 GHz" name="dc_uncertainty_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 9.9000 – 10.1000 GHz" name="dc_tolerance_limit_5"></td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -258,11 +291,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Add event listeners
-    if (uucRange && measuredValue) {
-        [uucRange, measuredValue].forEach(input => {
-            input.addEventListener('input', calculateMicrowaveUncertainty);
-        });
+    // Add event listeners for all rows
+    for (let i = 1; i <= 5; i++) {
+        const uucRange = document.querySelector(`input[name="dc_uuc_range${i > 1 ? '_' + i : ''}"]`);
+        const measuredValue = document.querySelector(`input[name="dc_measured_value${i > 1 ? '_' + i : ''}"]`);
+        const uncertainty = document.querySelector(`input[name="dc_uncertainty${i > 1 ? '_' + i : ''}"]`);
+        const toleranceLimit = document.querySelector(`input[name="dc_tolerance_limit${i > 1 ? '_' + i : ''}"]`);
+        
+        if (uucRange && measuredValue) {
+            [uucRange, measuredValue].forEach(input => {
+                input.addEventListener('input', function() {
+                    calculateMicrowaveUncertaintyForRow(i);
+                });
+            });
+        }
+    }
+    
+    // Helper function for each row
+    function calculateMicrowaveUncertaintyForRow(rowNum) {
+        const uucRange = document.querySelector(`input[name="dc_uuc_range${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const measuredValue = document.querySelector(`input[name="dc_measured_value${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const uncertainty = document.querySelector(`input[name="dc_uncertainty${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const toleranceLimit = document.querySelector(`input[name="dc_tolerance_limit${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        
+        if (uucRange && measuredValue && uncertainty) {
+            const range = parseFloat(uucRange.value) || 0;
+            const measured = parseFloat(measuredValue.value) || 0;
+            const uncertaintyValue = measured - range;
+            uncertainty.value = uncertaintyValue.toFixed(4);
+            
+            if (toleranceLimit) {
+                const minTolerance = (range - 0.1000).toFixed(4);
+                const maxTolerance = (range + 0.1000).toFixed(4);
+                toleranceLimit.value = `${minTolerance} – ${maxTolerance}`;
+            }
+        }
     }
 });
 </script>

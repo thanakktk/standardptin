@@ -10,7 +10,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.conf import settings
 from datetime import datetime
-from calibrate.models import CalibrationForce, CalibrationPressure, CalibrationTorque, BalanceCalibration
+from calibrate.models import CalibrationForce, CalibrationPressure, CalibrationTorque, BalanceCalibration, MicrowaveCalibration, HighFrequencyCalibration, LowFrequencyCalibration, DialGaugeCalibration
 from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -339,6 +339,86 @@ def create_calibration_request(request, pk):
             )
             messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
             
+        elif 'microwave' in machine_type_name:
+            # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+            existing_request = MicrowaveCalibration.objects.filter(
+                machine=machine,
+                status='pending'
+            ).first()
+            
+            if existing_request:
+                messages.warning(request, f'มีคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} อยู่แล้ว')
+                return redirect('machine-list')
+            
+            # สร้างคำร้องขอใหม่
+            calibration = MicrowaveCalibration.objects.create(
+                machine=machine,
+                status='pending',
+                priority=priority,
+                date_calibration=timezone.now().date()
+            )
+            messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            
+        elif 'high frequency' in machine_type_name:
+            # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+            existing_request = HighFrequencyCalibration.objects.filter(
+                machine=machine,
+                status='pending'
+            ).first()
+            
+            if existing_request:
+                messages.warning(request, f'มีคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} อยู่แล้ว')
+                return redirect('machine-list')
+            
+            # สร้างคำร้องขอใหม่
+            calibration = HighFrequencyCalibration.objects.create(
+                machine=machine,
+                status='pending',
+                priority=priority,
+                date_calibration=timezone.now().date()
+            )
+            messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            
+        elif 'low frequency' in machine_type_name:
+            # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+            existing_request = LowFrequencyCalibration.objects.filter(
+                machine=machine,
+                status='pending'
+            ).first()
+            
+            if existing_request:
+                messages.warning(request, f'มีคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} อยู่แล้ว')
+                return redirect('machine-list')
+            
+            # สร้างคำร้องขอใหม่
+            calibration = LowFrequencyCalibration.objects.create(
+                machine=machine,
+                status='pending',
+                priority=priority,
+                date_calibration=timezone.now().date()
+            )
+            messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            
+        elif 'dial gauge' in machine_type_name:
+            # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+            existing_request = DialGaugeCalibration.objects.filter(
+                machine=machine,
+                status='pending'
+            ).first()
+            
+            if existing_request:
+                messages.warning(request, f'มีคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} อยู่แล้ว')
+                return redirect('machine-list')
+            
+            # สร้างคำร้องขอใหม่
+            calibration = DialGaugeCalibration.objects.create(
+                machine=machine,
+                status='pending',
+                priority=priority,
+                date_calibration=timezone.now().date()
+            )
+            messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            
         else:
             messages.error(request, 'ไม่พบประเภทการสอบเทียบที่เหมาะสมสำหรับเครื่องมือนี้')
             return redirect('machine-list')
@@ -483,6 +563,106 @@ def bulk_calibration_request(request):
                         uuc_id=machine,
                         status='not_set',
                         priority=priority
+                    )
+                    created_count += 1
+                    
+                elif 'balance' in machine_type_name:
+                    # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+                    existing_request = BalanceCalibration.objects.filter(
+                        machine=machine,
+                        status='pending'
+                    ).first()
+                    
+                    if existing_request:
+                        skipped_count += 1
+                        continue
+                    
+                    # สร้างคำร้องขอใหม่
+                    BalanceCalibration.objects.create(
+                        machine=machine,
+                        status='pending',
+                        priority=priority,
+                        date_calibration=timezone.now().date()
+                    )
+                    created_count += 1
+                    
+                elif 'microwave' in machine_type_name:
+                    # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+                    existing_request = MicrowaveCalibration.objects.filter(
+                        machine=machine,
+                        status='pending'
+                    ).first()
+                    
+                    if existing_request:
+                        skipped_count += 1
+                        continue
+                    
+                    # สร้างคำร้องขอใหม่
+                    MicrowaveCalibration.objects.create(
+                        machine=machine,
+                        status='pending',
+                        priority=priority,
+                        date_calibration=timezone.now().date()
+                    )
+                    created_count += 1
+                    
+                elif 'high frequency' in machine_type_name:
+                    # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+                    existing_request = HighFrequencyCalibration.objects.filter(
+                        machine=machine,
+                        status='pending'
+                    ).first()
+                    
+                    if existing_request:
+                        skipped_count += 1
+                        continue
+                    
+                    # สร้างคำร้องขอใหม่
+                    HighFrequencyCalibration.objects.create(
+                        machine=machine,
+                        status='pending',
+                        priority=priority,
+                        date_calibration=timezone.now().date()
+                    )
+                    created_count += 1
+                    
+                elif 'low frequency' in machine_type_name:
+                    # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+                    existing_request = LowFrequencyCalibration.objects.filter(
+                        machine=machine,
+                        status='pending'
+                    ).first()
+                    
+                    if existing_request:
+                        skipped_count += 1
+                        continue
+                    
+                    # สร้างคำร้องขอใหม่
+                    LowFrequencyCalibration.objects.create(
+                        machine=machine,
+                        status='pending',
+                        priority=priority,
+                        date_calibration=timezone.now().date()
+                    )
+                    created_count += 1
+                    
+                elif 'dial gauge' in machine_type_name:
+                    # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
+                    existing_request = DialGaugeCalibration.objects.filter(
+                        machine=machine,
+                        status='pending'
+                    ).first()
+                    
+                    if existing_request:
+                        skipped_count += 1
+                        continue
+                    
+                    # สร้างคำร้องขอใหม่
+                    DialGaugeCalibration.objects.create(
+                        machine=machine,
+                        status='pending',
+                        priority=priority,
+                        date_calibration=timezone.now().date()
                     )
                     created_count += 1
                     

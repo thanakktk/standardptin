@@ -286,8 +286,8 @@ class DialGaugeCalibration(models.Model):
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
     
     # ข้อมูลมาตรฐาน
-    res_uuc = models.DecimalField(max_digits=10, decimal_places=6, verbose_name="ความละเอียด UUC (inch)")
-    acc_std = models.DecimalField(max_digits=10, decimal_places=8, verbose_name="ความแม่นยำมาตรฐาน (inch)")
+    res_uuc = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True, verbose_name="ความละเอียด UUC (inch)")
+    acc_std = models.DecimalField(max_digits=10, decimal_places=8, blank=True, null=True, verbose_name="ความแม่นยำมาตรฐาน (inch)")
     
     # สถานะและความสำคัญ
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะสอบเทียบ")
@@ -476,7 +476,7 @@ class HighFrequencyCalibration(models.Model):
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='high_frequency_certificates')
     date_calibration = models.DateField(verbose_name="วันที่สอบเทียบ")
     update = models.DateTimeField(auto_now=True, verbose_name="วันที่อัปเดต")
-    next_due = models.DateField(verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
+    next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
     certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะการสอบเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
@@ -488,12 +488,62 @@ class HighFrequencyCalibration(models.Model):
     freq_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±)")
     freq_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit")
     
+    # แถวเพิ่มเติมสำหรับ Frequency
+    freq_uuc_range_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Time Base) 2")
+    freq_uuc_setting_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting 2")
+    freq_measured_value_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value 2")
+    freq_uncertainty_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) 2")
+    freq_tolerance_limit_2 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit 2")
+    
+    freq_uuc_range_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Time Base) 3")
+    freq_uuc_setting_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting 3")
+    freq_measured_value_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value 3")
+    freq_uncertainty_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) 3")
+    freq_tolerance_limit_3 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit 3")
+    
+    freq_uuc_range_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Time Base) 4")
+    freq_uuc_setting_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting 4")
+    freq_measured_value_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value 4")
+    freq_uncertainty_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) 4")
+    freq_tolerance_limit_4 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit 4")
+    
+    freq_uuc_range_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Time Base) 5")
+    freq_uuc_setting_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting 5")
+    freq_measured_value_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value 5")
+    freq_uncertainty_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) 5")
+    freq_tolerance_limit_5 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit 5")
+    
     # 2. Digital Voltmeter Calibration
     volt_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Voltage)")
     volt_uuc_setting = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting")
     volt_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value")
     volt_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±)")
     volt_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit")
+    
+    # แถวเพิ่มเติมสำหรับ Voltage
+    volt_uuc_range_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Voltage) 2")
+    volt_uuc_setting_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting 2")
+    volt_measured_value_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value 2")
+    volt_uncertainty_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) 2")
+    volt_tolerance_limit_2 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit 2")
+    
+    volt_uuc_range_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Voltage) 3")
+    volt_uuc_setting_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting 3")
+    volt_measured_value_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value 3")
+    volt_uncertainty_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) 3")
+    volt_tolerance_limit_3 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit 3")
+    
+    volt_uuc_range_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Voltage) 4")
+    volt_uuc_setting_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting 4")
+    volt_measured_value_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value 4")
+    volt_uncertainty_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) 4")
+    volt_tolerance_limit_4 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit 4")
+    
+    volt_uuc_range_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Voltage) 5")
+    volt_uuc_setting_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting 5")
+    volt_measured_value_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value 5")
+    volt_uncertainty_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) 5")
+    volt_tolerance_limit_5 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit 5")
     
     def __str__(self):
         return f"High Frequency Calibration - {self.machine.name}"
@@ -525,7 +575,7 @@ class LowFrequencyCalibration(models.Model):
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='low_frequency_certificates')
     date_calibration = models.DateField(verbose_name="วันที่สอบเทียบ")
     update = models.DateTimeField(auto_now=True, verbose_name="วันที่อัปเดต")
-    next_due = models.DateField(verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
+    next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
     certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะการสอบเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
@@ -536,6 +586,9 @@ class LowFrequencyCalibration(models.Model):
     dc_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC)")
     dc_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC)")
     dc_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC)")
+    dc_error = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (DC)")
+    dc_pass_fail = models.CharField(max_length=10, blank=True, null=True, verbose_name="Pass/Fail (DC)")
+    dc_remarks = models.TextField(blank=True, null=True, verbose_name="Remarks (DC)")
     
     # 2. AC VOLTAGE
     ac_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (AC)")
@@ -543,6 +596,9 @@ class LowFrequencyCalibration(models.Model):
     ac_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (AC)")
     ac_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (AC)")
     ac_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (AC)")
+    ac_error = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (AC)")
+    ac_pass_fail = models.CharField(max_length=10, blank=True, null=True, verbose_name="Pass/Fail (AC)")
+    ac_remarks = models.TextField(blank=True, null=True, verbose_name="Remarks (AC)")
     
     # 3. RESISTANCE
     res_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Resistance)")
@@ -550,6 +606,9 @@ class LowFrequencyCalibration(models.Model):
     res_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (Resistance)")
     res_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (Resistance)")
     res_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (Resistance)")
+    res_error = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (Resistance)")
+    res_pass_fail = models.CharField(max_length=10, blank=True, null=True, verbose_name="Pass/Fail (Resistance)")
+    res_remarks = models.TextField(blank=True, null=True, verbose_name="Remarks (Resistance)")
     
     def __str__(self):
         return f"Low Frequency Calibration - {self.machine.name}"

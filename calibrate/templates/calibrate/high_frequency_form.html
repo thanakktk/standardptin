@@ -2,6 +2,17 @@
 
 {% block title %}{{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการสอบเทียบ High Frequency - {{ object.machine.name|default:'เครื่องมือ' }}{% endblock %}
 
+{% block extra_css %}
+<style>
+.table-bordered td, .table-bordered th {
+    border: 1px solid #dee2e6 !important;
+}
+.table-bordered {
+    border: 1px solid #dee2e6 !important;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <div class="container-fluid">
@@ -124,7 +135,7 @@
                                 <div class="text-danger small">{{ form.certificate_issuer.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4" style="display: none !important;">
                             <label for="{{ form.machine.id_for_label }}" class="form-label">
                                 <i class="fas fa-tools me-1"></i>{{ form.machine.label }}
                             </label>
@@ -166,7 +177,7 @@
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-bordered">
+                                <table class="table table-bordered" style="border: 1px solid #dee2e6;">
                                     <thead class="table-dark">
                                         <tr>
                                             <th>UUC Range<br><small>Time Base</small></th>
@@ -209,6 +220,134 @@
                                                 {% endif %}
                                             </td>
                                         </tr>
+                                        <tr>
+                                            <td>
+                                                {{ form.freq_uuc_range_2 }}
+                                                {% if form.freq_uuc_range_2.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uuc_range_2.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_uuc_setting_2 }}
+                                                {% if form.freq_uuc_setting_2.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uuc_setting_2.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_measured_value_2 }}
+                                                {% if form.freq_measured_value_2.errors %}
+                                                    <div class="text-danger small">{{ form.freq_measured_value_2.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_uncertainty_2 }}
+                                                {% if form.freq_uncertainty_2.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uncertainty_2.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_tolerance_limit_2 }}
+                                                {% if form.freq_tolerance_limit_2.errors %}
+                                                    <div class="text-danger small">{{ form.freq_tolerance_limit_2.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                {{ form.freq_uuc_range_3 }}
+                                                {% if form.freq_uuc_range_3.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uuc_range_3.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_uuc_setting_3 }}
+                                                {% if form.freq_uuc_setting_3.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uuc_setting_3.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_measured_value_3 }}
+                                                {% if form.freq_measured_value_3.errors %}
+                                                    <div class="text-danger small">{{ form.freq_measured_value_3.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_uncertainty_3 }}
+                                                {% if form.freq_uncertainty_3.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uncertainty_3.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_tolerance_limit_3 }}
+                                                {% if form.freq_tolerance_limit_3.errors %}
+                                                    <div class="text-danger small">{{ form.freq_tolerance_limit_3.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                {{ form.freq_uuc_range_4 }}
+                                                {% if form.freq_uuc_range_4.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uuc_range_4.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_uuc_setting_4 }}
+                                                {% if form.freq_uuc_setting_4.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uuc_setting_4.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_measured_value_4 }}
+                                                {% if form.freq_measured_value_4.errors %}
+                                                    <div class="text-danger small">{{ form.freq_measured_value_4.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_uncertainty_4 }}
+                                                {% if form.freq_uncertainty_4.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uncertainty_4.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_tolerance_limit_4 }}
+                                                {% if form.freq_tolerance_limit_4.errors %}
+                                                    <div class="text-danger small">{{ form.freq_tolerance_limit_4.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                {{ form.freq_uuc_range_5 }}
+                                                {% if form.freq_uuc_range_5.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uuc_range_5.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_uuc_setting_5 }}
+                                                {% if form.freq_uuc_setting_5.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uuc_setting_5.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_measured_value_5 }}
+                                                {% if form.freq_measured_value_5.errors %}
+                                                    <div class="text-danger small">{{ form.freq_measured_value_5.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_uncertainty_5 }}
+                                                {% if form.freq_uncertainty_5.errors %}
+                                                    <div class="text-danger small">{{ form.freq_uncertainty_5.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.freq_tolerance_limit_5 }}
+                                                {% if form.freq_tolerance_limit_5.errors %}
+                                                    <div class="text-danger small">{{ form.freq_tolerance_limit_5.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -230,7 +369,7 @@
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-bordered">
+                                <table class="table table-bordered" style="border: 1px solid #dee2e6;">
                                     <thead class="table-dark">
                                         <tr>
                                             <th>UUC Range</th>
@@ -270,6 +409,134 @@
                                                 {{ form.volt_tolerance_limit }}
                                                 {% if form.volt_tolerance_limit.errors %}
                                                     <div class="text-danger small">{{ form.volt_tolerance_limit.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                {{ form.volt_uuc_range_2 }}
+                                                {% if form.volt_uuc_range_2.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uuc_range_2.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_uuc_setting_2 }}
+                                                {% if form.volt_uuc_setting_2.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uuc_setting_2.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_measured_value_2 }}
+                                                {% if form.volt_measured_value_2.errors %}
+                                                    <div class="text-danger small">{{ form.volt_measured_value_2.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_uncertainty_2 }}
+                                                {% if form.volt_uncertainty_2.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uncertainty_2.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_tolerance_limit_2 }}
+                                                {% if form.volt_tolerance_limit_2.errors %}
+                                                    <div class="text-danger small">{{ form.volt_tolerance_limit_2.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                {{ form.volt_uuc_range_3 }}
+                                                {% if form.volt_uuc_range_3.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uuc_range_3.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_uuc_setting_3 }}
+                                                {% if form.volt_uuc_setting_3.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uuc_setting_3.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_measured_value_3 }}
+                                                {% if form.volt_measured_value_3.errors %}
+                                                    <div class="text-danger small">{{ form.volt_measured_value_3.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_uncertainty_3 }}
+                                                {% if form.volt_uncertainty_3.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uncertainty_3.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_tolerance_limit_3 }}
+                                                {% if form.volt_tolerance_limit_3.errors %}
+                                                    <div class="text-danger small">{{ form.volt_tolerance_limit_3.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                {{ form.volt_uuc_range_4 }}
+                                                {% if form.volt_uuc_range_4.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uuc_range_4.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_uuc_setting_4 }}
+                                                {% if form.volt_uuc_setting_4.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uuc_setting_4.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_measured_value_4 }}
+                                                {% if form.volt_measured_value_4.errors %}
+                                                    <div class="text-danger small">{{ form.volt_measured_value_4.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_uncertainty_4 }}
+                                                {% if form.volt_uncertainty_4.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uncertainty_4.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_tolerance_limit_4 }}
+                                                {% if form.volt_tolerance_limit_4.errors %}
+                                                    <div class="text-danger small">{{ form.volt_tolerance_limit_4.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                {{ form.volt_uuc_range_5 }}
+                                                {% if form.volt_uuc_range_5.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uuc_range_5.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_uuc_setting_5 }}
+                                                {% if form.volt_uuc_setting_5.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uuc_setting_5.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_measured_value_5 }}
+                                                {% if form.volt_measured_value_5.errors %}
+                                                    <div class="text-danger small">{{ form.volt_measured_value_5.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_uncertainty_5 }}
+                                                {% if form.volt_uncertainty_5.errors %}
+                                                    <div class="text-danger small">{{ form.volt_uncertainty_5.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.volt_tolerance_limit_5 }}
+                                                {% if form.volt_tolerance_limit_5.errors %}
+                                                    <div class="text-danger small">{{ form.volt_tolerance_limit_5.errors.0 }}</div>
                                                 {% endif %}
                                             </td>
                                         </tr>
