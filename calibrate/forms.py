@@ -1,13 +1,13 @@
 from django import forms
-from .models import CalibrationForce, CalibrationPressure, CalibrationTorque, DialGaugeCalibration, DialGaugeReading, BalanceCalibration, BalanceReading, MicrowaveCalibration, MicrowaveReading
+from .models import CalibrationForce, CalibrationPressure, CalibrationTorque, DialGaugeCalibration, DialGaugeReading, BalanceCalibration, BalanceReading, MicrowaveCalibration, MicrowaveReading, HighFrequencyCalibration, LowFrequencyCalibration
 from django.contrib.auth import get_user_model
-from machine.models import Machine, MachineType
+from machine.models import Machine, MachineType, CalibrationEquipment
 from std.models import Standard
 
 class CalibrationForceForm(forms.ModelForm):
     class Meta:
         model = CalibrationForce
-        fields = ['apply_com', 'apply_ten', 'compress', 'tension', 'fullscale', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'uuc_id', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number']
+        fields = ['apply_com', 'apply_ten', 'compress', 'tension', 'fullscale', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'uuc_id', 'calibrator', 'certificate_issuer', 'certificate_number']
         widgets = {
             'apply_com': forms.TextInput(attrs={'class': 'form-control'}),
             'apply_ten': forms.TextInput(attrs={'class': 'form-control'}),
@@ -21,7 +21,6 @@ class CalibrationForceForm(forms.ModelForm):
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'uuc_id': forms.Select(attrs={'class': 'form-control'}),
-            'std_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
             'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
@@ -35,14 +34,14 @@ class CalibrationForceForm(forms.ModelForm):
         self.fields['calibrator'].queryset = users
         self.fields['certificate_issuer'].queryset = users
         
-        # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
-        self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
+        # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
+        self.fields['uuc_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['uuc_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
 
 class CalibrationPressureForm(forms.ModelForm):
     class Meta:
         model = CalibrationPressure
-        fields = ['set', 'm1', 'm2', 'm3', 'm4', 'avg', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'uuc_id', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number']
+        fields = ['set', 'm1', 'm2', 'm3', 'm4', 'avg', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'uuc_id', 'calibrator', 'certificate_issuer', 'certificate_number']
         widgets = {
             'set': forms.TextInput(attrs={'class': 'form-control'}),
             'm1': forms.TextInput(attrs={'class': 'form-control'}),
@@ -57,7 +56,6 @@ class CalibrationPressureForm(forms.ModelForm):
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'uuc_id': forms.Select(attrs={'class': 'form-control'}),
-            'std_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
             'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
@@ -72,14 +70,14 @@ class CalibrationPressureForm(forms.ModelForm):
         self.fields['calibrator'].queryset = users
         self.fields['certificate_issuer'].queryset = users
         
-        # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
-        self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
+        # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
+        self.fields['uuc_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['uuc_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
 
 class CalibrationTorqueForm(forms.ModelForm):
     class Meta:
         model = CalibrationTorque
-        fields = ['cwset', 'cw0', 'cw90', 'cw180', 'cw270', 'cw_reading', 'cw_avg', 'cw_error', 'cw_tolerance_start', 'cw_tolerance_end', 'ccwset', 'ccw0', 'ccw90', 'ccw180', 'ccw270', 'ccw_reading', 'ccw_avg', 'ccw_error', 'ccw_tolerance_start', 'ccw_tolerance_end', 'update', 'next_due', 'status', 'uuc_id', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number']
+        fields = ['cwset', 'cw0', 'cw90', 'cw180', 'cw270', 'cw_reading', 'cw_avg', 'cw_error', 'cw_tolerance_start', 'cw_tolerance_end', 'ccwset', 'ccw0', 'ccw90', 'ccw180', 'ccw270', 'ccw_reading', 'ccw_avg', 'ccw_error', 'ccw_tolerance_start', 'ccw_tolerance_end', 'update', 'next_due', 'status', 'uuc_id', 'calibrator', 'certificate_issuer', 'certificate_number']
         widgets = {
             'cwset': forms.NumberInput(attrs={'class': 'form-control'}),
             'cw0': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -105,7 +103,6 @@ class CalibrationTorqueForm(forms.ModelForm):
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'uuc_id': forms.Select(attrs={'class': 'form-control'}),
-            'std_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
             'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
@@ -119,18 +116,18 @@ class CalibrationTorqueForm(forms.ModelForm):
         self.fields['calibrator'].queryset = users
         self.fields['certificate_issuer'].queryset = users
         
-        # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
-        self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
+        # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
+        self.fields['uuc_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['uuc_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
 
 class DialGaugeCalibrationForm(forms.ModelForm):
     """ฟอร์มสำหรับการสอบเทียบ Dial Gauge"""
     class Meta:
         model = DialGaugeCalibration
-        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'update', 'next_due', 'res_uuc', 'acc_std', 'status', 'type_a_sd', 'type_b_res_uuc', 'type_b_acc_std', 'type_b_hysteresis', 'uc_68', 'k_factor', 'expanded_uncertainty_95']
+        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'update', 'next_due', 'res_uuc', 'acc_std', 'status', 'type_a_sd', 'type_b_res_uuc', 'type_b_acc_std', 'type_b_hysteresis', 'uc_68', 'k_factor', 'expanded_uncertainty_95',
+                 'uuc_set', 'actual', 'error', 'uncertainty', 'tolerance_limit']
         widgets = {
             'machine': forms.Select(attrs={'class': 'form-control'}),
-            'std_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
             'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -146,6 +143,12 @@ class DialGaugeCalibrationForm(forms.ModelForm):
             'uc_68': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
             'k_factor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'expanded_uncertainty_95': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
+            # Dial Gauge Calibration fields
+            'uuc_set': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0050'}),
+            'actual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0050'}),
+            'error': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000'}),
+            'uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0003'}),
+            'tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0040 – 0.0060'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -164,9 +167,9 @@ class DialGaugeCalibrationForm(forms.ModelForm):
             self.fields['machine'].queryset = Machine.objects.filter(deleted=False).order_by('name')
         self.fields['machine'].empty_label = "เลือก Dial Gauge"
         
-        # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
-        self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
+        # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
+        self.fields['uuc_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['uuc_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
 
 class DialGaugeReadingForm(forms.ModelForm):
     """ฟอร์มสำหรับข้อมูลการอ่านค่า Dial Gauge"""
@@ -193,10 +196,10 @@ class BalanceCalibrationForm(forms.ModelForm):
     """ฟอร์มสำหรับการสอบเทียบ Balance"""
     class Meta:
         model = BalanceCalibration
-        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'received_date', 'issue_date', 'next_due', 'certificate_number', 'procedure_number', 'status', 'drift', 'res_push', 'res_tip', 'air_buoyancy', 'uncertainty_68', 'uncertainty_95_k', 'final_uncertainty']
+        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'received_date', 'issue_date', 'next_due', 'certificate_number', 'procedure_number', 'status', 'drift', 'res_push', 'res_tip', 'air_buoyancy', 'uncertainty_68', 'uncertainty_95_k', 'final_uncertainty',
+                 'linear_nominal_value', 'linear_conventional_mass', 'linear_displayed_value', 'linear_error', 'linear_uncertainty', 'linear_tolerance_limit']
         widgets = {
             'machine': forms.Select(attrs={'class': 'form-control'}),
-            'std_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
             'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'required': True}),
@@ -213,6 +216,13 @@ class BalanceCalibrationForm(forms.ModelForm):
             'uncertainty_68': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
             'uncertainty_95_k': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
             'final_uncertainty': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
+            # Linear fields
+            'linear_nominal_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10 g'}),
+            'linear_conventional_mass': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 g'}),
+            'linear_displayed_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.00002 g'}),
+            'linear_error': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น -0.00002 g'}),
+            'linear_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0003 g'}),
+            'linear_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 9.0007 – 10.0003 g'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -231,9 +241,9 @@ class BalanceCalibrationForm(forms.ModelForm):
             self.fields['machine'].queryset = Machine.objects.filter(deleted=False).order_by('name')
         self.fields['machine'].empty_label = "เลือก Balance"
         
-        # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
-        self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
+        # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
+        self.fields['uuc_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['uuc_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
 
 class BalanceReadingForm(forms.ModelForm):
     """ฟอร์มสำหรับข้อมูลการอ่านค่า Balance"""
@@ -261,10 +271,10 @@ class MicrowaveCalibrationForm(forms.ModelForm):
     """ฟอร์มสำหรับการสอบเทียบ Microwave"""
     class Meta:
         model = MicrowaveCalibration
-        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'update', 'next_due', 'certificate_number', 'status']
+        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'update', 'next_due', 'certificate_number', 'status',
+                 'dc_uuc_range', 'dc_uuc_setting', 'dc_measured_value', 'dc_uncertainty', 'dc_tolerance_limit']
         widgets = {
             'machine': forms.Select(attrs={'class': 'form-control'}),
-            'std_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
             'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -272,6 +282,12 @@ class MicrowaveCalibrationForm(forms.ModelForm):
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
+            # DC VOLTAGE fields
+            'dc_uuc_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 962 MHz'}),
+            'dc_uuc_setting': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น -2 dBm'}),
+            'dc_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 961.9922 MHz'}),
+            'dc_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น -0.0078 MHz'}),
+            'dc_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 961.9000 – 962.1000 MHz'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -290,9 +306,9 @@ class MicrowaveCalibrationForm(forms.ModelForm):
             self.fields['machine'].queryset = Machine.objects.filter(deleted=False).order_by('name')
         self.fields['machine'].empty_label = "เลือก Microwave"
         
-        # ตั้งค่า queryset สำหรับเครื่องมือการสอบเทียบ
-        self.fields['std_id'].queryset = Standard.objects.all().order_by('name')
-        self.fields['std_id'].empty_label = "เลือกเครื่องมือการสอบเทียบ"
+        # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
+        self.fields['uuc_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['uuc_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
 
 class MicrowaveReadingForm(forms.ModelForm):
     """ฟอร์มสำหรับข้อมูลการอ่านค่า Microwave"""
@@ -314,3 +330,94 @@ class MicrowaveReadingForm(forms.ModelForm):
             'test_result': forms.Select(attrs={'class': 'form-control'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+class HighFrequencyCalibrationForm(forms.ModelForm):
+    class Meta:
+        model = HighFrequencyCalibration
+        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'next_due', 'certificate_number', 'status', 'priority',
+                 'freq_uuc_range', 'freq_uuc_setting', 'freq_measured_value', 'freq_uncertainty', 'freq_tolerance_limit',
+                 'volt_uuc_range', 'volt_uuc_setting', 'volt_measured_value', 'volt_uncertainty', 'volt_tolerance_limit']
+        widgets = {
+            'machine': forms.Select(attrs={'class': 'form-control'}),
+            'std_id': forms.Select(attrs={'class': 'form-control'}),
+            'calibrator': forms.Select(attrs={'class': 'form-control'}),
+            'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
+            'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            # Frequency fields
+            'freq_uuc_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10 MHz'}),
+            'freq_uuc_setting': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 MHz'}),
+            'freq_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 MHz'}),
+            'freq_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 MHz'}),
+            'freq_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 9.0085 – 10.0015 MHz'}),
+            # Voltage fields
+            'volt_uuc_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10 VDC'}),
+            'volt_uuc_setting': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 1.0000 V'}),
+            'volt_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 1.0001 V'}),
+            'volt_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น -0.0001 V'}),
+            'volt_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.9997 – 1.0007 V'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ตั้งค่า queryset สำหรับฟิลด์ calibrator และ certificate_issuer
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        self.fields['calibrator'].queryset = users
+        self.fields['certificate_issuer'].queryset = users
+        
+        # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
+        self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['std_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
+
+class LowFrequencyCalibrationForm(forms.ModelForm):
+    class Meta:
+        model = LowFrequencyCalibration
+        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'next_due', 'certificate_number', 'status', 'priority',
+                 'dc_uuc_range', 'dc_uuc_setting', 'dc_measured_value', 'dc_uncertainty', 'dc_tolerance_limit',
+                 'ac_uuc_range', 'ac_uuc_setting', 'ac_measured_value', 'ac_uncertainty', 'ac_tolerance_limit',
+                 'res_uuc_range', 'res_uuc_setting', 'res_measured_value', 'res_uncertainty', 'res_tolerance_limit']
+        widgets = {
+            'machine': forms.Select(attrs={'class': 'form-control'}),
+            'std_id': forms.Select(attrs={'class': 'form-control'}),
+            'calibrator': forms.Select(attrs={'class': 'form-control'}),
+            'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
+            'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            # DC Voltage fields
+            'dc_uuc_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 mV'}),
+            'dc_uuc_setting': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 mV'}),
+            'dc_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 mV'}),
+            'dc_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 mV'}),
+            'dc_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 49.0035 – 50.0065 mV'}),
+            # AC Voltage fields
+            'ac_uuc_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 mV'}),
+            'ac_uuc_setting': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 mV'}),
+            'ac_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50 mV'}),
+            'ac_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 mV'}),
+            'ac_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 45.0080 – 50.0020 mV'}),
+            # Resistance fields
+            'res_uuc_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 500 Ω'}),
+            'res_uuc_setting': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 500 Ω'}),
+            'res_measured_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 500 Ω'}),
+            'res_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 Ω'}),
+            'res_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 499.0077 – 500.0033 Ω'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ตั้งค่า queryset สำหรับฟิลด์ calibrator และ certificate_issuer
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        self.fields['calibrator'].queryset = users
+        self.fields['certificate_issuer'].queryset = users
+        
+        # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
+        self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
+        self.fields['std_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"

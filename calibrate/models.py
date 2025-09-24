@@ -261,6 +261,13 @@ class DialGaugeCalibration(models.Model):
     k_factor = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, verbose_name="K")
     expanded_uncertainty_95 = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True, verbose_name="95%")
     
+    # Dial Gauge Calibration fields
+    uuc_set = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC.Set( inch )")
+    actual = models.CharField(max_length=50, blank=True, null=True, verbose_name="Actual( inch )")
+    error = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error( inch )")
+    uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (g)")
+    tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit")
+    
     def __str__(self):
         return f"Dial Gauge Calibration - {self.machine.name} ({self.date_calibration})"
 
@@ -354,6 +361,14 @@ class BalanceCalibration(models.Model):
     uncertainty_95_k = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True, verbose_name="95%*K")
     final_uncertainty = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True, verbose_name="Final Uncer")
     
+    # Linear (Min-Max) fields
+    linear_nominal_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Nominal Value (g)")
+    linear_conventional_mass = models.CharField(max_length=50, blank=True, null=True, verbose_name="Conventional Mass (g)")
+    linear_displayed_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Displayed Value (g)")
+    linear_error = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (g)")
+    linear_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (g)")
+    linear_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit")
+    
     def __str__(self):
         return f"Balance Calibration - {self.machine.name} ({self.date_calibration})"
 
@@ -396,6 +411,111 @@ class BalanceReading(models.Model):
         verbose_name = "ข้อมูลการอ่านค่า Balance"
         verbose_name_plural = "ข้อมูลการอ่านค่า Balance"
 
+class HighFrequencyCalibration(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'รอสอบเทียบ'),
+        ('in_progress', 'กำลังสอบเทียบ'),
+        ('passed', 'ผ่านการสอบเทียบ'),
+        ('cert_issued', 'ออกใบรับรอง'),
+        ('failed', 'ไม่ผ่านการสอบเทียบ'),
+        ('closed', 'ปิดงาน'),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('normal', 'ปกติ'),
+        ('urgent', 'ด่วน'),
+        ('very_urgent', 'ด่วนมาก'),
+    ]
+    
+    # ข้อมูลพื้นฐาน
+    machine = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, verbose_name="เครื่องมือ High Frequency")
+    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='high_frequency_calibrations')
+    certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='high_frequency_certificates')
+    date_calibration = models.DateField(verbose_name="วันที่สอบเทียบ")
+    update = models.DateTimeField(auto_now=True, verbose_name="วันที่อัปเดต")
+    next_due = models.DateField(verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
+    certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะการสอบเทียบ")
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
+    
+    # 1. Frequency Accuracy and Display Calibration
+    freq_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Time Base)")
+    freq_uuc_setting = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting")
+    freq_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value")
+    freq_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±)")
+    freq_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit")
+    
+    # 2. Digital Voltmeter Calibration
+    volt_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Voltage)")
+    volt_uuc_setting = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting")
+    volt_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value")
+    volt_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±)")
+    volt_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit")
+    
+    def __str__(self):
+        return f"High Frequency Calibration - {self.machine.name}"
+    
+    class Meta:
+        verbose_name = "การสอบเทียบ High Frequency"
+        verbose_name_plural = "การสอบเทียบ High Frequency"
+
+class LowFrequencyCalibration(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'รอสอบเทียบ'),
+        ('in_progress', 'กำลังสอบเทียบ'),
+        ('passed', 'ผ่านการสอบเทียบ'),
+        ('cert_issued', 'ออกใบรับรอง'),
+        ('failed', 'ไม่ผ่านการสอบเทียบ'),
+        ('closed', 'ปิดงาน'),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('normal', 'ปกติ'),
+        ('urgent', 'ด่วน'),
+        ('very_urgent', 'ด่วนมาก'),
+    ]
+    
+    # ข้อมูลพื้นฐาน
+    machine = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, verbose_name="เครื่องมือ Low Frequency")
+    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='low_frequency_calibrations')
+    certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='low_frequency_certificates')
+    date_calibration = models.DateField(verbose_name="วันที่สอบเทียบ")
+    update = models.DateTimeField(auto_now=True, verbose_name="วันที่อัปเดต")
+    next_due = models.DateField(verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
+    certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะการสอบเทียบ")
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
+    
+    # 1. DC VOLTAGE
+    dc_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (DC)")
+    dc_uuc_setting = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (DC)")
+    dc_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC)")
+    dc_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC)")
+    dc_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC)")
+    
+    # 2. AC VOLTAGE
+    ac_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (AC)")
+    ac_uuc_setting = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (AC)")
+    ac_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (AC)")
+    ac_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (AC)")
+    ac_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (AC)")
+    
+    # 3. RESISTANCE
+    res_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Resistance)")
+    res_uuc_setting = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (Resistance)")
+    res_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (Resistance)")
+    res_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (Resistance)")
+    res_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (Resistance)")
+    
+    def __str__(self):
+        return f"Low Frequency Calibration - {self.machine.name}"
+    
+    class Meta:
+        verbose_name = "การสอบเทียบ Low Frequency"
+        verbose_name_plural = "การสอบเทียบ Low Frequency"
+
 class MicrowaveCalibration(models.Model):
     """ข้อมูลการสอบเทียบ Microwave"""
     STATUS_CHOICES = [
@@ -428,6 +548,13 @@ class MicrowaveCalibration(models.Model):
     # สถานะและความสำคัญ
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะสอบเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
+    
+    # 1. DC VOLTAGE fields
+    dc_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (DC)")
+    dc_uuc_setting = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (DC)")
+    dc_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC)")
+    dc_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC)")
+    dc_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC)")
     
     def __str__(self):
         return f"Microwave Calibration - {self.machine.name} ({self.date_calibration})"

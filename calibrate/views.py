@@ -5,8 +5,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
-from .models import CalibrationForce, CalibrationPressure, CalibrationTorque, DialGaugeCalibration, BalanceCalibration, MicrowaveCalibration
-from .forms import CalibrationForceForm, CalibrationPressureForm, CalibrationTorqueForm, DialGaugeCalibrationForm, BalanceCalibrationForm, MicrowaveCalibrationForm
+from .models import CalibrationForce, CalibrationPressure, CalibrationTorque, DialGaugeCalibration, BalanceCalibration, MicrowaveCalibration, HighFrequencyCalibration, LowFrequencyCalibration
+from .forms import CalibrationForceForm, CalibrationPressureForm, CalibrationTorqueForm, DialGaugeCalibrationForm, BalanceCalibrationForm, MicrowaveCalibrationForm, HighFrequencyCalibrationForm, LowFrequencyCalibrationForm
 from machine.models import Machine, MachineType
 from django.db import models
 from docx import Document
@@ -2399,3 +2399,25 @@ def export_certificate(request, pk):
     response["Content-Disposition"] = f'attachment; filename="certificate_{calibration.pk}.docx"'
     doc.save(response)
     return response
+
+class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
+    model = HighFrequencyCalibration
+    form_class = HighFrequencyCalibrationForm
+    template_name = 'calibrate/high_frequency_form.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'แก้ไขการสอบเทียบ High Frequency - {self.object.machine.name}'
+        return context
+
+class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
+    model = LowFrequencyCalibration
+    form_class = LowFrequencyCalibrationForm
+    template_name = 'calibrate/low_frequency_form.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'แก้ไขการสอบเทียบ Low Frequency - {self.object.machine.name}'
+        return context

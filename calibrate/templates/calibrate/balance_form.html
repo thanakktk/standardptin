@@ -164,9 +164,16 @@
                             <div id="calibration-equipment-container">
                                 <div class="row mb-2 calibration-equipment-row">
                                     <div class="col-md-10">
-                                        {{ form.std_id }}
-                                        {% if form.std_id.errors %}
-                                            <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                                        <select name="{{ form.uuc_id.name }}" id="{{ form.uuc_id.id_for_label }}" class="form-control">
+                                            <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                            {% for equipment in form.uuc_id.field.queryset %}
+                                                <option value="{{ equipment.id }}" {% if form.uuc_id.value == equipment.id %}selected{% endif %}>
+                                                    {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.uuc_id.errors %}
+                                            <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
                                         {% endif %}
                                     </div>
                                     <div class="col-md-2">
@@ -240,6 +247,77 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Linear (Min-Max) -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-balance-scale me-2"></i>
+                                Linear (Min-Max)
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Nominal Value (g)</th>
+                                            <th>Conventional Mass (g)</th>
+                                            <th>Displayed Value (g)</th>
+                                            <th>Error (g)</th>
+                                            <th>Uncertainty (g)</th>
+                                            <th>Tolerance Limit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                {{ form.linear_nominal_value }}
+                                                {% if form.linear_nominal_value.errors %}
+                                                    <div class="text-danger small">{{ form.linear_nominal_value.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.linear_conventional_mass }}
+                                                {% if form.linear_conventional_mass.errors %}
+                                                    <div class="text-danger small">{{ form.linear_conventional_mass.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.linear_displayed_value }}
+                                                {% if form.linear_displayed_value.errors %}
+                                                    <div class="text-danger small">{{ form.linear_displayed_value.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.linear_error }}
+                                                {% if form.linear_error.errors %}
+                                                    <div class="text-danger small">{{ form.linear_error.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.linear_uncertainty }}
+                                                {% if form.linear_uncertainty.errors %}
+                                                    <div class="text-danger small">{{ form.linear_uncertainty.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.linear_tolerance_limit }}
+                                                {% if form.linear_tolerance_limit.errors %}
+                                                    <div class="text-danger small">{{ form.linear_tolerance_limit.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>หมายเหตุ:</strong> ช่องที่ 2 กับ 3 ห้ามเกินจากช่องที่ 1 ± 0.0003 ถ้าช่อง 2 กับ 3 เกิน ให้ผลสอบเทียบไม่ผ่าน
+                                </small>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- ตารางข้อมูลการอ่านค่า Balance Reading -->
@@ -345,10 +423,10 @@ document.addEventListener('click', function(e) {
         newRow.className = 'row mb-2 calibration-equipment-row';
         newRow.innerHTML = `
             <div class="col-md-10">
-                <select name="std_id_${equipmentCounter}" class="form-control">
+                <select name="uuc_id_${equipmentCounter}" class="form-control">
                     <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
-                    {% for equipment in form.std_id.field.queryset %}
-                        <option value="{{ equipment.id }}">{{ equipment.name }} - {{ equipment.machine_type.name }}</option>
+                    {% for equipment in form.uuc_id.field.queryset %}
+                        <option value="{{ equipment.id }}">{{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -421,6 +499,35 @@ document.addEventListener('DOMContentLoaded', function() {
     if (displayed3 && conventional3 && error3) {
         displayed3.addEventListener('input', () => calculateError(displayed3, conventional3, error3));
         conventional3.addEventListener('input', () => calculateError(displayed3, conventional3, error3));
+    }
+    
+    // คำนวณ Linear Error และ Tolerance
+    const linearDisplayed = document.querySelector('input[name="linear_displayed_value"]');
+    const linearConventional = document.querySelector('input[name="linear_conventional_mass"]');
+    const linearError = document.querySelector('input[name="linear_error"]');
+    const linearTolerance = document.querySelector('input[name="linear_tolerance_limit"]');
+    
+    function calculateLinearError() {
+        if (linearDisplayed && linearConventional && linearError) {
+            const displayed = parseFloat(linearDisplayed.value) || 0;
+            const conventional = parseFloat(linearConventional.value) || 0;
+            const error = displayed - conventional;
+            linearError.value = error.toFixed(5);
+            
+            // Calculate tolerance limit
+            if (linearTolerance) {
+                const nominal = parseFloat(document.querySelector('input[name="linear_nominal_value"]').value) || 0;
+                const minTolerance = (nominal - 0.0003).toFixed(4);
+                const maxTolerance = (nominal + 0.0003).toFixed(4);
+                linearTolerance.value = `${minTolerance} – ${maxTolerance}`;
+            }
+        }
+    }
+    
+    if (linearDisplayed && linearConventional) {
+        [linearDisplayed, linearConventional].forEach(input => {
+            input.addEventListener('input', calculateLinearError);
+        });
     }
 });
 </script>

@@ -115,7 +115,7 @@
                                 <div class="text-danger small">{{ form.certificate_issuer.errors.0 }}</div>
                             {% endif %}
                         </div>
-                            {% if form.std_id.errors %}
+                            {% if form.uuc_id.errors %}
                                 <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
                             {% endif %}
                         </div>
@@ -141,7 +141,14 @@
                             <div id="calibration-equipment-container">
                                 <div class="row mb-2 calibration-equipment-row">
                                     <div class="col-md-10">
-                                        {{ form.uuc_id }}
+                                        <select name="{{ form.uuc_id.name }}" id="{{ form.uuc_id.id_for_label }}" class="form-control">
+                                            <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                            {% for equipment in form.uuc_id.field.queryset %}
+                                                <option value="{{ equipment.id }}" {% if form.uuc_id.value == equipment.id %}selected{% endif %}>
+                                                    {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
                                         {% if form.uuc_id.errors %}
                                             <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
                                         {% endif %}

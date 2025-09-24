@@ -146,9 +146,16 @@
                             <div id="calibration-equipment-container">
                                 <div class="row mb-2 calibration-equipment-row">
                                     <div class="col-md-10">
-                                        {{ form.std_id }}
-                                        {% if form.std_id.errors %}
-                                            <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                                        <select name="{{ form.uuc_id.name }}" id="{{ form.uuc_id.id_for_label }}" class="form-control">
+                                            <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                            {% for equipment in form.uuc_id.field.queryset %}
+                                                <option value="{{ equipment.id }}" {% if form.uuc_id.value == equipment.id %}selected{% endif %}>
+                                                    {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.uuc_id.errors %}
+                                            <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
                                         {% endif %}
                                     </div>
                                     <div class="col-md-2">
@@ -598,10 +605,10 @@ document.addEventListener('DOMContentLoaded', function() {
             newRow.className = 'row mb-2 calibration-equipment-row';
             newRow.innerHTML = `
                 <div class="col-md-10">
-                    <select name="std_id_${equipmentCounter}" class="form-control">
+                    <select name="uuc_id_${equipmentCounter}" class="form-control">
                         <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
-                        {% for equipment in form.std_id.field.queryset %}
-                            <option value="{{ equipment.id }}">{{ equipment.name }} - {{ equipment.machine_type.name }}</option>
+                        {% for equipment in form.uuc_id.field.queryset %}
+                            <option value="{{ equipment.id }}">{{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}</option>
                         {% endfor %}
                     </select>
                 </div>
