@@ -102,13 +102,49 @@ def send_machine_email(request, pk):
             body = f"ชื่อเครื่องมือ: {machine.name}\nรุ่น: {machine.model}\nหมายเลขเครื่อง: {machine.serial_number}\n" \
                    f"ประเภท: {machine.machine_type}\nหน่วยนับ: {machine.unit}\nผู้ผลิต: {machine.manufacture}\n" \
                    f"{message}"
-            send_mail(
-                subject,
-                body,
-                settings.DEFAULT_FROM_EMAIL,
-                [request.user.email],
-                fail_silently=False,
-            )
+            
+            # ส่งอีเมลไปที่หน่วยงานของเครื่องมือ
+            recipient_emails = []
+            if machine.organize and machine.organize.email:
+                recipient_emails.append(machine.organize.email)
+            else:
+                # ถ้าไม่มีอีเมลหน่วยงาน ให้ส่งไปที่ผู้ใช้
+                recipient_emails.append(request.user.email)
+            
+            try:
+                send_mail(
+                    subject,
+                    body,
+                    settings.DEFAULT_FROM_EMAIL,
+                    recipient_emails,
+                    fail_silently=False,
+                )
+                messages.success(request, f'ส่งอีเมลสำเร็จไปยัง {", ".join(recipient_emails)}')
+            except Exception as e:
+                messages.warning(request, f'ไม่สามารถส่งอีเมลผ่าน SMTP ได้: {str(e)}')
+                # เก็บอีเมลเป็นไฟล์แทน
+                try:
+                    import datetime
+                    
+                    # สร้างโฟลเดอร์ sent_emails ถ้าไม่มี
+                    email_dir = settings.BASE_DIR / 'sent_emails'
+                    email_dir.mkdir(exist_ok=True)
+                    
+                    # สร้างไฟล์อีเมล
+                    timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+                    email_file = email_dir / f'email_{timestamp}.txt'
+                    
+                    with open(email_file, 'w', encoding='utf-8') as f:
+                        f.write(f"To: {', '.join(recipient_emails)}\n")
+                        f.write(f"Subject: {subject}\n")
+                        f.write(f"From: {settings.DEFAULT_FROM_EMAIL}\n")
+                        f.write(f"Date: {datetime.datetime.now()}\n")
+                        f.write("="*50 + "\n")
+                        f.write(body)
+                    
+                    messages.info(request, f'เก็บอีเมลเป็นไฟล์แทน: {email_file.name}')
+                except Exception as file_error:
+                    messages.error(request, f'ไม่สามารถเก็บอีเมลได้: {str(file_error)}')
             return render(request, 'machine/send_email_done.html', {'machine': machine})
     else:
         from .forms import SendMachineEmailForm
@@ -164,18 +200,52 @@ def send_filtered_email(request):
             body += f"วันที่อัปเดต: {machine.update}\n"
             body += "-" * 50 + "\n"
         
-        # ส่งอีเมล
+        # ส่งอีเมลไปที่หน่วยงานของผู้ใช้
         try:
+            recipient_emails = []
+            if request.user.organizations.exists():
+                # ส่งไปที่หน่วยงานของผู้ใช้
+                for org in request.user.organizations.all():
+                    if org.email:
+                        recipient_emails.append(org.email)
+            
+            if not recipient_emails:
+                # ถ้าไม่มีอีเมลหน่วยงาน ให้ส่งไปที่ผู้ใช้
+                recipient_emails.append(request.user.email)
+            
             send_mail(
                 subject,
                 body,
                 settings.DEFAULT_FROM_EMAIL,
-                [request.user.email],
+                recipient_emails,
                 fail_silently=False,
             )
-            messages.success(request, 'ส่งอีเมลรายงานสำเร็จ')
+            messages.success(request, f'ส่งอีเมลรายงานสำเร็จไปยัง {", ".join(recipient_emails)}')
         except Exception as e:
-            messages.error(request, f'เกิดข้อผิดพลาดในการส่งอีเมล: {str(e)}')
+            messages.warning(request, f'ไม่สามารถส่งอีเมลผ่าน SMTP ได้: {str(e)}')
+            # เก็บอีเมลเป็นไฟล์แทน
+            try:
+                import datetime
+                
+                # สร้างโฟลเดอร์ sent_emails ถ้าไม่มี
+                email_dir = settings.BASE_DIR / 'sent_emails'
+                email_dir.mkdir(exist_ok=True)
+                
+                # สร้างไฟล์อีเมล
+                timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+                email_file = email_dir / f'filtered_email_{timestamp}.txt'
+                
+                with open(email_file, 'w', encoding='utf-8') as f:
+                    f.write(f"To: {', '.join(recipient_emails)}\n")
+                    f.write(f"Subject: {subject}\n")
+                    f.write(f"From: {settings.DEFAULT_FROM_EMAIL}\n")
+                    f.write(f"Date: {datetime.datetime.now()}\n")
+                    f.write("="*50 + "\n")
+                    f.write(body)
+                
+                messages.info(request, f'เก็บอีเมลเป็นไฟล์แทน: {email_file.name}')
+            except Exception as file_error:
+                messages.error(request, f'ไม่สามารถเก็บอีเมลได้: {str(file_error)}')
     
     return redirect('machine-list')
 
@@ -491,27 +561,63 @@ def bulk_send_email(request):
         if message.strip():
             body += f"\nข้อความเพิ่มเติม:\n{message}\n"
         
-        # ส่งอีเมล
+        # ส่งอีเมลไปที่หน่วยงานของผู้ใช้
         try:
+            recipient_emails = []
+            if request.user.organizations.exists():
+                # ส่งไปที่หน่วยงานของผู้ใช้
+                for org in request.user.organizations.all():
+                    if org.email:
+                        recipient_emails.append(org.email)
+            
+            if not recipient_emails:
+                # ถ้าไม่มีอีเมลหน่วยงาน ให้ส่งไปที่ผู้ใช้
+                recipient_emails.append(request.user.email)
+            
             send_mail(
                 subject,
                 body,
                 settings.DEFAULT_FROM_EMAIL,
-                [request.user.email],
+                recipient_emails,
                 fail_silently=False,
             )
             
             return JsonResponse({
                 'success': True,
                 'sent_count': machines.count(),
-                'message': f'ส่งอีเมลข้อมูลเครื่องมือสำเร็จ {machines.count()} รายการ'
+                'message': f'ส่งอีเมลข้อมูลเครื่องมือสำเร็จ {machines.count()} รายการไปยัง {", ".join(recipient_emails)}'
             })
             
         except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'message': f'เกิดข้อผิดพลาดในการส่งอีเมล: {str(e)}'
-            })
+            # เก็บอีเมลเป็นไฟล์แทน
+            try:
+                import datetime
+                
+                # สร้างโฟลเดอร์ sent_emails ถ้าไม่มี
+                email_dir = settings.BASE_DIR / 'sent_emails'
+                email_dir.mkdir(exist_ok=True)
+                
+                # สร้างไฟล์อีเมล
+                timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+                email_file = email_dir / f'bulk_email_{timestamp}.txt'
+                
+                with open(email_file, 'w', encoding='utf-8') as f:
+                    f.write(f"To: {', '.join(recipient_emails)}\n")
+                    f.write(f"Subject: {subject}\n")
+                    f.write(f"From: {settings.DEFAULT_FROM_EMAIL}\n")
+                    f.write(f"Date: {datetime.datetime.now()}\n")
+                    f.write("="*50 + "\n")
+                    f.write(body)
+                
+                return JsonResponse({
+                    'success': False,
+                    'message': f'ไม่สามารถส่งอีเมลผ่าน SMTP ได้ เก็บเป็นไฟล์แทน: {email_file.name}'
+                })
+            except Exception as file_error:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'ไม่สามารถเก็บอีเมลได้: {str(file_error)}'
+                })
         
     except Exception as e:
         return JsonResponse({

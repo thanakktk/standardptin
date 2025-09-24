@@ -154,7 +154,7 @@
                                     {{ cal.type_name }}
                                 {% endif %}
                             </td>
-                            <td>{{ organization.name|default:"ฝสอ.ฝูง ๔๐๓ บน.๔" }}</td>
+                            <td>{{ cal.user_unit|default:"ฝสอ.ฝูง ๔๐๓ บน.๔" }}</td>
                             <td>๑</td>
                             <td>
                                 {% if cal.status == 'cert_issued' or cal.status == 'passed' or cal.status == 'active' %}
@@ -200,7 +200,7 @@
                                     {% if cal.status == 'cert_issued' or cal.status == 'passed' or cal.status == 'active' %}
                                         {% if cal.type == 'balance' %}
                                             <a href="{% url 'export-balance-certificate-docx' cal.id %}" 
-                                               class="btn btn-outline-success btn-sm" title="Export ใบรับรอง Balance แบบ DOCX">
+                                               class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Balance แบบ DOCX">
                                                 <i class="fas fa-file-word"></i>
                                             </a>
                                         {% else %}

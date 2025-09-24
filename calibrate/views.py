@@ -348,6 +348,7 @@ def calibration_dashboard(request):
             'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -367,6 +368,7 @@ def calibration_dashboard(request):
             'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -386,6 +388,7 @@ def calibration_dashboard(request):
             'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Dial Gauge calibrations
@@ -405,6 +408,7 @@ def calibration_dashboard(request):
             'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Balance calibrations
@@ -424,6 +428,7 @@ def calibration_dashboard(request):
             'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
         })
     
     # เพิ่มข้อมูล Microwave calibrations
@@ -443,6 +448,7 @@ def calibration_dashboard(request):
             'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์
@@ -1158,6 +1164,7 @@ def calibration_report(request):
             'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -1177,6 +1184,7 @@ def calibration_report(request):
             'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -1196,6 +1204,7 @@ def calibration_report(request):
             'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Balance calibrations
@@ -1215,6 +1224,7 @@ def calibration_report(request):
             'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
         })
     
     # เรียงลำดับตามวันที่สอบเทียบล่าสุด
@@ -1289,6 +1299,7 @@ def calibration_report_detail(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -1308,6 +1319,7 @@ def calibration_report_detail(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -1327,6 +1339,7 @@ def calibration_report_detail(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Balance calibrations
@@ -1346,6 +1359,7 @@ def calibration_report_detail(request):
             'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์
@@ -1480,6 +1494,7 @@ def export_to_word(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -1499,6 +1514,7 @@ def export_to_word(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -1518,6 +1534,7 @@ def export_to_word(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)
@@ -1735,6 +1752,7 @@ def export_to_excel(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -1754,6 +1772,7 @@ def export_to_excel(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -1773,6 +1792,7 @@ def export_to_excel(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)

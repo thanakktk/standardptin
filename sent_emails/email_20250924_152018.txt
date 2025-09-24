@@ -1,0 +1,12 @@
+To: pakka.sort@gmail.com
+Subject: ข้อมูลเครื่องมือ: Pressure
+From: noreply@calibration-system.local
+Date: 2025-09-24 15:20:18.670278
+==================================================
+ชื่อเครื่องมือ: Pressure
+รุ่น: P01
+หมายเลขเครื่อง: PTA001
+ประเภท: Pressure
+หน่วยนับ: 31
+ผู้ผลิต: CDI
+ds

@@ -14,5 +14,5 @@ class Employee(models.Model):
         return self.name
 
     class Meta:
-        verbose_name = "พนักงาน"
-        verbose_name_plural = "พนักงาน"
+        verbose_name = "ผู้ใช้งาน"
+        verbose_name_plural = "ผู้ใช้งาน"
