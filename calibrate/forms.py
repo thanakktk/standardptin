@@ -196,10 +196,11 @@ class BalanceCalibrationForm(forms.ModelForm):
     """ฟอร์มสำหรับการสอบเทียบ Balance"""
     class Meta:
         model = BalanceCalibration
-        fields = ['machine', 'std_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'received_date', 'issue_date', 'next_due', 'certificate_number', 'procedure_number', 'status', 'drift', 'res_push', 'res_tip', 'air_buoyancy', 'uncertainty_68', 'uncertainty_95_k', 'final_uncertainty',
+        fields = ['machine', 'uuc_id', 'calibrator', 'certificate_issuer', 'date_calibration', 'received_date', 'issue_date', 'next_due', 'certificate_number', 'procedure_number', 'status',
                  'linear_nominal_value', 'linear_conventional_mass', 'linear_displayed_value', 'linear_error', 'linear_uncertainty', 'linear_tolerance_limit']
         widgets = {
             'machine': forms.Select(attrs={'class': 'form-control'}),
+            'uuc_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
             'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'required': True}),
@@ -209,20 +210,13 @@ class BalanceCalibrationForm(forms.ModelForm):
             'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
             'procedure_number': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
-            'drift': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
-            'res_push': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
-            'res_tip': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
-            'air_buoyancy': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
-            'uncertainty_68': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
-            'uncertainty_95_k': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
-            'final_uncertainty': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
-            # Linear fields
-            'linear_nominal_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10 g'}),
-            'linear_conventional_mass': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 g'}),
-            'linear_displayed_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.00002 g'}),
-            'linear_error': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น -0.00002 g'}),
-            'linear_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0003 g'}),
-            'linear_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 9.0007 – 10.0003 g'}),
+            # Linear (Min-Max) fields
+            'linear_nominal_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000'}),
+            'linear_conventional_mass': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000'}),
+            'linear_displayed_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.00002'}),
+            'linear_error': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
+            'linear_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.00003'}),
+            'linear_tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -241,9 +235,9 @@ class BalanceCalibrationForm(forms.ModelForm):
             self.fields['machine'].queryset = Machine.objects.filter(deleted=False).order_by('name')
         self.fields['machine'].empty_label = "เลือก Balance"
         
-        # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
-        self.fields['uuc_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
-        self.fields['uuc_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
+        # ตั้งค่า queryset สำหรับเครื่องมือที่สอบเทียบ
+        self.fields['uuc_id'].queryset = Machine.objects.all().order_by('name')
+        self.fields['uuc_id'].empty_label = "เลือกเครื่องมือที่สอบเทียบ"
 
 class BalanceReadingForm(forms.ModelForm):
     """ฟอร์มสำหรับข้อมูลการอ่านค่า Balance"""
@@ -372,6 +366,14 @@ class HighFrequencyCalibrationForm(forms.ModelForm):
         # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
         self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
         self.fields['std_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
+        
+        # ตั้งค่า queryset สำหรับเครื่องมือ High Frequency
+        high_freq_type = MachineType.objects.filter(name__icontains='high frequency').first()
+        if high_freq_type:
+            self.fields['machine'].queryset = Machine.objects.filter(machine_type=high_freq_type, deleted=False).order_by('name')
+        else:
+            self.fields['machine'].queryset = Machine.objects.filter(deleted=False).order_by('name')
+        self.fields['machine'].empty_label = "เลือกเครื่องมือ High Frequency"
 
 class LowFrequencyCalibrationForm(forms.ModelForm):
     class Meta:

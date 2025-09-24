@@ -332,6 +332,7 @@ class BalanceCalibration(models.Model):
     
     # ข้อมูลพื้นฐาน
     machine = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, verbose_name="เครื่องมือ Balance")
+    uuc_id = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่สอบเทียบ", related_name='balance_uuc_calibrations')
     std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='balance_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='balance_certificates')
