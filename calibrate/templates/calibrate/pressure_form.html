@@ -141,16 +141,16 @@
                             <div id="calibration-equipment-container">
                                 <div class="row mb-2 calibration-equipment-row">
                                     <div class="col-md-10">
-                                        <select name="{{ form.uuc_id.name }}" id="{{ form.uuc_id.id_for_label }}" class="form-control">
+                                        <select name="{{ form.std_id.name }}" id="{{ form.std_id.id_for_label }}" class="form-control">
                                             <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
-                                            {% for equipment in form.uuc_id.field.queryset %}
-                                                <option value="{{ equipment.id }}" {% if form.uuc_id.value == equipment.id %}selected{% endif %}>
+                                            {% for equipment in form.std_id.field.queryset %}
+                                                <option value="{{ equipment.id }}" {% if form.std_id.value == equipment.id %}selected{% endif %}>
                                                     {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
                                                 </option>
                                             {% endfor %}
                                         </select>
-                                        {% if form.uuc_id.errors %}
-                                            <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
+                                        {% if form.std_id.errors %}
+                                            <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
                                         {% endif %}
                                     </div>
                                     <div class="col-md-2">
@@ -248,132 +248,237 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <input type="number" name="set_2" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="set_2" class="form-control form-control-sm" value="{{ form.set_2.value|default:'' }}">
+                                        {% if form.set_2.errors %}
+                                            <div class="text-danger small">{{ form.set_2.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m1_2" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m1_2" class="form-control form-control-sm" value="{{ form.m1_2.value|default:'' }}">
+                                        {% if form.m1_2.errors %}
+                                            <div class="text-danger small">{{ form.m1_2.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m2_2" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m2_2" class="form-control form-control-sm" value="{{ form.m2_2.value|default:'' }}">
+                                        {% if form.m2_2.errors %}
+                                            <div class="text-danger small">{{ form.m2_2.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m3_2" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m3_2" class="form-control form-control-sm" value="{{ form.m3_2.value|default:'' }}">
+                                        {% if form.m3_2.errors %}
+                                            <div class="text-danger small">{{ form.m3_2.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m4_2" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m4_2" class="form-control form-control-sm" value="{{ form.m4_2.value|default:'' }}">
+                                        {% if form.m4_2.errors %}
+                                            <div class="text-danger small">{{ form.m4_2.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="avg_2" class="form-control form-control-sm" step="0.01" readonly>
+                                        <input type="number" name="avg_2" class="form-control form-control-sm" step="0.01" readonly value="{{ form.avg_2.value|default:'' }}">
+                                        {% if form.avg_2.errors %}
+                                            <div class="text-danger small">{{ form.avg_2.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="error_2" class="form-control form-control-sm" step="0.01">
+                                        <input type="number" name="error_2" class="form-control form-control-sm" step="0.01" value="{{ form.error_2.value|default:'' }}">
+                                        {% if form.error_2.errors %}
+                                            <div class="text-danger small">{{ form.error_2.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="text" name="tolerance_2" class="form-control form-control-sm">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input type="number" name="set_3" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m1_3" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m2_3" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m3_3" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m4_3" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="avg_3" class="form-control form-control-sm" step="0.01" readonly>
-                                    </td>
-                                    <td>
-                                        <input type="number" name="error_3" class="form-control form-control-sm" step="0.01">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="tolerance_3" class="form-control form-control-sm">
+                                        <input type="text" name="tolerance_2" class="form-control form-control-sm" value="{{ form.tolerance_2.value|default:'' }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>
-                                        <input type="number" name="set_4" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="set_3" class="form-control form-control-sm" value="{{ form.set_3.value|default:'' }}">
+                                        {% if form.set_3.errors %}
+                                            <div class="text-danger small">{{ form.set_3.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m1_4" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m1_3" class="form-control form-control-sm" value="{{ form.m1_3.value|default:'' }}">
+                                        {% if form.m1_3.errors %}
+                                            <div class="text-danger small">{{ form.m1_3.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m2_4" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m2_3" class="form-control form-control-sm" value="{{ form.m2_3.value|default:'' }}">
+                                        {% if form.m2_3.errors %}
+                                            <div class="text-danger small">{{ form.m2_3.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m3_4" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m3_3" class="form-control form-control-sm" value="{{ form.m3_3.value|default:'' }}">
+                                        {% if form.m3_3.errors %}
+                                            <div class="text-danger small">{{ form.m3_3.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m4_4" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m4_3" class="form-control form-control-sm" value="{{ form.m4_3.value|default:'' }}">
+                                        {% if form.m4_3.errors %}
+                                            <div class="text-danger small">{{ form.m4_3.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="avg_4" class="form-control form-control-sm" step="0.01" readonly>
+                                        <input type="number" name="avg_3" class="form-control form-control-sm" step="0.01" readonly value="{{ form.avg_3.value|default:'' }}">
+                                        {% if form.avg_3.errors %}
+                                            <div class="text-danger small">{{ form.avg_3.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="error_4" class="form-control form-control-sm" step="0.01">
+                                        <input type="number" name="error_3" class="form-control form-control-sm" step="0.01" value="{{ form.error_3.value|default:'' }}">
+                                        {% if form.error_3.errors %}
+                                            <div class="text-danger small">{{ form.error_3.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="text" name="tolerance_4" class="form-control form-control-sm">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input type="number" name="set_5" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m1_5" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m2_5" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m3_5" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="m4_5" class="form-control form-control-sm" step="0.1">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="avg_5" class="form-control form-control-sm" step="0.01" readonly>
-                                    </td>
-                                    <td>
-                                        <input type="number" name="error_5" class="form-control form-control-sm" step="0.01">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="tolerance_5" class="form-control form-control-sm">
+                                        <input type="text" name="tolerance_3" class="form-control form-control-sm" value="{{ form.tolerance_3.value|default:'' }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>
-                                        <input type="number" name="set_6" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="set_4" class="form-control form-control-sm" value="{{ form.set_4.value|default:'' }}">
+                                        {% if form.set_4.errors %}
+                                            <div class="text-danger small">{{ form.set_4.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m1_6" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m1_4" class="form-control form-control-sm" value="{{ form.m1_4.value|default:'' }}">
+                                        {% if form.m1_4.errors %}
+                                            <div class="text-danger small">{{ form.m1_4.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m2_6" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m2_4" class="form-control form-control-sm" value="{{ form.m2_4.value|default:'' }}">
+                                        {% if form.m2_4.errors %}
+                                            <div class="text-danger small">{{ form.m2_4.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m3_6" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m3_4" class="form-control form-control-sm" value="{{ form.m3_4.value|default:'' }}">
+                                        {% if form.m3_4.errors %}
+                                            <div class="text-danger small">{{ form.m3_4.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="m4_6" class="form-control form-control-sm" step="0.1">
+                                        <input type="text" name="m4_4" class="form-control form-control-sm" value="{{ form.m4_4.value|default:'' }}">
+                                        {% if form.m4_4.errors %}
+                                            <div class="text-danger small">{{ form.m4_4.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="avg_6" class="form-control form-control-sm" step="0.01" readonly>
+                                        <input type="number" name="avg_4" class="form-control form-control-sm" step="0.01" readonly value="{{ form.avg_4.value|default:'' }}">
+                                        {% if form.avg_4.errors %}
+                                            <div class="text-danger small">{{ form.avg_4.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="error_6" class="form-control form-control-sm" step="0.01">
+                                        <input type="number" name="error_4" class="form-control form-control-sm" step="0.01" value="{{ form.error_4.value|default:'' }}">
+                                        {% if form.error_4.errors %}
+                                            <div class="text-danger small">{{ form.error_4.errors.0 }}</div>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <input type="text" name="tolerance_6" class="form-control form-control-sm">
+                                        <input type="text" name="tolerance_4" class="form-control form-control-sm" value="{{ form.tolerance_4.value|default:'' }}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="text" name="set_5" class="form-control form-control-sm" value="{{ form.set_5.value|default:'' }}">
+                                        {% if form.set_5.errors %}
+                                            <div class="text-danger small">{{ form.set_5.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="text" name="m1_5" class="form-control form-control-sm" value="{{ form.m1_5.value|default:'' }}">
+                                        {% if form.m1_5.errors %}
+                                            <div class="text-danger small">{{ form.m1_5.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="text" name="m2_5" class="form-control form-control-sm" value="{{ form.m2_5.value|default:'' }}">
+                                        {% if form.m2_5.errors %}
+                                            <div class="text-danger small">{{ form.m2_5.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="text" name="m3_5" class="form-control form-control-sm" value="{{ form.m3_5.value|default:'' }}">
+                                        {% if form.m3_5.errors %}
+                                            <div class="text-danger small">{{ form.m3_5.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="text" name="m4_5" class="form-control form-control-sm" value="{{ form.m4_5.value|default:'' }}">
+                                        {% if form.m4_5.errors %}
+                                            <div class="text-danger small">{{ form.m4_5.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="number" name="avg_5" class="form-control form-control-sm" step="0.01" readonly value="{{ form.avg_5.value|default:'' }}">
+                                        {% if form.avg_5.errors %}
+                                            <div class="text-danger small">{{ form.avg_5.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="number" name="error_5" class="form-control form-control-sm" step="0.01" value="{{ form.error_5.value|default:'' }}">
+                                        {% if form.error_5.errors %}
+                                            <div class="text-danger small">{{ form.error_5.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="text" name="tolerance_5" class="form-control form-control-sm" value="{{ form.tolerance_5.value|default:'' }}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="text" name="set_6" class="form-control form-control-sm" value="{{ form.set_6.value|default:'' }}">
+                                        {% if form.set_6.errors %}
+                                            <div class="text-danger small">{{ form.set_6.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="text" name="m1_6" class="form-control form-control-sm" value="{{ form.m1_6.value|default:'' }}">
+                                        {% if form.m1_6.errors %}
+                                            <div class="text-danger small">{{ form.m1_6.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="text" name="m2_6" class="form-control form-control-sm" value="{{ form.m2_6.value|default:'' }}">
+                                        {% if form.m2_6.errors %}
+                                            <div class="text-danger small">{{ form.m2_6.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="text" name="m3_6" class="form-control form-control-sm" value="{{ form.m3_6.value|default:'' }}">
+                                        {% if form.m3_6.errors %}
+                                            <div class="text-danger small">{{ form.m3_6.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="text" name="m4_6" class="form-control form-control-sm" value="{{ form.m4_6.value|default:'' }}">
+                                        {% if form.m4_6.errors %}
+                                            <div class="text-danger small">{{ form.m4_6.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="number" name="avg_6" class="form-control form-control-sm" step="0.01" readonly value="{{ form.avg_6.value|default:'' }}">
+                                        {% if form.avg_6.errors %}
+                                            <div class="text-danger small">{{ form.avg_6.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="number" name="error_6" class="form-control form-control-sm" step="0.01" value="{{ form.error_6.value|default:'' }}">
+                                        {% if form.error_6.errors %}
+                                            <div class="text-danger small">{{ form.error_6.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="text" name="tolerance_6" class="form-control form-control-sm" value="{{ form.tolerance_6.value|default:'' }}">
                                     </td>
                                 </tr>
                             </tbody>

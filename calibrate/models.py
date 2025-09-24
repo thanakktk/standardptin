@@ -33,7 +33,7 @@ class CalibrationForce(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะสอบเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='force_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='force_certificates')
     certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
@@ -66,6 +66,47 @@ class CalibrationPressure(models.Model):
     m4 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4")
     avg = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย")
     error = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (Error)")
+    
+    # แถวเพิ่มเติม
+    set_2 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าตั้งต้น (แถว 2)")
+    m1_2 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 1 (แถว 2)")
+    m2_2 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 2 (แถว 2)")
+    m3_2 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3 (แถว 2)")
+    m4_2 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4 (แถว 2)")
+    avg_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย (แถว 2)")
+    error_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (แถว 2)")
+    
+    set_3 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าตั้งต้น (แถว 3)")
+    m1_3 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 1 (แถว 3)")
+    m2_3 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 2 (แถว 3)")
+    m3_3 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3 (แถว 3)")
+    m4_3 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4 (แถว 3)")
+    avg_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย (แถว 3)")
+    error_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (แถว 3)")
+    
+    set_4 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าตั้งต้น (แถว 4)")
+    m1_4 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 1 (แถว 4)")
+    m2_4 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 2 (แถว 4)")
+    m3_4 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3 (แถว 4)")
+    m4_4 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4 (แถว 4)")
+    avg_4 = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย (แถว 4)")
+    error_4 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (แถว 4)")
+    
+    set_5 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าตั้งต้น (แถว 5)")
+    m1_5 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 1 (แถว 5)")
+    m2_5 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 2 (แถว 5)")
+    m3_5 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3 (แถว 5)")
+    m4_5 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4 (แถว 5)")
+    avg_5 = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย (แถว 5)")
+    error_5 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (แถว 5)")
+    
+    set_6 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าตั้งต้น (แถว 6)")
+    m1_6 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 1 (แถว 6)")
+    m2_6 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 2 (แถว 6)")
+    m3_6 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3 (แถว 6)")
+    m4_6 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4 (แถว 6)")
+    avg_6 = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย (แถว 6)")
+    error_6 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (แถว 6)")
     uncer = models.FloatField(blank=True, null=True, verbose_name="ค่าความไม่แน่นอน (Uncertainty)")
     tolerance_start = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น")
     tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด")
@@ -74,7 +115,7 @@ class CalibrationPressure(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะสอบเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='pressure_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='pressure_certificates')
     certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
@@ -153,7 +194,7 @@ class CalibrationTorque(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_set', verbose_name="สถานะปรับเเทียบ")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
     uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='torque_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='torque_certificates')
     certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
@@ -235,7 +276,7 @@ class DialGaugeCalibration(models.Model):
     
     # ข้อมูลพื้นฐาน
     machine = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, verbose_name="เครื่องมือ Dial Gauge")
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='dial_gauge_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='dial_gauge_certificates')
     
@@ -333,7 +374,7 @@ class BalanceCalibration(models.Model):
     # ข้อมูลพื้นฐาน
     machine = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, verbose_name="เครื่องมือ Balance")
     uuc_id = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่สอบเทียบ", related_name='balance_uuc_calibrations')
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='balance_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='balance_certificates')
     
@@ -430,7 +471,7 @@ class HighFrequencyCalibration(models.Model):
     
     # ข้อมูลพื้นฐาน
     machine = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, verbose_name="เครื่องมือ High Frequency")
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='high_frequency_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='high_frequency_certificates')
     date_calibration = models.DateField(verbose_name="วันที่สอบเทียบ")
@@ -479,7 +520,7 @@ class LowFrequencyCalibration(models.Model):
     
     # ข้อมูลพื้นฐาน
     machine = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, verbose_name="เครื่องมือ Low Frequency")
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='low_frequency_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='low_frequency_certificates')
     date_calibration = models.DateField(verbose_name="วันที่สอบเทียบ")
@@ -536,7 +577,7 @@ class MicrowaveCalibration(models.Model):
     
     # ข้อมูลพื้นฐาน
     machine = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, verbose_name="เครื่องมือ Microwave")
-    std_id = models.ForeignKey('std.Standard', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='microwave_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='microwave_certificates')
     
