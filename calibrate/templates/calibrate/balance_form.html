@@ -70,7 +70,7 @@
                 <form method="post">
                     {% csrf_token %}
                     
-                    <!-- ข้อมูลทั่วไป -->
+                    <!-- ข้อมูลการสอบเทียบ Balance -->
                     <div class="row mb-3">
                         <div class="col-md-3">
                             <label class="form-label">
@@ -179,7 +179,6 @@
                                     <th>Conventional Mass (g)</th>
                                     <th>Displayed Value (g)</th>
                                     <th>Error (g)</th>
-                                    <th>Uncertainty (g)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -188,35 +187,30 @@
                                     <td>{{ form.linear_conventional_mass }}</td>
                                     <td>{{ form.linear_displayed_value }}</td>
                                     <td>{{ form.linear_error }}</td>
-                                    <td>{{ form.linear_uncertainty }}</td>
                                 </tr>
                                 <tr>
                                     <td>{{ form.linear_nominal_value_2 }}</td>
                                     <td>{{ form.linear_conventional_mass_2 }}</td>
                                     <td>{{ form.linear_displayed_value_2 }}</td>
                                     <td>{{ form.linear_error_2 }}</td>
-                                    <td>{{ form.linear_uncertainty_2 }}</td>
                                 </tr>
                                 <tr>
                                     <td>{{ form.linear_nominal_value_3 }}</td>
                                     <td>{{ form.linear_conventional_mass_3 }}</td>
                                     <td>{{ form.linear_displayed_value_3 }}</td>
                                     <td>{{ form.linear_error_3 }}</td>
-                                    <td>{{ form.linear_uncertainty_3 }}</td>
                                 </tr>
                                 <tr>
                                     <td>{{ form.linear_nominal_value_4 }}</td>
                                     <td>{{ form.linear_conventional_mass_4 }}</td>
                                     <td>{{ form.linear_displayed_value_4 }}</td>
                                     <td>{{ form.linear_error_4 }}</td>
-                                    <td>{{ form.linear_uncertainty_4 }}</td>
                                 </tr>
                                 <tr>
                                     <td>{{ form.linear_nominal_value_5 }}</td>
                                     <td>{{ form.linear_conventional_mass_5 }}</td>
                                     <td>{{ form.linear_displayed_value_5 }}</td>
                                     <td>{{ form.linear_error_5 }}</td>
-                                    <td>{{ form.linear_uncertainty_5 }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -228,7 +222,6 @@
                             <ul class="mb-0">
                                 <li>ช่อง Conventional Mass และ Displayed Value ป้อนค่าน้ำหนักเอง (ทศนิยม 4 ตัว)</li>
                                 <li>Error = Displayed Value - Conventional Mass</li>
-                                <li>Uncertainty = Nominal Value ± 0.0003 (ค่าห้ามเกินจากช่องที่ 1)</li>
                                 <li>ถ้าช่อง 2 กับ 3 เกิน ให้ผลสอบเทียบไม่ผ่าน</li>
                             </ul>
                         </small>
@@ -255,16 +248,13 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // ฟังก์ชันสำหรับคำนวณ Error และ Uncertainty
+    // ฟังก์ชันสำหรับคำนวณ Error
     function calculateLinearError(row) {
-        const nominalInput = row.querySelector('input[name*="linear_nominal_value"]');
         const conventionalInput = row.querySelector('input[name*="linear_conventional_mass"]');
         const displayedInput = row.querySelector('input[name*="linear_displayed_value"]');
         const errorInput = row.querySelector('input[name*="linear_error"]');
-        const uncertaintyInput = row.querySelector('input[name*="linear_uncertainty"]');
         
         function calculate() {
-            const nominal = parseFloat(nominalInput.value) || 0;
             const conventional = parseFloat(conventionalInput.value) || 0;
             const displayed = parseFloat(displayedInput.value) || 0;
             
@@ -273,17 +263,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const error = displayed - conventional;
                 errorInput.value = error.toFixed(5);
             }
-            
-            // คำนวณ Uncertainty = Nominal Value ± 0.0003
-            if (nominal) {
-                const minUncertainty = (nominal - 0.0003).toFixed(4);
-                const maxUncertainty = (nominal + 0.0003).toFixed(4);
-                uncertaintyInput.value = `${minUncertainty} – ${maxUncertainty}`;
-            }
         }
         
         // เพิ่ม event listeners
-        if (nominalInput) nominalInput.addEventListener('input', calculate);
         if (conventionalInput) conventionalInput.addEventListener('input', calculate);
         if (displayedInput) displayedInput.addEventListener('input', calculate);
         

@@ -309,12 +309,36 @@ class DialGaugeCalibration(models.Model):
     k_factor = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, verbose_name="K")
     expanded_uncertainty_95 = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True, verbose_name="95%")
     
-    # Dial Gauge Calibration fields
+    # Dial Gauge Calibration fields - Row 1
     uuc_set = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC.Set( inch )")
     actual = models.CharField(max_length=50, blank=True, null=True, verbose_name="Actual( inch )")
     error = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error( inch )")
     uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (g)")
     tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit")
+    
+    # Dial Gauge Calibration fields - Row 2
+    set_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC.Set( inch ) - Row 2")
+    actual_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Actual( inch ) - Row 2")
+    error_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error( inch ) - Row 2")
+    tolerance_limit_2 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit - Row 2")
+    
+    # Dial Gauge Calibration fields - Row 3
+    set_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC.Set( inch ) - Row 3")
+    actual_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Actual( inch ) - Row 3")
+    error_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error( inch ) - Row 3")
+    tolerance_limit_3 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit - Row 3")
+    
+    # Dial Gauge Calibration fields - Row 4
+    set_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC.Set( inch ) - Row 4")
+    actual_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Actual( inch ) - Row 4")
+    error_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error( inch ) - Row 4")
+    tolerance_limit_4 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit - Row 4")
+    
+    # Dial Gauge Calibration fields - Row 5
+    set_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC.Set( inch ) - Row 5")
+    actual_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Actual( inch ) - Row 5")
+    error_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error( inch ) - Row 5")
+    tolerance_limit_5 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit - Row 5")
     
     def __str__(self):
         return f"Dial Gauge Calibration - {self.machine.name} ({self.date_calibration})"

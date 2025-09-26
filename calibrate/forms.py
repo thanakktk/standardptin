@@ -149,15 +149,44 @@ class CalibrationTorqueForm(forms.ModelForm):
 class DialGaugeCalibrationForm(forms.ModelForm):
     class Meta:
         model = DialGaugeCalibration
-        fields = ['measurement_range', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer']
+        fields = ['measurement_range', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer',
+                  'uuc_set', 'actual', 'error', 'tolerance_limit',
+                  'set_2', 'actual_2', 'error_2', 'tolerance_limit_2',
+                  'set_3', 'actual_3', 'error_3', 'tolerance_limit_3',
+                  'set_4', 'actual_4', 'error_4', 'tolerance_limit_4',
+                  'set_5', 'actual_5', 'error_5', 'tolerance_limit_5']
         widgets = {
-            'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 bar'}),
+            'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 inch'}),
             'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
+            'uuc_set': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.1000'}),
+            'actual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.1005'}),
+            'error': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'tolerance_limit': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            # Row 2
+            'set_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.1000'}),
+            'actual_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.1005'}),
+            'error_2': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'tolerance_limit_2': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            # Row 3
+            'set_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.2000'}),
+            'actual_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.2003'}),
+            'error_3': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'tolerance_limit_3': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            # Row 4
+            'set_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.3000'}),
+            'actual_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.3001'}),
+            'error_4': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'tolerance_limit_4': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            # Row 5
+            'set_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.4000'}),
+            'actual_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.4002'}),
+            'error_5': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'tolerance_limit_5': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
     
     def __init__(self, *args, **kwargs):
