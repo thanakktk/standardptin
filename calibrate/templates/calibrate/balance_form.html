@@ -148,7 +148,7 @@
                             <div id="calibration-equipment-container">
                                 <div class="row mb-2 calibration-equipment-row">
                                     <div class="col-md-10">
-                                        <select name="{{ form.std_id.name }}" id="{{ form.std_id.id_for_label }}" class="form-control">
+                                        <select name="{{ form.std_id.name }}" id="{{ form.std_id.id_for_label }}" class="form-control equipment-select">
                                             <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
                                             {% for equipment in form.std_id.field.queryset %}
                                                 <option value="{{ equipment.id }}" {% if form.std_id.value == equipment.id %}selected{% endif %}>
@@ -275,6 +275,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // เริ่มต้นสำหรับแถวที่มีอยู่
     document.querySelectorAll('tbody tr').forEach(calculateLinearError);
+    
+    // จัดการข้อมูลเครื่องมือหลายตัวก่อนส่งฟอร์ม
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        const equipmentSelects = form.querySelectorAll('.equipment-select');
+        const selectedEquipment = [];
+        
+        equipmentSelects.forEach(select => {
+            if (select.value) {
+                selectedEquipment.push(select.value);
+            }
+        });
+        
+        // สร้าง hidden input สำหรับเก็บข้อมูลเครื่องมือหลายตัว
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'selected_equipment';
+        hiddenInput.value = selectedEquipment.join(',');
+        form.appendChild(hiddenInput);
+        
+        // ให้ฟอร์ม submit ตามปกติ
+        return true;
+    });
 });
 </script>
 {% endblock %}

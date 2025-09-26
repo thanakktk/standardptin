@@ -77,13 +77,36 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
+        # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
+        selected_equipment = self.request.POST.get('selected_equipment', '')
+        if selected_equipment:
+            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session
+            self.request.session['selected_equipment'] = selected_equipment
+            print(f"=== DEBUG: Selected equipment: {selected_equipment}")
+        
+        # จัดการข้อมูลเครื่องมือจาก form fields
+        equipment_ids = []
+        for key, value in self.request.POST.items():
+            if key.startswith('std_id_') and value:
+                equipment_ids.append(value)
+        
+        if equipment_ids:
+            # บันทึกข้อมูลเครื่องมือใน database
+            from machine.models import Machine
+            equipment_objects = Machine.objects.filter(id__in=equipment_ids)
+            print(f"=== DEBUG: Equipment objects: {list(equipment_objects.values('id', 'name'))}")
+            
+            # เก็บข้อมูลใน session สำหรับ export
+            self.request.session['calibration_equipment'] = list(equipment_objects.values('id', 'name', 'model', 'serial_number'))
+        
         # ตรวจสอบสถานะอัตโนมัติ
         self.auto_check_status(form.instance)
         
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Pressure เรียบร้อยแล้ว')
-        # ให้ Django จัดการ redirect ตาม success_url
+        
+        # ใช้ super().form_valid เหมือน Low Frequency ที่ทำงานได้
         return super().form_valid(form)
     
     def auto_check_status(self, calibration):
@@ -188,6 +211,12 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
     def form_valid(self, form):
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
+        
+        # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
+        selected_equipment = self.request.POST.get('selected_equipment', '')
+        if selected_equipment:
+            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
+            self.request.session['selected_equipment'] = selected_equipment
         
         # ตรวจสอบสถานะอัตโนมัติ
         self.auto_check_status(form.instance)
@@ -305,6 +334,12 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
     def form_valid(self, form):
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
+        
+        # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
+        selected_equipment = self.request.POST.get('selected_equipment', '')
+        if selected_equipment:
+            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
+            self.request.session['selected_equipment'] = selected_equipment
         
         # ตรวจสอบสถานะอัตโนมัติ
         self.auto_check_status(form.instance)
@@ -563,7 +598,7 @@ def calibration_dashboard(request):
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
             'std_name': cal.std_id.name if cal.std_id else '-',
-            'update_date': cal.update,
+            'update_date': cal.update or cal.date_calibration,
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
@@ -1486,6 +1521,10 @@ def calibration_report_detail(request):
     pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     balance_calibrations = BalanceCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
+    microwave_calibrations = MicrowaveCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
+    high_frequency_calibrations = HighFrequencyCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
+    low_frequency_calibrations = LowFrequencyCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
+    dial_gauge_calibrations = DialGaugeCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
     force_calibrations = []  # Empty list since CalibrationForce model no longer exists
     
     # รวมข้อมูลการสอบเทียบทั้งหมด
@@ -1571,6 +1610,86 @@ def calibration_report_detail(request):
             'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
         })
     
+    # เพิ่มข้อมูล Microwave calibrations
+    for cal in microwave_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'microwave',
+            'type_name': 'การสอบเทียบ Microwave',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.update or cal.date_calibration,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
+        })
+    
+    # เพิ่มข้อมูล High Frequency calibrations
+    for cal in high_frequency_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'high_frequency',
+            'type_name': 'การสอบเทียบ High Frequency',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.date_calibration,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
+        })
+    
+    # เพิ่มข้อมูล Low Frequency calibrations
+    for cal in low_frequency_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'low_frequency',
+            'type_name': 'การสอบเทียบ Low Frequency',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.date_calibration,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
+        })
+    
+    # เพิ่มข้อมูล Dial Gauge calibrations
+    for cal in dial_gauge_calibrations:
+        all_calibrations.append({
+            'id': cal.id,
+            'type': 'dial_gauge',
+            'type_name': 'การสอบเทียบ Dial Gauge',
+            'machine_name': cal.machine.name if cal.machine else '-',
+            'machine_model': cal.machine.model if cal.machine else '-',
+            'serial_number': cal.machine.serial_number if cal.machine else '-',
+            'std_name': cal.std_id.name if cal.std_id else '-',
+            'update_date': cal.date_calibration,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.date_calibration,  # วันที่สอบเทียบ
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
+        })
+    
     # กรองข้อมูลตามพารามิเตอร์
     filtered_calibrations = []
     for cal in all_calibrations:
@@ -1635,7 +1754,11 @@ def calibration_report_detail(request):
         'total_calibrations': (
             CalibrationPressure.objects.count() +
             CalibrationTorque.objects.count() +
-            BalanceCalibration.objects.count()
+            BalanceCalibration.objects.count() +
+            MicrowaveCalibration.objects.count() +
+            HighFrequencyCalibration.objects.count() +
+            LowFrequencyCalibration.objects.count() +
+            DialGaugeCalibration.objects.count()
         ),
         'all_calibrations': filtered_calibrations,
         'today': today,
@@ -2627,6 +2750,12 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
+        # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
+        selected_equipment = self.request.POST.get('selected_equipment', '')
+        if selected_equipment:
+            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
+            self.request.session['selected_equipment'] = selected_equipment
+        
         # ตรวจสอบสถานะอัตโนมัติ
         self.auto_check_status(form.instance)
         
@@ -2703,6 +2832,12 @@ class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
+        
+        # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
+        selected_equipment = self.request.POST.get('selected_equipment', '')
+        if selected_equipment:
+            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
+            self.request.session['selected_equipment'] = selected_equipment
         
         # ตรวจสอบสถานะอัตโนมัติ
         self.auto_check_status(form.instance)
@@ -2816,6 +2951,12 @@ class MicrowaveCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
+        # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
+        selected_equipment = self.request.POST.get('selected_equipment', '')
+        if selected_equipment:
+            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
+            self.request.session['selected_equipment'] = selected_equipment
+        
         # ตรวจสอบสถานะอัตโนมัติ
         self.auto_check_status(form.instance)
         
@@ -2887,6 +3028,12 @@ class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
+        
+        # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
+        selected_equipment = self.request.POST.get('selected_equipment', '')
+        if selected_equipment:
+            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
+            self.request.session['selected_equipment'] = selected_equipment
         
         # ตรวจสอบสถานะอัตโนมัติ
         self.auto_check_status(form.instance)

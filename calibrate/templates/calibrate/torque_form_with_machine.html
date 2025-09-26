@@ -66,7 +66,7 @@
                             <div id="calibration-equipment-container">
                                 <div class="row mb-2 calibration-equipment-row">
                                     <div class="col-md-8">
-                                        <select name="uuc_id_1" class="form-control" required>
+                                        <select name="std_id_1" class="form-control" required>
                                             <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
                                             {% for machine in machines %}
                                                 <option value="{{ machine.id }}">{{ machine.name }} - {{ machine.machine_type.name }}</option>
@@ -432,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
             newRow.className = 'row mb-2 calibration-equipment-row';
             newRow.innerHTML = `
                 <div class="col-md-8">
-                    <select name="uuc_id_${equipmentCounter}" class="form-control">
+                    <select name="std_id_${equipmentCounter}" class="form-control">
                         <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
                         {% for machine in machines %}
                             <option value="{{ machine.id }}">{{ machine.name }} - {{ machine.machine_type.name }}</option>

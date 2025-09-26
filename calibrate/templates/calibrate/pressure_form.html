@@ -155,7 +155,7 @@
                             <div id="calibration-equipment-container">
                                 <div class="row mb-2 calibration-equipment-row">
                                     <div class="col-md-10">
-                                        <select name="{{ form.std_id.name }}" id="{{ form.std_id.id_for_label }}" class="form-control">
+                                        <select name="{{ form.std_id.name }}" id="id_std_id_1" class="form-control equipment-select">
                                             <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
                                             {% for equipment in form.std_id.field.queryset %}
                                                 <option value="{{ equipment.id }}" {% if form.std_id.value == equipment.id %}selected{% endif %}>
@@ -234,19 +234,19 @@
                                         {{ form.measurement_range }}
                                     </td>
                                     <td>
-                                        <input type="text" name="set_2" class="form-control" value="{{ form.set_2.value|default:'' }}">
+                                        <input type="text" name="set_2" id="id_set_2" class="form-control" value="{{ form.set_2.value|default:'' }}" aria-label="Set 2">
                                         {% if form.set_2.errors %}
                                             <div class="text-danger small">{{ form.set_2.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="actual_2" class="form-control" step="0.01" value="{{ form.actual_2.value|default:'' }}">
+                                        <input type="number" name="actual_2" id="id_actual_2" class="form-control" step="0.01" value="{{ form.actual_2.value|default:'' }}" aria-label="Actual 2">
                                         {% if form.actual_2.errors %}
                                             <div class="text-danger small">{{ form.actual_2.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="error_2" class="form-control" step="0.01" value="{{ form.error_2.value|default:'' }}">
+                                        <input type="number" name="error_2" id="id_error_2" class="form-control" step="0.01" value="{{ form.error_2.value|default:'' }}" aria-label="Error 2">
                                         {% if form.error_2.errors %}
                                             <div class="text-danger small">{{ form.error_2.errors.0 }}</div>
                                         {% endif %}
@@ -254,10 +254,10 @@
                                     <td>
                                         <div class="row">
                                             <div class="col-6">
-                                                <input type="number" name="tolerance_start_2" class="form-control" step="0.01" value="{{ form.tolerance_start_2.value|default:'' }}">
+                                                <input type="number" name="tolerance_start_2" id="id_tolerance_start_2" class="form-control" step="0.01" value="{{ form.tolerance_start_2.value|default:'' }}" aria-label="Tolerance Start 2">
                                             </div>
                                             <div class="col-6">
-                                                <input type="number" name="tolerance_end_2" class="form-control" step="0.01" value="{{ form.tolerance_end_2.value|default:'' }}">
+                                                <input type="number" name="tolerance_end_2" id="id_tolerance_end_2" class="form-control" step="0.01" value="{{ form.tolerance_end_2.value|default:'' }}" aria-label="Tolerance End 2">
                                             </div>
                                         </div>
                                     </td>
@@ -267,19 +267,19 @@
                                         {{ form.measurement_range }}
                                     </td>
                                     <td>
-                                        <input type="text" name="set_3" class="form-control" value="{{ form.set_3.value|default:'' }}">
+                                        <input type="text" name="set_3" id="id_set_3" class="form-control" value="{{ form.set_3.value|default:'' }}" aria-label="Set 3">
                                         {% if form.set_3.errors %}
                                             <div class="text-danger small">{{ form.set_3.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="actual_3" class="form-control" step="0.01" value="{{ form.actual_3.value|default:'' }}">
+                                        <input type="number" name="actual_3" id="id_actual_3" class="form-control" step="0.01" value="{{ form.actual_3.value|default:'' }}" aria-label="Actual 3">
                                         {% if form.actual_3.errors %}
                                             <div class="text-danger small">{{ form.actual_3.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="error_3" class="form-control" step="0.01" value="{{ form.error_3.value|default:'' }}">
+                                        <input type="number" name="error_3" id="id_error_3" class="form-control" step="0.01" value="{{ form.error_3.value|default:'' }}" aria-label="Error 3">
                                         {% if form.error_3.errors %}
                                             <div class="text-danger small">{{ form.error_3.errors.0 }}</div>
                                         {% endif %}
@@ -287,10 +287,10 @@
                                     <td>
                                         <div class="row">
                                             <div class="col-6">
-                                                <input type="number" name="tolerance_start_3" class="form-control" step="0.01" value="{{ form.tolerance_start_3.value|default:'' }}">
+                                                <input type="number" name="tolerance_start_3" id="id_tolerance_start_3" class="form-control" step="0.01" value="{{ form.tolerance_start_3.value|default:'' }}" aria-label="Tolerance Start 3">
                                             </div>
                                             <div class="col-6">
-                                                <input type="number" name="tolerance_end_3" class="form-control" step="0.01" value="{{ form.tolerance_end_3.value|default:'' }}">
+                                                <input type="number" name="tolerance_end_3" id="id_tolerance_end_3" class="form-control" step="0.01" value="{{ form.tolerance_end_3.value|default:'' }}" aria-label="Tolerance End 3">
                                             </div>
                                         </div>
                                     </td>
@@ -503,20 +503,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // JavaScript สำหรับเพิ่มเครื่องมือที่ใช้สอบเทียบ
     let equipmentCounter = 1;
     
+    // เก็บข้อมูล equipment options ไว้ในตัวแปร
+    const equipmentOptions = `
+        {% for equipment in form.std_id.field.queryset %}
+            <option value="{{ equipment.id }}">{{ equipment.name }} - {{ equipment.model|default:"" }} - {{ equipment.serial_number|default:"" }}</option>
+        {% endfor %}
+    `;
+    
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('add-equipment-btn')) {
+            console.log('=== DEBUG: กดปุ่มเพิ่มเครื่องมือแล้ว ===');
             equipmentCounter++;
+            console.log(`Equipment counter: ${equipmentCounter}`);
+            
             const container = document.getElementById('calibration-equipment-container');
+            console.log('Container found:', container);
+            
             const newRow = document.createElement('div');
             newRow.className = 'row mb-2 calibration-equipment-row';
             newRow.innerHTML = `
                 <div class="col-md-10">
-                    <select name="uuc_id_${equipmentCounter}" class="form-control">
+                    <select name="std_id_${equipmentCounter}" id="id_std_id_${equipmentCounter}" class="form-control equipment-select">
                         <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
-                        {% for equipment in form.uuc_id.field.queryset %}
-                            <option value="{{ equipment.id }}">{{ equipment.name }} - {{ equipment.model }} - {{ equipment.serial_number }}</option>
-                        {% endfor %}
-                        
+                        ${equipmentOptions}
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -526,10 +535,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             container.appendChild(newRow);
+            console.log(`เพิ่มเครื่องมือตัวที่ ${equipmentCounter} เรียบร้อยแล้ว`);
         }
         
         if (e.target.classList.contains('remove-equipment-btn')) {
-            e.target.closest('.calibration-equipment-row').remove();
+            const row = e.target.closest('.calibration-equipment-row');
+            row.remove();
+            console.log('ลบเครื่องมือเรียบร้อยแล้ว');
+        }
+    });
+    
+    // จัดการข้อมูลเครื่องมือหลายตัวก่อนส่งฟอร์ม
+    document.addEventListener('submit', function(e) {
+        console.log('=== DEBUG: Form submit event ถูกเรียกแล้ว ===');
+        const form = e.target;
+        const equipmentSelects = form.querySelectorAll('.equipment-select');
+        const allSelects = form.querySelectorAll('select[name^="std_id"]');
+        const selectedEquipment = [];
+        
+        console.log(`Found ${equipmentSelects.length} equipment selects with class`);
+        console.log(`Found ${allSelects.length} all std_id selects`);
+        
+        // ใช้ allSelects แทน equipmentSelects
+        const selectsToProcess = allSelects.length > 0 ? allSelects : equipmentSelects;
+        
+        selectsToProcess.forEach((select, index) => {
+            console.log(`Equipment ${index + 1}: name="${select.name}", value="${select.value}"`);
+            if (select.value) {
+                selectedEquipment.push(select.value);
+            }
+        });
+        
+        console.log('Selected equipment:', selectedEquipment);
+        
+        // สร้าง hidden input สำหรับเก็บข้อมูลเครื่องมือหลายตัว
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'selected_equipment';
+        hiddenInput.value = selectedEquipment.join(',');
+        form.appendChild(hiddenInput);
+        
+        console.log('Hidden input created with value:', hiddenInput.value);
+        console.log('=== DEBUG: Form จะ submit ไปแล้ว ===');
+        
+        // ให้ฟอร์ม submit ตามปกติ
+        return true;
+    });
+    
+    // เพิ่ม event listener สำหรับปุ่ม submit โดยตรง
+    document.addEventListener('click', function(e) {
+        if (e.target.type === 'submit' || e.target.closest('button[type="submit"]')) {
+            console.log('=== DEBUG: ปุ่ม submit ถูกกดแล้ว ===');
         }
     });
 });
