@@ -1,53 +1,21 @@
 from django import forms
-from .models import CalibrationForce, CalibrationPressure, CalibrationTorque, DialGaugeCalibration, DialGaugeReading, BalanceCalibration, BalanceReading, MicrowaveCalibration, MicrowaveReading, HighFrequencyCalibration, LowFrequencyCalibration
+from .models import CalibrationPressure, CalibrationTorque, DialGaugeCalibration, DialGaugeReading, BalanceCalibration, BalanceReading, MicrowaveCalibration, MicrowaveReading, HighFrequencyCalibration, LowFrequencyCalibration
 from django.contrib.auth import get_user_model
 from machine.models import Machine, MachineType, CalibrationEquipment
 from std.models import Standard
 
-class CalibrationForceForm(forms.ModelForm):
-    class Meta:
-        model = CalibrationForce
-        fields = ['apply_com', 'apply_ten', 'compress', 'tension', 'fullscale', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number']
-        widgets = {
-            'apply_com': forms.TextInput(attrs={'class': 'form-control'}),
-            'apply_ten': forms.TextInput(attrs={'class': 'form-control'}),
-            'compress': forms.TextInput(attrs={'class': 'form-control'}),
-            'tension': forms.TextInput(attrs={'class': 'form-control'}),
-            'fullscale': forms.NumberInput(attrs={'class': 'form-control'}),
-            'error': forms.NumberInput(attrs={'class': 'form-control'}),
-            'tolerance_start': forms.NumberInput(attrs={'class': 'form-control'}),
-            'tolerance_end': forms.NumberInput(attrs={'class': 'form-control'}),
-            'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
-            'std_id': forms.Select(attrs={'class': 'form-control'}),
-            'calibrator': forms.Select(attrs={'class': 'form-control'}),
-            'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
-            'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # ตั้งค่า queryset สำหรับฟิลด์ calibrator และ certificate_issuer
-        User = get_user_model()
-        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
-        self.fields['calibrator'].queryset = users
-        self.fields['certificate_issuer'].queryset = users
-        
-        # ตั้งค่า queryset สำหรับเครื่องมือที่ใช้สอบเทียบ
-        self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
-        self.fields['std_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
 
 class CalibrationPressureForm(forms.ModelForm):
     class Meta:
         model = CalibrationPressure
-        fields = ['set', 'm1', 'm2', 'm3', 'm4', 'avg', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
+        fields = ['measurement_range', 'set', 'm1', 'm2', 'm3', 'm4', 'avg', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
                  'set_2', 'm1_2', 'm2_2', 'm3_2', 'm4_2', 'avg_2', 'error_2',
                  'set_3', 'm1_3', 'm2_3', 'm3_3', 'm4_3', 'avg_3', 'error_3',
                  'set_4', 'm1_4', 'm2_4', 'm3_4', 'm4_4', 'avg_4', 'error_4',
                  'set_5', 'm1_5', 'm2_5', 'm3_5', 'm4_5', 'avg_5', 'error_5',
                  'set_6', 'm1_6', 'm2_6', 'm3_6', 'm4_6', 'avg_6', 'error_6']
         widgets = {
+            'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 bar'}),
             'set': forms.TextInput(attrs={'class': 'form-control'}),
             'm1': forms.TextInput(attrs={'class': 'form-control'}),
             'm2': forms.TextInput(attrs={'class': 'form-control'}),

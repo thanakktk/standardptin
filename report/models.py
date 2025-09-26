@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from machine.models import Machine
-from calibrate.models import CalibrationForce, CalibrationPressure, CalibrationTorque
+from calibrate.models import CalibrationPressure, CalibrationTorque
 from organize.models import Organize
 from employee.models import Employee
 from std.models import Standard

@@ -179,11 +179,7 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    {% if cal.type == 'force' %}
-                                        <a href="{% url 'calibrate-force-edit' cal.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    {% elif cal.type == 'pressure' %}
+                                    {% if cal.type == 'pressure' %}
                                         <a href="{% url 'calibrate-pressure-edit' cal.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
                                             <i class="fas fa-edit"></i>
                                         </a>

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 # Import models
 from machine.models import Machine
-from calibrate.models import CalibrationForce, CalibrationPressure, CalibrationTorque
+from calibrate.models import CalibrationPressure, CalibrationTorque
 from cert.models import Certificate
 from employee.models import Employee
 from organize.models import Organize
@@ -16,7 +16,6 @@ def home(request):
     context = {
         'machine_count': Machine.objects.count(),
         'calibration_count': (
-            CalibrationForce.objects.count() + 
             CalibrationPressure.objects.count() + 
             CalibrationTorque.objects.count()
         ),
@@ -26,7 +25,7 @@ def home(request):
         
         # ข้อมูลเพิ่มเติมสำหรับ dashboard
         'recent_machines': Machine.objects.order_by('-update')[:5],
-        'recent_calibrations': CalibrationForce.objects.order_by('-cal_force_id')[:5],
+        'recent_calibrations': CalibrationPressure.objects.order_by('-cal_pressure_id')[:5],
         'recent_certificates': Certificate.objects.order_by('-created_at')[:5],
         
         # สถิติตามประเภท

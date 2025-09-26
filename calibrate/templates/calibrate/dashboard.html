@@ -19,90 +19,6 @@
 
 <div class="main-content">
     <div class="container-fluid">
-        <!-- สถิติการสอบเทียบ -->
-        <div class="row mb-4">
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-icon bg-primary">
-                        <i class="fas fa-weight"></i>
-                    </div>
-                    <div class="stats-content">
-                        <h3>{{ force_calibrations_count }}</h3>
-                        <p>บันทึกการสอบเทียบแรง</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-icon bg-success">
-                        <i class="fas fa-tachometer-alt"></i>
-                    </div>
-                    <div class="stats-content">
-                        <h3>{{ pressure_calibrations_count }}</h3>
-                        <p>บันทึกการสอบเทียบความดัน</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-icon bg-warning">
-                        <i class="fas fa-cog"></i>
-                    </div>
-                    <div class="stats-content">
-                        <h3>{{ torque_calibrations_count }}</h3>
-                        <p>บันทึกการสอบเทียบแรงบิด</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-icon bg-secondary">
-                        <i class="fas fa-ruler"></i>
-                    </div>
-                    <div class="stats-content">
-                        <h3>{{ dial_gauge_calibrations_count }}</h3>
-                        <p>บันทึกการสอบเทียบ Dial Gauge</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-icon bg-dark">
-                        <i class="fas fa-balance-scale"></i>
-                    </div>
-                    <div class="stats-content">
-                        <h3>{{ balance_calibrations_count }}</h3>
-                        <p>บันทึกการสอบเทียบ Balance</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="stats-card">
-                    <div class="stats-icon bg-danger">
-                        <i class="fas fa-satellite-dish"></i>
-                    </div>
-                    <div class="stats-content">
-                        <h3>{{ microwave_calibrations_count }}</h3>
-                        <p>บันทึกการสอบเทียบ Microwave</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- สถิติรอการสอบเทียบ -->
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="stats-card">
-                    <div class="stats-icon bg-info">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stats-content">
-                        <h3>{{ pending_calibrations_count }}</h3>
-                        <p>รอการสอบเทียบทั้งหมด</p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Search และ Filter -->
         <div class="row mb-4">
@@ -137,12 +53,13 @@
                                     </label>
                                     <select class="form-control" name="calibration_type">
                                         <option value="">ทั้งหมด</option>
-                                        <option value="force" {% if request.GET.calibration_type == 'force' %}selected{% endif %}>แรง</option>
-                                        <option value="pressure" {% if request.GET.calibration_type == 'pressure' %}selected{% endif %}>ความดัน</option>
-                                        <option value="torque" {% if request.GET.calibration_type == 'torque' %}selected{% endif %}>แรงบิด</option>
+                                        <option value="pressure" {% if request.GET.calibration_type == 'pressure' %}selected{% endif %}>Pressure</option>
+                                        <option value="torque" {% if request.GET.calibration_type == 'torque' %}selected{% endif %}>Torque</option>
                                         <option value="dial_gauge" {% if request.GET.calibration_type == 'dial_gauge' %}selected{% endif %}>Dial Gauge</option>
                                         <option value="balance" {% if request.GET.calibration_type == 'balance' %}selected{% endif %}>Balance</option>
                                         <option value="microwave" {% if request.GET.calibration_type == 'microwave' %}selected{% endif %}>Microwave</option>
+                                        <option value="high_frequency" {% if request.GET.calibration_type == 'high_frequency' %}selected{% endif %}>High Frequency</option>
+                                        <option value="low_frequency" {% if request.GET.calibration_type == 'low_frequency' %}selected{% endif %}>Low Frequency</option>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
@@ -198,14 +115,11 @@
                             รายการบันทึกการสอบเทียบทั้งหมด ({{ all_calibrations|length }} รายการ)
                         </h5>
                         <div class="btn-group" role="group">
-                            <a href="{% url 'calibrate-force-list' %}" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-weight me-1"></i>แรง
-                            </a>
                             <a href="{% url 'calibrate-pressure-list' %}" class="btn btn-outline-success btn-sm">
-                                <i class="fas fa-tachometer-alt me-1"></i>ความดัน
+                                <i class="fas fa-tachometer-alt me-1"></i>Pressure
                             </a>
                             <a href="{% url 'calibrate-torque-list' %}" class="btn btn-outline-warning btn-sm">
-                                <i class="fas fa-cog me-1"></i>แรงบิด
+                                <i class="fas fa-cog me-1"></i>Torque
                             </a>
                             <a href="{% url 'calibrate-balance-list' %}" class="btn btn-outline-dark btn-sm">
                                 <i class="fas fa-balance-scale me-1"></i>Balance
@@ -310,32 +224,7 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                {% if cal.type == 'force' %}
-                                                    <a href="{% url 'calibrate-force-edit' cal.id %}" class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    {% if user.is_staff or user.is_superuser %}
-                                                        <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
-                                                                data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
-                                                                data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
-                                                                title="เปลี่ยนระดับความเร่งด่วน">
-                                                            <i class="fas fa-arrow-up"></i>
-                                                        </button>
-                                                        {% if cal.status != 'closed' %}
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary close-work-btn" 
-                                                                    data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
-                                                                    data-name="{{ cal.machine_name }}" data-current-status="{{ cal.status }}"
-                                                                    title="ปิดงาน">
-                                                                <i class="fas fa-check-circle"></i>
-                                                            </button>
-                                                        {% endif %}
-                                                    {% endif %}
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
-                                                            data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
-                                                            data-name="{{ cal.machine_name }}">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                {% elif cal.type == 'pressure' %}
+                                                {% if cal.type == 'pressure' %}
                                                     <a href="{% url 'calibrate-pressure-edit' cal.id %}" class="btn btn-sm btn-outline-success">
                                                         <i class="fas fa-edit"></i>
                                                     </a>

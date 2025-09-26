@@ -1,38 +1,8 @@
 from django.contrib import admin
 
-from .models import CalibrationForce, CalibrationPressure, CalibrationTorque, UUC, UUCStdMap, DialGaugeCalibration, DialGaugeReading, BalanceCalibration, BalanceReading, MicrowaveCalibration, MicrowaveReading
+from .models import CalibrationPressure, CalibrationTorque, UUC, UUCStdMap, DialGaugeCalibration, DialGaugeReading, BalanceCalibration, BalanceReading, MicrowaveCalibration, MicrowaveReading
 
 
-@admin.register(CalibrationForce)
-class CalibrationForceAdmin(admin.ModelAdmin):
-    list_display = (
-        'cal_force_id',
-        'apply_com',
-        'apply_ten',
-        'compress',
-        'tension',
-        'fullscale',
-        'error',
-        'uncer',
-        'tolerance_start',
-        'tolerance_end',
-        'update',
-        'next_due',
-        'status',
-        'priority',
-        'uuc_id',
-        'std_id',
-        'calibrator',
-        'certificate_issuer',
-    )
-    list_filter = (
-        'update',
-        'next_due',
-        'uuc_id',
-        'std_id',
-        'calibrator',
-        'certificate_issuer',
-    )
 
 
 @admin.register(CalibrationPressure)

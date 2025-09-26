@@ -10,7 +10,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.conf import settings
 from datetime import datetime
-from calibrate.models import CalibrationForce, CalibrationPressure, CalibrationTorque, BalanceCalibration, MicrowaveCalibration, HighFrequencyCalibration, LowFrequencyCalibration, DialGaugeCalibration
+from calibrate.models import CalibrationPressure, CalibrationTorque, BalanceCalibration, MicrowaveCalibration, HighFrequencyCalibration, LowFrequencyCalibration, DialGaugeCalibration
 from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -262,26 +262,7 @@ def create_calibration_request(request, pk):
     
     try:
         # สร้างบันทึกการสอบเทียบตามประเภทเครื่องมือ
-        if 'force' in machine_type_name:
-            # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
-            existing_request = CalibrationForce.objects.filter(
-                uuc_id=machine,
-                status='pending'
-            ).first()
-            
-            if existing_request:
-                messages.warning(request, f'มีคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} อยู่แล้ว')
-                return redirect('machine-list')
-            
-            # สร้างคำร้องขอใหม่
-            calibration = CalibrationForce.objects.create(
-                uuc_id=machine,
-                status='pending',
-                priority=priority
-            )
-            messages.success(request, f'ส่งคำร้องขอบันทึกสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
-            
-        elif 'pressure' in machine_type_name:
+        if 'pressure' in machine_type_name:
             # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
             existing_request = CalibrationPressure.objects.filter(
                 uuc_id=machine,
@@ -509,26 +490,7 @@ def bulk_calibration_request(request):
                 machine_type_name = machine.machine_type.name.lower()
                 
                 # ตรวจสอบประเภทเครื่องมือและสร้างคำร้องขอ
-                if 'force' in machine_type_name:
-                    # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
-                    existing_request = CalibrationForce.objects.filter(
-                        uuc_id=machine,
-                        status='pending'
-                    ).first()
-                    
-                    if existing_request:
-                        skipped_count += 1
-                        continue
-                    
-                    # สร้างคำร้องขอใหม่
-                    CalibrationForce.objects.create(
-                        uuc_id=machine,
-                        status='pending',
-                        priority=priority
-                    )
-                    created_count += 1
-                    
-                elif 'pressure' in machine_type_name:
+                if 'pressure' in machine_type_name:
                     # ตรวจสอบว่ามีคำร้องขออยู่แล้วหรือไม่
                     existing_request = CalibrationPressure.objects.filter(
                         uuc_id=machine,

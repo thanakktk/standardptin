@@ -2,45 +2,6 @@ from django.db import models
 from machine.models import Machine
 from django.conf import settings
 
-class CalibrationForce(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'รอสอบเทียบ'),
-        ('in_progress', 'กำลังสอบเทียบ'),
-        ('passed', 'ผ่านการสอบเทียบ'),
-        ('cert_issued', 'ออกใบรับรอง'),
-        ('failed', 'ไม่ผ่านการสอบเทียบ'),
-        ('closed', 'ปิดงาน'),
-    ]
-    
-    PRIORITY_CHOICES = [
-        ('normal', 'ปกติ'),
-        ('urgent', 'ด่วน'),
-        ('very_urgent', 'ด่วนมาก'),
-    ]
-    
-    cal_force_id = models.AutoField(primary_key=True, verbose_name="รหัสการสอบเทียบแรง")
-    apply_com = models.CharField(max_length=10, blank=True, null=True, verbose_name="แรงกด (Compression)")
-    apply_ten = models.CharField(max_length=10, blank=True, null=True, verbose_name="แรงดึง (Tension)")
-    compress = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่ากด (Compression)")
-    tension = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าดึง (Tension)")
-    fullscale = models.FloatField(blank=True, null=True, verbose_name="ค่าช่วงการวัดสูงสุด (Full Scale)")
-    error = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (Error)")
-    uncer = models.FloatField(blank=True, null=True, verbose_name="ค่าความไม่แน่นอน (Uncertainty)")
-    tolerance_start = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น")
-    tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด")
-    update = models.DateField(blank=True, null=True, verbose_name="วันที่สอบเทียบ")
-    next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="สถานะสอบเทียบ")
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal', verbose_name="ระดับความเร่งด่วน")
-    uuc_id = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name="เครื่องมือที่สอบเทียบ")
-    std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
-    calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='force_calibrations')
-    certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='force_certificates')
-    certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
-
-    class Meta:
-        verbose_name = "ข้อมูลสอบเทียบแรง"
-        verbose_name_plural = "ข้อมูลสอบเทียบแรง"
 
 class CalibrationPressure(models.Model):
     STATUS_CHOICES = [
@@ -58,7 +19,8 @@ class CalibrationPressure(models.Model):
         ('very_urgent', 'ด่วนมาก'),
     ]
     
-    cal_pressure_id = models.AutoField(primary_key=True, verbose_name="รหัสการสอบเทียบความดัน")
+    cal_pressure_id = models.AutoField(primary_key=True, verbose_name="รหัสการสอบเทียบ Pressure")
+    measurement_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="ช่วงการวัด")
     set = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าตั้งต้น")
     m1 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 1")
     m2 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 2")
@@ -121,8 +83,8 @@ class CalibrationPressure(models.Model):
     certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
 
     class Meta:
-        verbose_name = "ข้อมูลสอบเทียบความดัน"
-        verbose_name_plural = "ข้อมูลสอบเทียบความดัน"
+        verbose_name = "ข้อมูลสอบเทียบ Pressure"
+        verbose_name_plural = "ข้อมูลสอบเทียบ Pressure"
     
     def calculate_average(self):
         """คำนวณค่าเฉลี่ยจาก m1, m2, m3, m4"""

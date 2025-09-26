@@ -1,6 +1,5 @@
 from django.urls import path
 from .views import (
-    CalibrationForceListView, CalibrationForceCreateView, CalibrationForceUpdateView, CalibrationForceDeleteView,
     CalibrationPressureListView, CalibrationPressureCreateView, CalibrationPressureUpdateView, CalibrationPressureDeleteView,
     CalibrationTorqueListView, CalibrationTorqueCreateView, CalibrationTorqueUpdateView, CalibrationTorqueDeleteView,
     BalanceCalibrationListView, BalanceCalibrationCreateView, BalanceCalibrationUpdateView, BalanceCalibrationDeleteView,
@@ -34,11 +33,6 @@ urlpatterns = [
     path('machine/<int:machine_id>/', machine_calibration_list, name='machine-calibration-list'),
     path('machine/<int:machine_id>/add/', create_calibration_for_machine, name='machine-calibration-add'),
     
-    # URL เดิม (สำหรับการจัดการทั่วไป)
-    path('force/', CalibrationForceListView.as_view(), name='calibrate-force-list'),
-    path('force/add/', CalibrationForceCreateView.as_view(), name='calibrate-force-add'),
-    path('force/<int:pk>/edit/', CalibrationForceUpdateView.as_view(), name='calibrate-force-edit'),
-    path('force/<int:pk>/delete/', CalibrationForceDeleteView.as_view(), name='calibrate-force-delete'),
 
     path('pressure/', CalibrationPressureListView.as_view(), name='calibrate-pressure-list'),
     path('pressure/add/', CalibrationPressureCreateView.as_view(), name='calibrate-pressure-add'),

@@ -5,8 +5,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
-from .models import CalibrationForce, CalibrationPressure, CalibrationTorque, DialGaugeCalibration, BalanceCalibration, MicrowaveCalibration, HighFrequencyCalibration, LowFrequencyCalibration
-from .forms import CalibrationForceForm, CalibrationPressureForm, CalibrationTorqueForm, DialGaugeCalibrationForm, BalanceCalibrationForm, MicrowaveCalibrationForm, HighFrequencyCalibrationForm, LowFrequencyCalibrationForm
+from .models import CalibrationPressure, CalibrationTorque, DialGaugeCalibration, BalanceCalibration, MicrowaveCalibration, HighFrequencyCalibration, LowFrequencyCalibration
+from .forms import CalibrationPressureForm, CalibrationTorqueForm, DialGaugeCalibrationForm, BalanceCalibrationForm, MicrowaveCalibrationForm, HighFrequencyCalibrationForm, LowFrequencyCalibrationForm
 from machine.models import Machine, MachineType
 from django.db import models
 from docx import Document
@@ -20,60 +20,9 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 
-class CalibrationForceListView(LoginRequiredMixin, ListView):
-    model = CalibrationForce
-    template_name = 'calibrate/force_list.html'
-    context_object_name = 'calibrations'
-    
-    def get_queryset(self):
-        # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ
-        return CalibrationForce.objects.annotate(
-            priority_order=models.Case(
-                models.When(priority='very_urgent', then=models.Value(1)),
-                models.When(priority='urgent', then=models.Value(2)),
-                models.When(priority='normal', then=models.Value(3)),
-                default=models.Value(4),
-                output_field=models.IntegerField(),
-            )
-        ).order_by('priority_order', '-update')
 
-class CalibrationForceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
-    model = CalibrationForce
-    form_class = CalibrationForceForm
-    template_name = 'calibrate/force_form.html'
-    success_url = reverse_lazy('calibrate-dashboard')
-    permission_required = 'calibrate.add_calibrationforce'
-    
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
-        form.fields['calibrator'].queryset = users
-        form.fields['certificate_issuer'].queryset = users
-        return form
 
-class CalibrationForceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    model = CalibrationForce
-    form_class = CalibrationForceForm
-    template_name = 'calibrate/force_form.html'
-    success_url = reverse_lazy('calibrate-dashboard')
-    permission_required = 'calibrate.change_calibrationforce'
-    
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
-        form.fields['calibrator'].queryset = users
-        form.fields['certificate_issuer'].queryset = users
-        return form
 
-class CalibrationForceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
-    model = CalibrationForce
-    template_name = 'calibrate/force_confirm_delete.html'
-    success_url = reverse_lazy('calibrate-dashboard')
-    permission_required = 'calibrate.delete_calibrationforce'
 
 class CalibrationPressureListView(LoginRequiredMixin, ListView):
     model = CalibrationPressure
@@ -252,18 +201,6 @@ def calibration_dashboard(request):
     status_filter = request.GET.get('status_filter', '')
     priority_filter = request.GET.get('priority_filter', '')
     
-    # ดึงข้อมูลการสอบเทียบทั้งหมด (ยกเว้นงานที่ปิดแล้ว) เรียงตามระดับความเร่งด่วน
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').exclude(
-        status='closed'
-    ).annotate(
-        priority_order=models.Case(
-            models.When(priority='very_urgent', then=models.Value(1)),
-            models.When(priority='urgent', then=models.Value(2)),
-            models.When(priority='normal', then=models.Value(3)),
-            default=models.Value(4),
-            output_field=models.IntegerField(),
-        )
-    ).order_by('priority_order', '-update')
     
     pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').exclude(
         status='closed'
@@ -357,32 +294,13 @@ def calibration_dashboard(request):
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
     
-    # เพิ่มข้อมูล Force calibrations
-    for cal in force_calibrations:
-        all_calibrations.append({
-            'id': cal.cal_force_id,
-            'type': 'force',
-            'type_name': 'การสอบเทียบแรง',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
-            'update_date': cal.update,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
-            'calibration_date': cal.update,  # วันที่สอบเทียบ
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
-        })
     
     # เพิ่มข้อมูล Pressure calibrations
     for cal in pressure_calibrations:
         all_calibrations.append({
             'id': cal.cal_pressure_id,
             'type': 'pressure',
-            'type_name': 'การสอบเทียบความดัน',
+            'type_name': 'การสอบเทียบ Pressure',
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
@@ -557,14 +475,12 @@ def calibration_dashboard(request):
     today_plus_30 = today + timedelta(days=30)
     
     context = {
-        'force_calibrations_count': CalibrationForce.objects.count(),
         'pressure_calibrations_count': CalibrationPressure.objects.count(),
         'torque_calibrations_count': CalibrationTorque.objects.count(),
         'dial_gauge_calibrations_count': DialGaugeCalibration.objects.count(),
         'balance_calibrations_count': BalanceCalibration.objects.count(),
         'microwave_calibrations_count': MicrowaveCalibration.objects.count(),
         'pending_calibrations_count': (
-            CalibrationForce.objects.filter(status='pending').count() +
             CalibrationPressure.objects.filter(status='pending').count() +
             CalibrationTorque.objects.filter(status='pending').count() +
             DialGaugeCalibration.objects.filter(status='pending').count() +
@@ -585,10 +501,7 @@ def machine_calibration_list(request, machine_id):
     # ตรวจสอบประเภทเครื่องมือและดึงข้อมูลการสอบเทียบที่เหมาะสม
     machine_type_name = machine.machine_type.name.lower()
     
-    if 'force' in machine_type_name:
-        calibrations = CalibrationForce.objects.filter(uuc_id=machine.id)
-        calibration_type = 'force'
-    elif 'pressure' in machine_type_name:
+    if 'pressure' in machine_type_name:
         calibrations = CalibrationPressure.objects.filter(uuc_id=machine.id)
         calibration_type = 'pressure'
     elif 'torque' in machine_type_name:
@@ -612,11 +525,7 @@ def create_calibration_for_machine(request, machine_id):
     machine_type_name = machine.machine_type.name.lower()
     
     if request.method == 'POST':
-        if 'force' in machine_type_name:
-            form = CalibrationForceForm(request.POST)
-            template = 'calibrate/force_form.html'
-            success_url = reverse_lazy('machine-calibration-list', kwargs={'machine_id': machine_id})
-        elif 'pressure' in machine_type_name:
+        if 'pressure' in machine_type_name:
             form = CalibrationPressureForm(request.POST)
             template = 'calibrate/pressure_form.html'
             success_url = reverse_lazy('machine-calibration-list', kwargs={'machine_id': machine_id})
@@ -659,10 +568,7 @@ def create_calibration_for_machine(request, machine_id):
             messages.success(request, 'บันทึกการสอบเทียบเรียบร้อยแล้ว')
             return redirect(success_url)
     else:
-        if 'force' in machine_type_name:
-            form = CalibrationForceForm(initial={'uuc_id': machine.id})
-            template = 'calibrate/force_form.html'
-        elif 'pressure' in machine_type_name:
+        if 'pressure' in machine_type_name:
             form = CalibrationPressureForm(initial={'uuc_id': machine.id})
             template = 'calibrate/pressure_form.html'
         elif 'torque' in machine_type_name:
@@ -698,10 +604,7 @@ def create_calibration_for_machine(request, machine_id):
 @login_required
 def calibration_by_type(request, calibration_type):
     """แสดงรายการการสอบเทียบตามประเภท"""
-    if calibration_type == 'force':
-        calibrations = CalibrationForce.objects.all()
-        template = 'calibrate/force_list.html'
-    elif calibration_type == 'pressure':
+    if calibration_type == 'pressure':
         calibrations = CalibrationPressure.objects.all()
         template = 'calibrate/pressure_list.html'
     elif calibration_type == 'torque':
@@ -751,11 +654,7 @@ def create_calibration_with_machine(request, machine_id):
     machine_type_name = machine.machine_type.name.lower()
     
     if request.method == 'POST':
-        if 'force' in machine_type_name:
-            form = CalibrationForceForm(request.POST)
-            template = 'calibrate/force_form_with_machine.html'
-            success_url = reverse_lazy('calibrate-dashboard')
-        elif 'pressure' in machine_type_name:
+        if 'pressure' in machine_type_name:
             # สำหรับ Pressure ใช้การประมวลผลข้อมูลแบบพิเศษ
             return process_pressure_calibration(request, machine)
         elif 'torque' in machine_type_name:
@@ -839,16 +738,7 @@ def create_calibration_with_machine(request, machine_id):
             'uuc_id': machine,
         }
         
-        if 'force' in machine_type_name:
-            form = CalibrationForceForm(initial=initial_data)
-            # เพิ่มตัวเลือกผู้ใช้สำหรับฟิลด์ calibrator และ certificate_issuer
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
-            form.fields['calibrator'].queryset = users
-            form.fields['certificate_issuer'].queryset = users
-            template = 'calibrate/force_form_with_machine.html'
-        elif 'pressure' in machine_type_name:
+        if 'pressure' in machine_type_name:
             form = CalibrationPressureForm(initial=initial_data)
             # เพิ่มตัวเลือกผู้ใช้สำหรับฟิลด์ calibrator และ certificate_issuer
             from django.contrib.auth import get_user_model
@@ -1301,7 +1191,6 @@ def calibration_report(request):
     from datetime import date, timedelta
     
     # ดึงข้อมูลการสอบเทียบทั้งหมด
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     balance_calibrations = BalanceCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
@@ -1309,32 +1198,13 @@ def calibration_report(request):
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
     
-    # เพิ่มข้อมูล Force calibrations
-    for cal in force_calibrations:
-        all_calibrations.append({
-            'id': cal.cal_force_id,
-            'type': 'force',
-            'type_name': 'การสอบเทียบแรง',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
-            'update_date': cal.update,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
-            'calibration_date': cal.update,  # วันที่สอบเทียบ
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
-        })
     
     # เพิ่มข้อมูล Pressure calibrations
     for cal in pressure_calibrations:
         all_calibrations.append({
             'id': cal.cal_pressure_id,
             'type': 'pressure',
-            'type_name': 'การสอบเทียบความดัน',
+            'type_name': 'การสอบเทียบ Pressure',
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
@@ -1397,11 +1267,9 @@ def calibration_report(request):
     today_plus_30 = today + timedelta(days=30)
     
     context = {
-        'force_machines': Machine.objects.filter(machine_type__name__icontains='force').count(),
         'pressure_machines': Machine.objects.filter(machine_type__name__icontains='pressure').count(),
         'torque_machines': Machine.objects.filter(machine_type__name__icontains='torque').count(),
         'total_calibrations': (
-            CalibrationForce.objects.count() +
             CalibrationPressure.objects.count() +
             CalibrationTorque.objects.count()
         ),
@@ -1436,7 +1304,6 @@ def calibration_report_detail(request):
         organization = None
     
     # ดึงข้อมูลการสอบเทียบทั้งหมด
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     balance_calibrations = BalanceCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
@@ -1469,7 +1336,7 @@ def calibration_report_detail(request):
         all_calibrations.append({
             'id': cal.cal_pressure_id,
             'type': 'pressure',
-            'type_name': 'การสอบเทียบความดัน',
+            'type_name': 'การสอบเทียบ Pressure',
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
@@ -1583,11 +1450,9 @@ def calibration_report_detail(request):
     today_plus_30 = today + timedelta(days=30)
     
     context = {
-        'force_machines': Machine.objects.filter(machine_type__name__icontains='force').count(),
         'pressure_machines': Machine.objects.filter(machine_type__name__icontains='pressure').count(),
         'torque_machines': Machine.objects.filter(machine_type__name__icontains='torque').count(),
         'total_calibrations': (
-            CalibrationForce.objects.count() +
             CalibrationPressure.objects.count() +
             CalibrationTorque.objects.count() +
             BalanceCalibration.objects.count()
@@ -1632,7 +1497,6 @@ def export_to_word(request):
         organization = None
     
     # ดึงข้อมูลการสอบเทียบทั้งหมด
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     
@@ -1664,7 +1528,7 @@ def export_to_word(request):
         all_calibrations.append({
             'id': cal.cal_pressure_id,
             'type': 'pressure',
-            'type_name': 'การสอบเทียบความดัน',
+            'type_name': 'การสอบเทียบ Pressure',
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
@@ -1809,9 +1673,7 @@ def export_to_word(request):
         row_cells[2].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
         
         # ชื่อเครื่องวัด
-        if cal['type'] == 'force':
-            instrument_name = 'Force Gauge'
-        elif cal['type'] == 'pressure':
+        if cal['type'] == 'pressure':
             instrument_name = 'Pressure Gauge'
         elif cal['type'] == 'torque':
             instrument_name = 'Torque Wrench'
@@ -1890,7 +1752,6 @@ def export_to_excel(request):
         organization = None
     
     # ดึงข้อมูลการสอบเทียบทั้งหมด
-    force_calibrations = CalibrationForce.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     
@@ -1922,7 +1783,7 @@ def export_to_excel(request):
         all_calibrations.append({
             'id': cal.cal_pressure_id,
             'type': 'pressure',
-            'type_name': 'การสอบเทียบความดัน',
+            'type_name': 'การสอบเทียบ Pressure',
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
@@ -2058,9 +1919,7 @@ def export_to_excel(request):
         ws.cell(row=row, column=3, value=serial_value).alignment = Alignment(horizontal='center')
         
         # ชื่อเครื่องวัด
-        if cal['type'] == 'force':
-            instrument_name = 'Force Gauge'
-        elif cal['type'] == 'pressure':
+        if cal['type'] == 'pressure':
             instrument_name = 'Pressure Gauge'
         elif cal['type'] == 'torque':
             instrument_name = 'Torque Wrench'
@@ -2148,9 +2007,7 @@ def increase_priority(request, cal_type, cal_id):
             })
         
         # ดึงข้อมูลการสอบเทียบตามประเภท
-        if cal_type == 'force':
-            calibration = get_object_or_404(CalibrationForce, cal_force_id=cal_id)
-        elif cal_type == 'pressure':
+        if cal_type == 'pressure':
             calibration = get_object_or_404(CalibrationPressure, cal_pressure_id=cal_id)
         elif cal_type == 'torque':
             calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
@@ -2206,9 +2063,7 @@ def close_work(request, cal_type, cal_id):
     
     try:
         # ดึงข้อมูลการสอบเทียบตามประเภท
-        if cal_type == 'force':
-            calibration = get_object_or_404(CalibrationForce, cal_force_id=cal_id)
-        elif cal_type == 'pressure':
+        if cal_type == 'pressure':
             calibration = get_object_or_404(CalibrationPressure, cal_pressure_id=cal_id)
         elif cal_type == 'torque':
             calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
@@ -2250,9 +2105,7 @@ def export_certificate_excel(request, cal_id, cal_type):
     """Export ใบรับรองแบบ Excel (แบบจำลอง)"""
     try:
         # ดึงข้อมูลการสอบเทียบตามประเภท
-        if cal_type == 'force':
-            calibration = get_object_or_404(CalibrationForce, cal_force_id=cal_id)
-        elif cal_type == 'pressure':
+        if cal_type == 'pressure':
             calibration = get_object_or_404(CalibrationPressure, cal_pressure_id=cal_id)
         elif cal_type == 'torque':
             calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
@@ -2527,7 +2380,8 @@ def export_balance_certificate_docx(request, cal_id):
 
 from docxtpl import DocxTemplate
 def export_certificate(request, pk):
-    calibration = CalibrationForce.objects.get(pk=pk)
+    # This function is no longer needed as Force Gauge is removed
+    return HttpResponse("Force Gauge functionality has been removed", status=410)
 
     doc = DocxTemplate("Balance_template.docx")
 
