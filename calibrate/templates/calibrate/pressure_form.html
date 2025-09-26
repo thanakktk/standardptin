@@ -564,8 +564,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const uucSetInput = row.querySelector('input[name^="set"]');
         const actualInput = row.querySelector('input[name*="actual"]');
         const errorInput = row.querySelector('input[name^="error"]');
-        const toleranceStartInput = row.querySelector('input[name^="tolerance_start"]');
-        const toleranceEndInput = row.querySelector('input[name^="tolerance_end"]');
+        const toleranceStartInput = row.querySelector('input[name*="tolerance_start"]');
+        const toleranceEndInput = row.querySelector('input[name*="tolerance_end"]');
         
         // ฟังก์ชันคำนวณ Error (Actual - UUC Set)
         function calculateError() {
