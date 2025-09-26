@@ -8,7 +8,7 @@ from .models import (
 class CalibrationPressureForm(forms.ModelForm):
     class Meta:
         model = CalibrationPressure
-        fields = ['measurement_range', 'set', 'm1', 'm2', 'm3', 'm4', 'actual', 'error', 'tolerance_start', 'tolerance_end',
+        fields = ['measurement_range', 'update', 'next_due', 'set', 'm1', 'm2', 'm3', 'm4', 'actual', 'error', 'tolerance_start', 'tolerance_end',
                   'set_2', 'm1_2', 'm2_2', 'm3_2', 'm4_2', 'actual_2', 'error_2', 'tolerance_start_2', 'tolerance_end_2',
                   'set_3', 'm1_3', 'm2_3', 'm3_3', 'm4_3', 'actual_3', 'error_3', 'tolerance_start_3', 'tolerance_end_3',
                   'set_4', 'm1_4', 'm2_4', 'm3_4', 'm4_4', 'actual_4', 'error_4', 'tolerance_start_4', 'tolerance_end_4',
@@ -17,6 +17,8 @@ class CalibrationPressureForm(forms.ModelForm):
                   'std_id', 'calibrator', 'certificate_issuer', 'certificate_number', 'status', 'priority']
         widgets = {
             'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 bar'}),
+            'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'set': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10 bar'}),
             'm1': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 bar'}),
             'm2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 bar'}),
@@ -95,7 +97,7 @@ class CalibrationPressureForm(forms.ModelForm):
 class CalibrationTorqueForm(forms.ModelForm):
     class Meta:
         model = CalibrationTorque
-        fields = ['measurement_range', 'cwset', 'cw0', 'cw90', 'cw180', 'cw270', 'ccwset', 'ccw0', 'ccw90', 'ccw180', 'ccw270', 
+        fields = ['measurement_range', 'update', 'next_due', 'cwset', 'cw0', 'cw90', 'cw180', 'cw270', 'ccwset', 'ccw0', 'ccw90', 'ccw180', 'ccw270', 
                   'cw_actual', 'cw_error', 'cw_tolerance_start', 'cw_tolerance_end',
                  'cwset_2', 'cw_actual_2', 'cw_error_2', 'cw_tolerance_start_2', 'cw_tolerance_end_2',
                   'cwset_3', 'cw_actual_3', 'cw_error_3', 'cw_tolerance_start_3', 'cw_tolerance_end_3',
@@ -105,6 +107,8 @@ class CalibrationTorqueForm(forms.ModelForm):
                   'std_id', 'calibrator', 'certificate_issuer', 'certificate_number', 'status', 'priority']
         widgets = {
             'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 Nm'}),
+            'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'cwset': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10 Nm', 'step': '0.0001'}),
             'cw0': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 Nm', 'step': '0.0001'}),
             'cw90': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 Nm', 'step': '0.0001'}),
@@ -471,7 +475,7 @@ class MicrowaveCalibrationForm(forms.ModelForm):
 class DialGaugeCalibrationForm(forms.ModelForm):
     class Meta:
         model = DialGaugeCalibration
-        fields = ['measurement_range', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer',
+        fields = ['measurement_range', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer',
                   'uuc_set', 'actual', 'error', 'uncertainty', 'tolerance_limit',
                   'set_2', 'actual_2', 'error_2', 'tolerance_limit_2',
                   'set_3', 'actual_3', 'error_3', 'tolerance_limit_3',
@@ -479,6 +483,7 @@ class DialGaugeCalibrationForm(forms.ModelForm):
                   'set_5', 'actual_5', 'error_5', 'tolerance_limit_5']
         widgets = {
             'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 mm'}),
+            'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),

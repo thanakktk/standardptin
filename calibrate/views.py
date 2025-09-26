@@ -74,8 +74,7 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         return form
     
     def form_valid(self, form):
-        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
-        form.instance.status = 'in_progress'
+        # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
         # เพิ่ม success message
@@ -140,8 +139,7 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
         return form
     
     def form_valid(self, form):
-        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
-        form.instance.status = 'in_progress'
+        # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
         # เพิ่ม success message
@@ -206,8 +204,7 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         return form
     
     def form_valid(self, form):
-        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
-        form.instance.status = 'in_progress'
+        # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
         # เพิ่ม success message
@@ -2048,6 +2045,14 @@ def increase_priority(request, cal_type, cal_id):
             calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
         elif cal_type == 'balance':
             calibration = get_object_or_404(BalanceCalibration, pk=cal_id)
+        elif cal_type == 'high_frequency':
+            calibration = get_object_or_404(HighFrequencyCalibration, pk=cal_id)
+        elif cal_type == 'low_frequency':
+            calibration = get_object_or_404(LowFrequencyCalibration, pk=cal_id)
+        elif cal_type == 'microwave':
+            calibration = get_object_or_404(MicrowaveCalibration, pk=cal_id)
+        elif cal_type == 'dial_gauge':
+            calibration = get_object_or_404(DialGaugeCalibration, pk=cal_id)
         else:
             return JsonResponse({
                 'success': False,
@@ -2104,6 +2109,14 @@ def close_work(request, cal_type, cal_id):
             calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
         elif cal_type == 'balance':
             calibration = get_object_or_404(BalanceCalibration, pk=cal_id)
+        elif cal_type == 'high_frequency':
+            calibration = get_object_or_404(HighFrequencyCalibration, pk=cal_id)
+        elif cal_type == 'low_frequency':
+            calibration = get_object_or_404(LowFrequencyCalibration, pk=cal_id)
+        elif cal_type == 'microwave':
+            calibration = get_object_or_404(MicrowaveCalibration, pk=cal_id)
+        elif cal_type == 'dial_gauge':
+            calibration = get_object_or_404(DialGaugeCalibration, pk=cal_id)
         else:
             return JsonResponse({
                 'success': False,
@@ -2463,8 +2476,7 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         return context
     
     def form_valid(self, form):
-        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
-        form.instance.status = 'in_progress'
+        # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
         # เพิ่ม success message
@@ -2485,8 +2497,7 @@ class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         return context
     
     def form_valid(self, form):
-        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
-        form.instance.status = 'in_progress'
+        # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
         # เพิ่ม success message
@@ -2507,8 +2518,7 @@ class MicrowaveCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         return context
     
     def form_valid(self, form):
-        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
-        form.instance.status = 'in_progress'
+        # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
         # เพิ่ม success message
@@ -2529,8 +2539,7 @@ class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         return context
     
     def form_valid(self, form):
-        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
-        form.instance.status = 'in_progress'
+        # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
         # เพิ่ม success message

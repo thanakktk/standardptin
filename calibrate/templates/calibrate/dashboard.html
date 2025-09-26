@@ -114,20 +114,9 @@
                             <i class="fas fa-list me-2"></i>
                             รายการบันทึกการสอบเทียบทั้งหมด ({{ all_calibrations|length }} รายการ)
                         </h5>
-                        <div class="btn-group" role="group">
-                            <a href="{% url 'calibrate-pressure-list' %}" class="btn btn-outline-success btn-sm">
-                                <i class="fas fa-tachometer-alt me-1"></i>Pressure
-                            </a>
-                            <a href="{% url 'calibrate-torque-list' %}" class="btn btn-outline-warning btn-sm">
-                                <i class="fas fa-cog me-1"></i>Torque
-                            </a>
-                            <a href="{% url 'calibrate-balance-list' %}" class="btn btn-outline-dark btn-sm">
-                                <i class="fas fa-balance-scale me-1"></i>Balance
-                            </a>
-                            <button type="button" class="btn btn-outline-danger btn-sm" id="deleteSelectedBtn" style="display: none;">
-                                <i class="fas fa-trash me-1"></i>ลบที่เลือก
-                            </button>
-                        </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="deleteSelectedBtn" style="display: none;">
+                            <i class="fas fa-trash me-1"></i>ลบที่เลือก
+                        </button>
                     </div>
                     <div class="card-body">
                         {% if all_calibrations %}
