@@ -77,11 +77,58 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
+        # ตรวจสอบสถานะอัตโนมัติ
+        self.auto_check_status(form.instance)
+        
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Pressure เรียบร้อยแล้ว')
         # ให้ Django จัดการ redirect ตาม success_url
         return super().form_valid(form)
+    
+    def auto_check_status(self, calibration):
+        """ตรวจสอบสถานะอัตโนมัติสำหรับ Pressure"""
+        # ตรวจสอบว่ามีข้อมูลครบถ้วนหรือไม่
+        has_data = any([
+            calibration.set, calibration.m1, calibration.m2, calibration.m3, calibration.m4,
+            calibration.set_2, calibration.m1_2, calibration.m2_2, calibration.m3_2, calibration.m4_2,
+            calibration.set_3, calibration.m1_3, calibration.m2_3, calibration.m3_3, calibration.m4_3,
+            calibration.set_4, calibration.m1_4, calibration.m2_4, calibration.m3_4, calibration.m4_4,
+            calibration.set_5, calibration.m1_5, calibration.m2_5, calibration.m3_5, calibration.m4_5,
+            calibration.set_6, calibration.m1_6, calibration.m2_6, calibration.m3_6, calibration.m4_6
+        ])
+        
+        if not has_data:
+            # ยังไม่มีข้อมูล = กำลังสอบเทียบ
+            calibration.status = 'in_progress'
+        else:
+            # มีข้อมูลแล้ว = ตรวจสอบผลการสอบเทียบ
+            if self.check_pressure_pass_fail(calibration):
+                calibration.status = 'passed'
+            else:
+                calibration.status = 'failed'
+        
+        calibration.save()
+    
+    def check_pressure_pass_fail(self, calibration):
+        """ตรวจสอบผลการสอบเทียบ Pressure"""
+        # ตรวจสอบทุกแถวที่มีข้อมูล
+        rows_to_check = [
+            (calibration.set, calibration.m1, calibration.m2, calibration.m3, calibration.m4, calibration.actual, calibration.error, calibration.tolerance_start, calibration.tolerance_end),
+            (calibration.set_2, calibration.m1_2, calibration.m2_2, calibration.m3_2, calibration.m4_2, calibration.actual_2, calibration.error_2, calibration.tolerance_start_2, calibration.tolerance_end_2),
+            (calibration.set_3, calibration.m1_3, calibration.m2_3, calibration.m3_3, calibration.m4_3, calibration.actual_3, calibration.error_3, calibration.tolerance_start_3, calibration.tolerance_end_3),
+            (calibration.set_4, calibration.m1_4, calibration.m2_4, calibration.m3_4, calibration.m4_4, calibration.actual_4, calibration.error_4, calibration.tolerance_start_4, calibration.tolerance_end_4),
+            (calibration.set_5, calibration.m1_5, calibration.m2_5, calibration.m3_5, calibration.m4_5, calibration.actual_5, calibration.error_5, calibration.tolerance_start_5, calibration.tolerance_end_5),
+            (calibration.set_6, calibration.m1_6, calibration.m2_6, calibration.m3_6, calibration.m4_6, calibration.actual_6, calibration.error_6, calibration.tolerance_start_6, calibration.tolerance_end_6)
+        ]
+        
+        for row in rows_to_check:
+            set_val, m1, m2, m3, m4, actual, error, tolerance_start, tolerance_end = row
+            if set_val and m1 and m2 and m3 and m4 and actual is not None and tolerance_start is not None and tolerance_end is not None:
+                # ตรวจสอบว่าค่าอยู่ในช่วง tolerance หรือไม่
+                if not (tolerance_start <= actual <= tolerance_end):
+                    return False  # ไม่ผ่าน
+        return True  # ผ่าน
 
 class CalibrationPressureDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationPressure
@@ -142,11 +189,63 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
+        # ตรวจสอบสถานะอัตโนมัติ
+        self.auto_check_status(form.instance)
+        
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Torque เรียบร้อยแล้ว')
         # ให้ Django จัดการ redirect ตาม success_url
         return super().form_valid(form)
+    
+    def auto_check_status(self, calibration):
+        """ตรวจสอบสถานะอัตโนมัติสำหรับ Torque"""
+        # ตรวจสอบว่ามีข้อมูลครบถ้วนหรือไม่
+        has_data = any([
+            calibration.cwset, calibration.cw0, calibration.cw90, calibration.cw180, calibration.cw270,
+            calibration.ccwset, calibration.ccw0, calibration.ccw90, calibration.ccw180, calibration.ccw270,
+            calibration.cwset_2, calibration.cwset_3, calibration.ccwset_2, calibration.ccwset_3
+        ])
+        
+        if not has_data:
+            # ยังไม่มีข้อมูล = กำลังสอบเทียบ
+            calibration.status = 'in_progress'
+        else:
+            # มีข้อมูลแล้ว = ตรวจสอบผลการสอบเทียบ
+            if self.check_torque_pass_fail(calibration):
+                calibration.status = 'passed'
+            else:
+                calibration.status = 'failed'
+        
+        calibration.save()
+    
+    def check_torque_pass_fail(self, calibration):
+        """ตรวจสอบผลการสอบเทียบ Torque"""
+        # ตรวจสอบ CW
+        cw_rows = [
+            (calibration.cwset, calibration.cw_actual, calibration.cw_tolerance_start, calibration.cw_tolerance_end),
+            (calibration.cwset_2, calibration.cw_actual_2, calibration.cw_tolerance_start_2, calibration.cw_tolerance_end_2),
+            (calibration.cwset_3, calibration.cw_actual_3, calibration.cw_tolerance_start_3, calibration.cw_tolerance_end_3)
+        ]
+        
+        for set_val, actual, tolerance_start, tolerance_end in cw_rows:
+            if set_val and actual is not None and tolerance_start is not None and tolerance_end is not None:
+                if not (tolerance_start <= actual <= tolerance_end):
+                    return False
+        
+        # ตรวจสอบ CCW
+        ccw_rows = [
+            (calibration.ccwset, calibration.ccw_actual, calibration.ccw_tolerance_start, calibration.ccw_tolerance_end),
+            (calibration.ccwset_2, calibration.ccw_actual_2, calibration.ccw_tolerance_start_2, calibration.ccw_tolerance_end_2),
+            (calibration.ccwset_3, calibration.ccw_actual_3, calibration.ccw_tolerance_start_3, calibration.ccw_tolerance_end_3)
+        ]
+        
+        for set_val, actual, tolerance_start, tolerance_end in ccw_rows:
+            if set_val and actual is not None and tolerance_start is not None and tolerance_end is not None:
+                if not (tolerance_start <= actual <= tolerance_end):
+                    return False
+        
+        return True
 
 class CalibrationTorqueDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationTorque
@@ -207,11 +306,60 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
+        # ตรวจสอบสถานะอัตโนมัติ
+        self.auto_check_status(form.instance)
+        
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Balance เรียบร้อยแล้ว')
         # ให้ Django จัดการ redirect ตาม success_url
         return super().form_valid(form)
+    
+    def auto_check_status(self, calibration):
+        """ตรวจสอบสถานะอัตโนมัติสำหรับ Balance"""
+        # ตรวจสอบว่ามีข้อมูลครบถ้วนหรือไม่
+        has_data = any([
+            calibration.linear_nominal_value, calibration.linear_conventional_mass, calibration.linear_displayed_value,
+            calibration.linear_nominal_value_2, calibration.linear_conventional_mass_2, calibration.linear_displayed_value_2,
+            calibration.linear_nominal_value_3, calibration.linear_conventional_mass_3, calibration.linear_displayed_value_3,
+            calibration.linear_nominal_value_4, calibration.linear_conventional_mass_4, calibration.linear_displayed_value_4,
+            calibration.linear_nominal_value_5, calibration.linear_conventional_mass_5, calibration.linear_displayed_value_5
+        ])
+        
+        if not has_data:
+            # ยังไม่มีข้อมูล = กำลังสอบเทียบ
+            calibration.status = 'in_progress'
+        else:
+            # มีข้อมูลแล้ว = ตรวจสอบผลการสอบเทียบ
+            if self.check_balance_pass_fail(calibration):
+                calibration.status = 'passed'
+            else:
+                calibration.status = 'failed'
+        
+        calibration.save()
+    
+    def check_balance_pass_fail(self, calibration):
+        """ตรวจสอบผลการสอบเทียบ Balance"""
+        # ตรวจสอบทุกแถวที่มีข้อมูล
+        rows_to_check = [
+            (calibration.linear_nominal_value, calibration.linear_conventional_mass, calibration.linear_displayed_value, calibration.linear_error, calibration.linear_uncertainty),
+            (calibration.linear_nominal_value_2, calibration.linear_conventional_mass_2, calibration.linear_displayed_value_2, calibration.linear_error_2, calibration.linear_uncertainty_2),
+            (calibration.linear_nominal_value_3, calibration.linear_conventional_mass_3, calibration.linear_displayed_value_3, calibration.linear_error_3, calibration.linear_uncertainty_3),
+            (calibration.linear_nominal_value_4, calibration.linear_conventional_mass_4, calibration.linear_displayed_value_4, calibration.linear_error_4, calibration.linear_uncertainty_4),
+            (calibration.linear_nominal_value_5, calibration.linear_conventional_mass_5, calibration.linear_displayed_value_5, calibration.linear_error_5, calibration.linear_uncertainty_5)
+        ]
+        
+        for nominal, conventional, displayed, error, uncertainty in rows_to_check:
+            if nominal and conventional and displayed and error is not None and uncertainty is not None:
+                # ตรวจสอบว่าค่า error อยู่ในช่วงที่ยอมรับได้หรือไม่ (เช่น ±0.1%)
+                try:
+                    error_percent = abs(float(error)) / float(nominal) * 100 if float(nominal) != 0 else 0
+                    if error_percent > 0.1:  # เกิน 0.1% = ไม่ผ่าน
+                        return False
+                except (ValueError, ZeroDivisionError):
+                    return False
+        
+        return True
 
 class BalanceCalibrationDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = BalanceCalibration
@@ -2479,11 +2627,67 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
+        # ตรวจสอบสถานะอัตโนมัติ
+        self.auto_check_status(form.instance)
+        
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ High Frequency เรียบร้อยแล้ว')
         # ให้ Django จัดการ redirect ตาม success_url
         return super().form_valid(form)
+    
+    def auto_check_status(self, calibration):
+        """ตรวจสอบสถานะอัตโนมัติสำหรับ High Frequency"""
+        # ตรวจสอบว่ามีข้อมูลครบถ้วนหรือไม่
+        has_data = any([
+            calibration.freq_uuc_setting, calibration.freq_measured_value,
+            calibration.freq_uuc_setting_2, calibration.freq_measured_value_2,
+            calibration.freq_uuc_setting_3, calibration.freq_measured_value_3,
+            calibration.freq_uuc_setting_4, calibration.freq_measured_value_4,
+            calibration.freq_uuc_setting_5, calibration.freq_measured_value_5
+        ])
+        
+        if not has_data:
+            # ยังไม่มีข้อมูล = กำลังสอบเทียบ
+            calibration.status = 'in_progress'
+        else:
+            # มีข้อมูลแล้ว = ตรวจสอบผลการสอบเทียบ
+            if self.check_high_frequency_pass_fail(calibration):
+                calibration.status = 'passed'
+            else:
+                calibration.status = 'failed'
+        
+        calibration.save()
+    
+    def check_high_frequency_pass_fail(self, calibration):
+        """ตรวจสอบผลการสอบเทียบ High Frequency"""
+        # ตรวจสอบทุกแถวที่มีข้อมูล
+        rows_to_check = [
+            (calibration.freq_uuc_setting, calibration.freq_measured_value, calibration.freq_uncertainty, calibration.freq_tolerance_limit),
+            (calibration.freq_uuc_setting_2, calibration.freq_measured_value_2, calibration.freq_uncertainty_2, calibration.freq_tolerance_limit_2),
+            (calibration.freq_uuc_setting_3, calibration.freq_measured_value_3, calibration.freq_uncertainty_3, calibration.freq_tolerance_limit_3),
+            (calibration.freq_uuc_setting_4, calibration.freq_measured_value_4, calibration.freq_uncertainty_4, calibration.freq_tolerance_limit_4),
+            (calibration.freq_uuc_setting_5, calibration.freq_measured_value_5, calibration.freq_uncertainty_5, calibration.freq_tolerance_limit_5)
+        ]
+        
+        for setting, measured, uncertainty, tolerance in rows_to_check:
+            if setting and measured and uncertainty and tolerance:
+                try:
+                    # ตรวจสอบว่าค่า measured อยู่ในช่วง tolerance หรือไม่
+                    setting_val = float(setting)
+                    measured_val = float(measured)
+                    uncertainty_val = float(uncertainty)
+                    
+                    # คำนวณช่วง tolerance
+                    tolerance_start = setting_val - uncertainty_val
+                    tolerance_end = setting_val + uncertainty_val
+                    
+                    if not (tolerance_start <= measured_val <= tolerance_end):
+                        return False
+                except (ValueError, TypeError):
+                    return False
+        
+        return True
 
 class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     model = LowFrequencyCalibration
@@ -2500,11 +2704,102 @@ class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
+        # ตรวจสอบสถานะอัตโนมัติ
+        self.auto_check_status(form.instance)
+        
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Low Frequency เรียบร้อยแล้ว')
         # ให้ Django จัดการ redirect ตาม success_url
         return super().form_valid(form)
+    
+    def auto_check_status(self, calibration):
+        """ตรวจสอบสถานะอัตโนมัติสำหรับ Low Frequency"""
+        # ตรวจสอบว่ามีข้อมูลครบถ้วนหรือไม่
+        has_data = any([
+            calibration.dc_uuc_setting, calibration.dc_measured_value,
+            calibration.ac_uuc_setting, calibration.ac_measured_value,
+            calibration.res_uuc_setting, calibration.res_measured_value
+        ])
+        
+        if not has_data:
+            # ยังไม่มีข้อมูล = กำลังสอบเทียบ
+            calibration.status = 'in_progress'
+        else:
+            # มีข้อมูลแล้ว = ตรวจสอบผลการสอบเทียบ
+            if self.check_low_frequency_pass_fail(calibration):
+                calibration.status = 'passed'
+            else:
+                calibration.status = 'failed'
+        
+        calibration.save()
+    
+    def check_low_frequency_pass_fail(self, calibration):
+        """ตรวจสอบผลการสอบเทียบ Low Frequency"""
+        # ตรวจสอบ DC VOLTAGE
+        dc_rows = [
+            (calibration.dc_uuc_setting, calibration.dc_measured_value, calibration.dc_uncertainty),
+            (calibration.dc_uuc_setting_2, calibration.dc_measured_value_2, calibration.dc_uncertainty_2),
+            (calibration.dc_uuc_setting_3, calibration.dc_measured_value_3, calibration.dc_uncertainty_3),
+            (calibration.dc_uuc_setting_4, calibration.dc_measured_value_4, calibration.dc_uncertainty_4),
+            (calibration.dc_uuc_setting_5, calibration.dc_measured_value_5, calibration.dc_uncertainty_5)
+        ]
+        
+        for setting, measured, uncertainty in dc_rows:
+            if setting and measured and uncertainty:
+                try:
+                    setting_val = float(setting)
+                    measured_val = float(measured)
+                    uncertainty_val = float(uncertainty)
+                    
+                    if abs(measured_val - setting_val) > uncertainty_val:
+                        return False
+                except (ValueError, TypeError):
+                    return False
+        
+        # ตรวจสอบ AC VOLTAGE
+        ac_rows = [
+            (calibration.ac_uuc_setting, calibration.ac_measured_value, calibration.ac_uncertainty),
+            (calibration.ac_uuc_setting_2, calibration.ac_measured_value_2, calibration.ac_uncertainty_2),
+            (calibration.ac_uuc_setting_3, calibration.ac_measured_value_3, calibration.ac_uncertainty_3),
+            (calibration.ac_uuc_setting_4, calibration.ac_measured_value_4, calibration.ac_uncertainty_4),
+            (calibration.ac_uuc_setting_5, calibration.ac_measured_value_5, calibration.ac_uncertainty_5)
+        ]
+        
+        for setting, measured, uncertainty in ac_rows:
+            if setting and measured and uncertainty:
+                try:
+                    setting_val = float(setting)
+                    measured_val = float(measured)
+                    uncertainty_val = float(uncertainty)
+                    
+                    if abs(measured_val - setting_val) > uncertainty_val:
+                        return False
+                except (ValueError, TypeError):
+                    return False
+        
+        # ตรวจสอบ RESISTANCE
+        res_rows = [
+            (calibration.res_uuc_setting, calibration.res_measured_value, calibration.res_uncertainty),
+            (calibration.res_uuc_setting_2, calibration.res_measured_value_2, calibration.res_uncertainty_2),
+            (calibration.res_uuc_setting_3, calibration.res_measured_value_3, calibration.res_uncertainty_3),
+            (calibration.res_uuc_setting_4, calibration.res_measured_value_4, calibration.res_uncertainty_4),
+            (calibration.res_uuc_setting_5, calibration.res_measured_value_5, calibration.res_uncertainty_5)
+        ]
+        
+        for setting, measured, uncertainty in res_rows:
+            if setting and measured and uncertainty:
+                try:
+                    setting_val = float(setting)
+                    measured_val = float(measured)
+                    uncertainty_val = float(uncertainty)
+                    
+                    if abs(measured_val - setting_val) > uncertainty_val:
+                        return False
+                except (ValueError, TypeError):
+                    return False
+        
+        return True
 
 class MicrowaveCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     model = MicrowaveCalibration
@@ -2521,11 +2816,62 @@ class MicrowaveCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
+        # ตรวจสอบสถานะอัตโนมัติ
+        self.auto_check_status(form.instance)
+        
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Microwave เรียบร้อยแล้ว')
         # ให้ Django จัดการ redirect ตาม success_url
         return super().form_valid(form)
+    
+    def auto_check_status(self, calibration):
+        """ตรวจสอบสถานะอัตโนมัติสำหรับ Microwave"""
+        # ตรวจสอบว่ามีข้อมูลครบถ้วนหรือไม่
+        has_data = any([
+            calibration.dc_uuc_setting, calibration.dc_measured_value,
+            calibration.dc_uuc_setting_2, calibration.dc_measured_value_2,
+            calibration.dc_uuc_setting_3, calibration.dc_measured_value_3,
+            calibration.dc_uuc_setting_4, calibration.dc_measured_value_4,
+            calibration.dc_uuc_setting_5, calibration.dc_measured_value_5
+        ])
+        
+        if not has_data:
+            # ยังไม่มีข้อมูล = กำลังสอบเทียบ
+            calibration.status = 'in_progress'
+        else:
+            # มีข้อมูลแล้ว = ตรวจสอบผลการสอบเทียบ
+            if self.check_microwave_pass_fail(calibration):
+                calibration.status = 'passed'
+            else:
+                calibration.status = 'failed'
+        
+        calibration.save()
+    
+    def check_microwave_pass_fail(self, calibration):
+        """ตรวจสอบผลการสอบเทียบ Microwave"""
+        # ตรวจสอบทุกแถวที่มีข้อมูล
+        rows_to_check = [
+            (calibration.dc_uuc_setting, calibration.dc_measured_value, calibration.dc_uncertainty),
+            (calibration.dc_uuc_setting_2, calibration.dc_measured_value_2, calibration.dc_uncertainty_2),
+            (calibration.dc_uuc_setting_3, calibration.dc_measured_value_3, calibration.dc_uncertainty_3),
+            (calibration.dc_uuc_setting_4, calibration.dc_measured_value_4, calibration.dc_uncertainty_4),
+            (calibration.dc_uuc_setting_5, calibration.dc_measured_value_5, calibration.dc_uncertainty_5)
+        ]
+        
+        for setting, measured, uncertainty in rows_to_check:
+            if setting and measured and uncertainty:
+                try:
+                    setting_val = float(setting)
+                    measured_val = float(measured)
+                    uncertainty_val = float(uncertainty)
+                    
+                    if abs(measured_val - setting_val) > uncertainty_val:
+                        return False
+                except (ValueError, TypeError):
+                    return False
+        
+        return True
 
 class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     model = DialGaugeCalibration
@@ -2542,11 +2888,63 @@ class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         # บันทึกข้อมูลการสอบเทียบ
         form.save()
         
+        # ตรวจสอบสถานะอัตโนมัติ
+        self.auto_check_status(form.instance)
+        
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Dial Gauge เรียบร้อยแล้ว')
         # ให้ Django จัดการ redirect ตาม success_url
         return super().form_valid(form)
+    
+    def auto_check_status(self, calibration):
+        """ตรวจสอบสถานะอัตโนมัติสำหรับ Dial Gauge"""
+        # ตรวจสอบว่ามีข้อมูลครบถ้วนหรือไม่
+        has_data = any([
+            calibration.uuc_set, calibration.actual,
+            calibration.set_2, calibration.actual_2,
+            calibration.set_3, calibration.actual_3,
+            calibration.set_4, calibration.actual_4,
+            calibration.set_5, calibration.actual_5
+        ])
+        
+        if not has_data:
+            # ยังไม่มีข้อมูล = กำลังสอบเทียบ
+            calibration.status = 'in_progress'
+        else:
+            # มีข้อมูลแล้ว = ตรวจสอบผลการสอบเทียบ
+            if self.check_dial_gauge_pass_fail(calibration):
+                calibration.status = 'passed'
+            else:
+                calibration.status = 'failed'
+        
+        calibration.save()
+    
+    def check_dial_gauge_pass_fail(self, calibration):
+        """ตรวจสอบผลการสอบเทียบ Dial Gauge"""
+        # ตรวจสอบทุกแถวที่มีข้อมูล
+        rows_to_check = [
+            (calibration.uuc_set, calibration.actual, calibration.error, calibration.tolerance_limit),
+            (calibration.set_2, calibration.actual_2, calibration.error_2, calibration.tolerance_limit_2),
+            (calibration.set_3, calibration.actual_3, calibration.error_3, calibration.tolerance_limit_3),
+            (calibration.set_4, calibration.actual_4, calibration.error_4, calibration.tolerance_limit_4),
+            (calibration.set_5, calibration.actual_5, calibration.error_5, calibration.tolerance_limit_5)
+        ]
+        
+        for set_val, actual, error, tolerance in rows_to_check:
+            if set_val and actual and error is not None and tolerance:
+                try:
+                    set_val_num = float(set_val)
+                    actual_num = float(actual)
+                    error_num = float(error)
+                    
+                    # ตรวจสอบว่าค่า error อยู่ในช่วงที่ยอมรับได้หรือไม่
+                    if abs(error_num) > abs(set_val_num * 0.01):  # เกิน 1% = ไม่ผ่าน
+                        return False
+                except (ValueError, TypeError):
+                    return False
+        
+        return True
 
 class HighFrequencyCalibrationDeleteView(LoginRequiredMixin, DeleteView):
     model = HighFrequencyCalibration
