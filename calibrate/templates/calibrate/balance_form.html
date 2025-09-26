@@ -1,274 +1,253 @@
-{% extends "base.html" %}
-{% load static %}
+{% extends 'base.html' %}
 
-{% block title %}แก้ไขการสอบเทียบ Balance{% endblock %}
+{% block title %}{{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการสอบเทียบ Balance - {{ object.machine.name|default:'เครื่องมือ' }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-balance-scale me-2"></i>
-                        แก้ไขการสอบเทียบ Balance - {{ object.machine.name }}
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <!-- ข้อมูลพื้นฐาน -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h6 class="card-title mb-0">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    ข้อมูลพื้นฐาน
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">ข้อมูลเครื่องมือ</label>
-                                            <div class="mt-2">
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <strong>ชื่อ:</strong> {{ object.machine.name }}
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <strong>รุ่น:</strong> {{ object.machine.model|default:"-" }}
-                                                    </div>
-                                                </div>
-                                                <div class="row mt-2">
-                                                    <div class="col-6">
-                                                        <strong>หมายเลข:</strong> {{ object.machine.serial_number|default:"-" }}
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <strong>ประเภท:</strong> {{ object.machine.machine_type.name }}
-                                                    </div>
-                                                </div>
-                                                <div class="row mt-2">
-                                                    <div class="col-6">
-                                                        <strong>ช่วงการวัด:</strong> {{ object.machine.range|default:"-" }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <input type="hidden" name="{{ form.machine.name }}" value="{{ object.machine.id }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="{{ form.uuc_id.id_for_label }}" class="form-label">เครื่องมือที่สอบเทียบ</label>
-                                            <select name="{{ form.uuc_id.name }}" class="form-control" id="{{ form.uuc_id.id_for_label }}">
-                                                <option value="">เลือกเครื่องมือที่สอบเทียบ</option>
-                                                {% for machine in form.uuc_id.field.queryset %}
-                                                    <option value="{{ machine.id }}" {% if machine.id == form.uuc_id.value %}selected{% endif %}>
-                                                        {{ machine.name }}-{{ machine.model|default:"" }}-{{ machine.serial_number|default:"" }}
-                                                    </option>
-                                                {% endfor %}
-                                            </select>
-                                            {% if form.uuc_id.errors %}
-                                                <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="{{ form.calibrator.id_for_label }}" class="form-label">ผู้สอบเทียบ</label>
-                                            {{ form.calibrator }}
-                                            {% if form.calibrator.errors %}
-                                                <div class="text-danger small">{{ form.calibrator.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="{{ form.certificate_issuer.id_for_label }}" class="form-label">ผู้ออกใบรับรอง</label>
-                                            {{ form.certificate_issuer }}
-                                            {% if form.certificate_issuer.errors %}
-                                                <div class="text-danger small">{{ form.certificate_issuer.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label class="form-label">ช่วงการวัด</label>
-                                            <input type="text" class="form-control" name="measurement_range" value="{{ object.machine.range|default:'' }}" placeholder="เช่น 0-100 bar">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label for="{{ form.date_calibration.id_for_label }}" class="form-label">วันที่สอบเทียบ</label>
-                                            {{ form.date_calibration }}
-                                            {% if form.date_calibration.errors %}
-                                                <div class="text-danger small">{{ form.date_calibration.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label for="{{ form.received_date.id_for_label }}" class="form-label">วันที่รับเครื่องมือ</label>
-                                            {{ form.received_date }}
-                                            {% if form.received_date.errors %}
-                                                <div class="text-danger small">{{ form.received_date.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label for="{{ form.issue_date.id_for_label }}" class="form-label">วันที่ออกใบรับรอง</label>
-                                            {{ form.issue_date }}
-                                            {% if form.issue_date.errors %}
-                                                <div class="text-danger small">{{ form.issue_date.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label for="{{ form.next_due.id_for_label }}" class="form-label">วันที่ครบกำหนดสอบเทียบถัดไป</label>
-                                            {{ form.next_due }}
-                                            {% if form.next_due.errors %}
-                                                <div class="text-danger small">{{ form.next_due.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="mb-3">
-                                            <label for="{{ form.certificate_number.id_for_label }}" class="form-label">หมายเลขใบรับรอง</label>
-                                            {{ form.certificate_number }}
-                                            {% if form.certificate_number.errors %}
-                                                <div class="text-danger small">{{ form.certificate_number.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="mb-3">
-                                            <label for="{{ form.procedure_number.id_for_label }}" class="form-label">หมายเลขขั้นตอนการสอบเทียบ</label>
-                                            {{ form.procedure_number }}
-                                            {% if form.procedure_number.errors %}
-                                                <div class="text-danger small">{{ form.procedure_number.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="mb-3">
-                                            <label for="{{ form.status.id_for_label }}" class="form-label">สถานะ</label>
-                                            {{ form.status }}
-                                            {% if form.status.errors %}
-                                                <div class="text-danger small">{{ form.status.errors.0 }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-balance-scale fa-lg"></i>
+                    {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการสอบเทียบ Balance
+                </h1>
+                <p class="page-subtitle">
+                    {% if object.machine %}
+                        {{ object.machine.name }} - {{ object.machine.machine_type.name }}
+                    {% else %}
+                        เลือกเครื่องมือเพื่อบันทึกการสอบเทียบ
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 
-                        <!-- Linear (Min-Max) -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h6 class="card-title mb-0">
-                                    <i class="fas fa-balance-scale me-2"></i>
-                                    Linear (Min-Max)
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered">
-                                        <thead class="table-dark">
-                                            <tr>
-                                                <th>Nominal Value (g)</th>
-                                                <th>Conventional Mass (g)</th>
-                                                <th>Displayed Value (g)</th>
-                                                <th>Error (g)</th>
-                                                <th>Uncertainty (g)</th>
-                                                <th>Tolerance Limit</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="linear-table-body">
-                                            <!-- แถวที่ 1 -->
-                                            <tr>
-                                                <td><input type="text" name="linear_nominal_value_1" class="form-control" placeholder="เช่น 10.0000"></td>
-                                                <td><input type="text" name="linear_conventional_mass_1" class="form-control" placeholder="เช่น 10.0000"></td>
-                                                <td><input type="text" name="linear_displayed_value_1" class="form-control" placeholder="เช่น 10.00002"></td>
-                                                <td><input type="text" name="linear_error_1" class="form-control" readonly></td>
-                                                <td><input type="text" name="linear_uncertainty_1" class="form-control" placeholder="เช่น 0.00003"></td>
-                                                <td><input type="text" name="linear_tolerance_limit_1" class="form-control" readonly></td>
-                                            </tr>
-                                            <!-- แถวที่ 2 -->
-                                            <tr>
-                                                <td><input type="text" name="linear_nominal_value_2" class="form-control" placeholder="เช่น 20.0000"></td>
-                                                <td><input type="text" name="linear_conventional_mass_2" class="form-control" placeholder="เช่น 20.0000"></td>
-                                                <td><input type="text" name="linear_displayed_value_2" class="form-control" placeholder="เช่น 20.00003"></td>
-                                                <td><input type="text" name="linear_error_2" class="form-control" readonly></td>
-                                                <td><input type="text" name="linear_uncertainty_2" class="form-control" placeholder="เช่น 0.00003"></td>
-                                                <td><input type="text" name="linear_tolerance_limit_2" class="form-control" readonly></td>
-                                            </tr>
-                                            <!-- แถวที่ 3 -->
-                                            <tr>
-                                                <td><input type="text" name="linear_nominal_value_3" class="form-control" placeholder="เช่น 50.0000"></td>
-                                                <td><input type="text" name="linear_conventional_mass_3" class="form-control" placeholder="เช่น 50.0000"></td>
-                                                <td><input type="text" name="linear_displayed_value_3" class="form-control" placeholder="เช่น 50.00005"></td>
-                                                <td><input type="text" name="linear_error_3" class="form-control" readonly></td>
-                                                <td><input type="text" name="linear_uncertainty_3" class="form-control" placeholder="เช่น 0.00003"></td>
-                                                <td><input type="text" name="linear_tolerance_limit_3" class="form-control" readonly></td>
-                                            </tr>
-                                            <!-- แถวที่ 4 -->
-                                            <tr>
-                                                <td><input type="text" name="linear_nominal_value_4" class="form-control" placeholder="เช่น 100.0000"></td>
-                                                <td><input type="text" name="linear_conventional_mass_4" class="form-control" placeholder="เช่น 100.0000"></td>
-                                                <td><input type="text" name="linear_displayed_value_4" class="form-control" placeholder="เช่น 100.00008"></td>
-                                                <td><input type="text" name="linear_error_4" class="form-control" readonly></td>
-                                                <td><input type="text" name="linear_uncertainty_4" class="form-control" placeholder="เช่น 0.00003"></td>
-                                                <td><input type="text" name="linear_tolerance_limit_4" class="form-control" readonly></td>
-                                            </tr>
-                                            <!-- แถวที่ 5 -->
-                                            <tr>
-                                                <td><input type="text" name="linear_nominal_value_5" class="form-control" placeholder="เช่น 200.0000"></td>
-                                                <td><input type="text" name="linear_conventional_mass_5" class="form-control" placeholder="เช่น 200.0000"></td>
-                                                <td><input type="text" name="linear_displayed_value_5" class="form-control" placeholder="เช่น 200.00010"></td>
-                                                <td><input type="text" name="linear_error_5" class="form-control" readonly></td>
-                                                <td><input type="text" name="linear_uncertainty_5" class="form-control" placeholder="เช่น 0.00003"></td>
-                                                <td><input type="text" name="linear_tolerance_limit_5" class="form-control" readonly></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="alert alert-info">
-                                    <small>
-                                        <strong>หมายเหตุ:</strong> ช่อง Conventional Mass กับ Displayed Value ห้ามเกินจาก Nominal Value ± 0.0003 ถ้าเกิน ให้ผลสอบเทียบไม่ผ่าน
-                                    </small>
-                                </div>
-                                <div class="mt-3">
-                                    <button type="button" class="btn btn-success btn-sm" id="add-linear-row">
-                                        <i class="fas fa-plus"></i> เพิ่มแถว
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm" id="remove-linear-row">
-                                        <i class="fas fa-minus"></i> ลบแถว
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-footer">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>บันทึก
-                            </button>
-                            <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary ms-2">
-                                <i class="fas fa-arrow-left me-2"></i>ย้อนกลับ
-                            </a>
-                        </div>
-                    </form>
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- ข้อมูลเครื่องมือ -->
+        {% if object.machine %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    ข้อมูลเครื่องมือ
+                </h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-3">
+                        <small><strong>ชื่อ:</strong> {{ object.machine.name }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>รุ่น:</strong> {{ object.machine.model|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>หมายเลข:</strong> {{ object.machine.serial_number|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>ประเภท:</strong> {{ object.machine.machine_type.name }}</small>
+                    </div>
                 </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <small><strong>ช่วงการวัด:</strong> {{ object.machine.range|default:"-" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ฟอร์มบันทึกการสอบเทียบ -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    ข้อมูลการสอบเทียบ Balance
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- ข้อมูลทั่วไป -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">
+                                <i class="fas fa-ruler me-1"></i>ช่วงการวัด
+                            </label>
+                            {{ form.measurement_range }}
+                            {% if form.measurement_range.errors %}
+                                <div class="text-danger small">{{ form.measurement_range.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.update.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>{{ form.update.label }}
+                            </label>
+                            {{ form.update }}
+                            {% if form.update.errors %}
+                                <div class="text-danger small">{{ form.update.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.next_due.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar-check me-1"></i>{{ form.next_due.label }}
+                            </label>
+                            {{ form.next_due }}
+                            {% if form.next_due.errors %}
+                                <div class="text-danger small">{{ form.next_due.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                <i class="fas fa-info-circle me-1"></i>{{ form.status.label }}
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="text-danger small">{{ form.status.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.calibrator.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-1"></i>{{ form.calibrator.label }}
+                            </label>
+                            {{ form.calibrator }}
+                            {% if form.calibrator.errors %}
+                                <div class="text-danger small">{{ form.calibrator.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.certificate_issuer.id_for_label }}" class="form-label">
+                                <i class="fas fa-certificate me-1"></i>{{ form.certificate_issuer.label }}
+                            </label>
+                            {{ form.certificate_issuer }}
+                            {% if form.certificate_issuer.errors %}
+                                <div class="text-danger small">{{ form.certificate_issuer.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.certificate_number.id_for_label }}" class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>{{ form.certificate_number.label }}
+                            </label>
+                            {{ form.certificate_number }}
+                            {% if form.certificate_number.errors %}
+                                <div class="text-danger small">{{ form.certificate_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
+                            </label>
+                            <div id="calibration-equipment-container">
+                                <div class="row mb-2 calibration-equipment-row">
+                                    <div class="col-md-10">
+                                        <select name="{{ form.std_id.name }}" id="{{ form.std_id.id_for_label }}" class="form-control">
+                                            <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                            {% for equipment in form.std_id.field.queryset %}
+                                                <option value="{{ equipment.id }}" {% if form.std_id.value == equipment.id %}selected{% endif %}>
+                                                    {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.std_id.errors %}
+                                            <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-success btn-sm add-equipment-btn">
+                                            <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ตารางการสอบเทียบ -->
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Nominal Value (g)</th>
+                                    <th>Conventional Mass (g)</th>
+                                    <th>Displayed Value (g)</th>
+                                    <th>Error (g)</th>
+                                    <th>Uncertainty (g)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ form.linear_nominal_value }}</td>
+                                    <td>{{ form.linear_conventional_mass }}</td>
+                                    <td>{{ form.linear_displayed_value }}</td>
+                                    <td>{{ form.linear_error }}</td>
+                                    <td>{{ form.linear_uncertainty }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ form.linear_nominal_value_2 }}</td>
+                                    <td>{{ form.linear_conventional_mass_2 }}</td>
+                                    <td>{{ form.linear_displayed_value_2 }}</td>
+                                    <td>{{ form.linear_error_2 }}</td>
+                                    <td>{{ form.linear_uncertainty_2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ form.linear_nominal_value_3 }}</td>
+                                    <td>{{ form.linear_conventional_mass_3 }}</td>
+                                    <td>{{ form.linear_displayed_value_3 }}</td>
+                                    <td>{{ form.linear_error_3 }}</td>
+                                    <td>{{ form.linear_uncertainty_3 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ form.linear_nominal_value_4 }}</td>
+                                    <td>{{ form.linear_conventional_mass_4 }}</td>
+                                    <td>{{ form.linear_displayed_value_4 }}</td>
+                                    <td>{{ form.linear_error_4 }}</td>
+                                    <td>{{ form.linear_uncertainty_4 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ form.linear_nominal_value_5 }}</td>
+                                    <td>{{ form.linear_conventional_mass_5 }}</td>
+                                    <td>{{ form.linear_displayed_value_5 }}</td>
+                                    <td>{{ form.linear_error_5 }}</td>
+                                    <td>{{ form.linear_uncertainty_5 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <strong>หมายเหตุ:</strong> 
+                            <ul class="mb-0">
+                                <li>ช่อง Conventional Mass และ Displayed Value ป้อนค่าน้ำหนักเอง (ทศนิยม 4 ตัว)</li>
+                                <li>Error = Displayed Value - Conventional Mass</li>
+                                <li>Uncertainty = Nominal Value ± 0.0003 (ค่าห้ามเกินจากช่องที่ 1)</li>
+                                <li>ถ้าช่อง 2 กับ 3 เกิน ให้ผลสอบเทียบไม่ผ่าน</li>
+                            </ul>
+                        </small>
+                    </div>
+
+                    <!-- ปุ่มบันทึก -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="fas fa-save me-2"></i>บันทึก
+                                </button>
+                                <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>ย้อนกลับ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -276,68 +255,44 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // ฟังก์ชันสำหรับคำนวณ Error และ Tolerance Limit
+    // ฟังก์ชันสำหรับคำนวณ Error และ Uncertainty
     function calculateLinearError(row) {
-        const nominalInput = row.querySelector('input[name*="nominal_value"]');
-        const conventionalInput = row.querySelector('input[name*="conventional_mass"]');
-        const displayedInput = row.querySelector('input[name*="displayed_value"]');
-        const errorInput = row.querySelector('input[name*="error"]');
-        const toleranceInput = row.querySelector('input[name*="tolerance_limit"]');
+        const nominalInput = row.querySelector('input[name*="linear_nominal_value"]');
+        const conventionalInput = row.querySelector('input[name*="linear_conventional_mass"]');
+        const displayedInput = row.querySelector('input[name*="linear_displayed_value"]');
+        const errorInput = row.querySelector('input[name*="linear_error"]');
+        const uncertaintyInput = row.querySelector('input[name*="linear_uncertainty"]');
         
         function calculate() {
             const nominal = parseFloat(nominalInput.value) || 0;
             const conventional = parseFloat(conventionalInput.value) || 0;
             const displayed = parseFloat(displayedInput.value) || 0;
             
-            // คำนวณ Error
+            // คำนวณ Error = Displayed Value - Conventional Mass
             if (displayed && conventional) {
                 const error = displayed - conventional;
                 errorInput.value = error.toFixed(5);
             }
             
-            // คำนวณ Tolerance Limit
+            // คำนวณ Uncertainty = Nominal Value ± 0.0003
             if (nominal) {
-                const minTolerance = (nominal - 0.0003).toFixed(4);
-                const maxTolerance = (nominal + 0.0003).toFixed(4);
-                toleranceInput.value = `${minTolerance} – ${maxTolerance}`;
+                const minUncertainty = (nominal - 0.0003).toFixed(4);
+                const maxUncertainty = (nominal + 0.0003).toFixed(4);
+                uncertaintyInput.value = `${minUncertainty} – ${maxUncertainty}`;
             }
         }
         
         // เพิ่ม event listeners
-        nominalInput.addEventListener('input', calculate);
-        conventionalInput.addEventListener('input', calculate);
-        displayedInput.addEventListener('input', calculate);
+        if (nominalInput) nominalInput.addEventListener('input', calculate);
+        if (conventionalInput) conventionalInput.addEventListener('input', calculate);
+        if (displayedInput) displayedInput.addEventListener('input', calculate);
+        
+        // คำนวณครั้งแรก
+        calculate();
     }
     
     // เริ่มต้นสำหรับแถวที่มีอยู่
-    document.querySelectorAll('#linear-table-body tr').forEach(calculateLinearError);
-    
-    // เพิ่มแถวใหม่
-    document.getElementById('add-linear-row').addEventListener('click', function() {
-        const tbody = document.getElementById('linear-table-body');
-        const rowCount = tbody.children.length + 1;
-        
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td><input type="text" name="linear_nominal_value_${rowCount}" class="form-control" placeholder="เช่น 10.0000"></td>
-            <td><input type="text" name="linear_conventional_mass_${rowCount}" class="form-control" placeholder="เช่น 10.0000"></td>
-            <td><input type="text" name="linear_displayed_value_${rowCount}" class="form-control" placeholder="เช่น 10.00002"></td>
-            <td><input type="text" name="linear_error_${rowCount}" class="form-control" readonly></td>
-            <td><input type="text" name="linear_uncertainty_${rowCount}" class="form-control" placeholder="เช่น 0.00003"></td>
-            <td><input type="text" name="linear_tolerance_limit_${rowCount}" class="form-control" readonly></td>
-        `;
-        
-        tbody.appendChild(newRow);
-        calculateLinearError(newRow);
-    });
-    
-    // ลบแถว
-    document.getElementById('remove-linear-row').addEventListener('click', function() {
-        const tbody = document.getElementById('linear-table-body');
-        if (tbody.children.length > 1) {
-            tbody.removeChild(tbody.lastElementChild);
-        }
-    });
+    document.querySelectorAll('tbody tr').forEach(calculateLinearError);
 });
 </script>
 {% endblock %}

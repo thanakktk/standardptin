@@ -190,14 +190,51 @@ class DialGaugeReadingForm(forms.ModelForm):
 class BalanceCalibrationForm(forms.ModelForm):
     class Meta:
         model = BalanceCalibration
-        fields = ['update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer']
+        fields = ['measurement_range', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
+                  'linear_nominal_value', 'linear_conventional_mass', 'linear_displayed_value', 'linear_error', 'linear_uncertainty',
+                  'linear_nominal_value_2', 'linear_conventional_mass_2', 'linear_displayed_value_2', 'linear_error_2', 'linear_uncertainty_2',
+                  'linear_nominal_value_3', 'linear_conventional_mass_3', 'linear_displayed_value_3', 'linear_error_3', 'linear_uncertainty_3',
+                  'linear_nominal_value_4', 'linear_conventional_mass_4', 'linear_displayed_value_4', 'linear_error_4', 'linear_uncertainty_4',
+                  'linear_nominal_value_5', 'linear_conventional_mass_5', 'linear_displayed_value_5', 'linear_error_5', 'linear_uncertainty_5']
         widgets = {
+            'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 g'}),
             'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
+            'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
+            # Row 1
+            'linear_nominal_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000'}),
+            'linear_conventional_mass': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000'}),
+            'linear_displayed_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.00002'}),
+            'linear_error': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'linear_uncertainty': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            # Row 2
+            'linear_nominal_value_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 20.0000'}),
+            'linear_conventional_mass_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 20.0000'}),
+            'linear_displayed_value_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 20.00003'}),
+            'linear_error_2': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'linear_uncertainty_2': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            # Row 3
+            'linear_nominal_value_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50.0000'}),
+            'linear_conventional_mass_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50.0000'}),
+            'linear_displayed_value_3': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 50.00005'}),
+            'linear_error_3': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'linear_uncertainty_3': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            # Row 4
+            'linear_nominal_value_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 100.0000'}),
+            'linear_conventional_mass_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 100.0000'}),
+            'linear_displayed_value_4': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 100.00008'}),
+            'linear_error_4': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'linear_uncertainty_4': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            # Row 5
+            'linear_nominal_value_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 200.0000'}),
+            'linear_conventional_mass_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 200.0000'}),
+            'linear_displayed_value_5': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 200.00010'}),
+            'linear_error_5': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'linear_uncertainty_5': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
     
     def __init__(self, *args, **kwargs):

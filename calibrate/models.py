@@ -386,6 +386,7 @@ class BalanceCalibration(models.Model):
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='balance_certificates')
     
     # ข้อมูลการสอบเทียบ
+    measurement_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="ช่วงการวัด")
     date_calibration = models.DateField(verbose_name="วันที่สอบเทียบ")
     update = models.DateField(blank=True, null=True, verbose_name="วันที่อัปเดต")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
@@ -410,13 +411,40 @@ class BalanceCalibration(models.Model):
     uncertainty_95_k = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True, verbose_name="95%*K")
     final_uncertainty = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True, verbose_name="Final Uncer")
     
-    # Linear (Min-Max) fields
+    # Linear (Min-Max) fields - Row 1
     linear_nominal_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Nominal Value (g)")
     linear_conventional_mass = models.CharField(max_length=50, blank=True, null=True, verbose_name="Conventional Mass (g)")
     linear_displayed_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Displayed Value (g)")
     linear_error = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (g)")
     linear_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (g)")
-    linear_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit")
+    
+    # Linear (Min-Max) fields - Row 2
+    linear_nominal_value_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Nominal Value (g) - Row 2")
+    linear_conventional_mass_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Conventional Mass (g) - Row 2")
+    linear_displayed_value_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Displayed Value (g) - Row 2")
+    linear_error_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (g) - Row 2")
+    linear_uncertainty_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (g) - Row 2")
+    
+    # Linear (Min-Max) fields - Row 3
+    linear_nominal_value_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Nominal Value (g) - Row 3")
+    linear_conventional_mass_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Conventional Mass (g) - Row 3")
+    linear_displayed_value_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Displayed Value (g) - Row 3")
+    linear_error_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (g) - Row 3")
+    linear_uncertainty_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (g) - Row 3")
+    
+    # Linear (Min-Max) fields - Row 4
+    linear_nominal_value_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Nominal Value (g) - Row 4")
+    linear_conventional_mass_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Conventional Mass (g) - Row 4")
+    linear_displayed_value_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Displayed Value (g) - Row 4")
+    linear_error_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (g) - Row 4")
+    linear_uncertainty_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (g) - Row 4")
+    
+    # Linear (Min-Max) fields - Row 5
+    linear_nominal_value_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Nominal Value (g) - Row 5")
+    linear_conventional_mass_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Conventional Mass (g) - Row 5")
+    linear_displayed_value_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Displayed Value (g) - Row 5")
+    linear_error_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (g) - Row 5")
+    linear_uncertainty_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (g) - Row 5")
     
     def __str__(self):
         return f"Balance Calibration - {self.machine.name} ({self.date_calibration})"
