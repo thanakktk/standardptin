@@ -72,6 +72,17 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         form.fields['calibrator'].queryset = users
         form.fields['certificate_issuer'].queryset = users
         return form
+    
+    def form_valid(self, form):
+        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
+        form.instance.status = 'in_progress'
+        form.save()
+        
+        # เพิ่ม success message
+        from django.contrib import messages
+        messages.success(self.request, 'บันทึกการสอบเทียบ Pressure เรียบร้อยแล้ว')
+        # ให้ Django จัดการ redirect ตาม success_url
+        return super().form_valid(form)
 
 class CalibrationPressureDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationPressure
@@ -127,6 +138,17 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
         form.fields['calibrator'].queryset = users
         form.fields['certificate_issuer'].queryset = users
         return form
+    
+    def form_valid(self, form):
+        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
+        form.instance.status = 'in_progress'
+        form.save()
+        
+        # เพิ่ม success message
+        from django.contrib import messages
+        messages.success(self.request, 'บันทึกการสอบเทียบ Torque เรียบร้อยแล้ว')
+        # ให้ Django จัดการ redirect ตาม success_url
+        return super().form_valid(form)
 
 class CalibrationTorqueDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationTorque
@@ -182,6 +204,17 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         form.fields['calibrator'].queryset = users
         form.fields['certificate_issuer'].queryset = users
         return form
+    
+    def form_valid(self, form):
+        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
+        form.instance.status = 'in_progress'
+        form.save()
+        
+        # เพิ่ม success message
+        from django.contrib import messages
+        messages.success(self.request, 'บันทึกการสอบเทียบ Balance เรียบร้อยแล้ว')
+        # ให้ Django จัดการ redirect ตาม success_url
+        return super().form_valid(form)
 
 class BalanceCalibrationDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = BalanceCalibration
@@ -1194,6 +1227,7 @@ def calibration_report(request):
     pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     balance_calibrations = BalanceCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
+    force_calibrations = []  # Empty list since CalibrationForce model no longer exists
     
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
@@ -1307,6 +1341,7 @@ def calibration_report_detail(request):
     pressure_calibrations = CalibrationPressure.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     torque_calibrations = CalibrationTorque.objects.select_related('uuc_id', 'std_id', 'calibrator', 'certificate_issuer').all()
     balance_calibrations = BalanceCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
+    force_calibrations = []  # Empty list since CalibrationForce model no longer exists
     
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
@@ -2426,6 +2461,17 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ High Frequency - {self.object.machine.name}'
         return context
+    
+    def form_valid(self, form):
+        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
+        form.instance.status = 'in_progress'
+        form.save()
+        
+        # เพิ่ม success message
+        from django.contrib import messages
+        messages.success(self.request, 'บันทึกการสอบเทียบ High Frequency เรียบร้อยแล้ว')
+        # ให้ Django จัดการ redirect ตาม success_url
+        return super().form_valid(form)
 
 class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     model = LowFrequencyCalibration
@@ -2437,6 +2483,17 @@ class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ Low Frequency - {self.object.machine.name}'
         return context
+    
+    def form_valid(self, form):
+        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
+        form.instance.status = 'in_progress'
+        form.save()
+        
+        # เพิ่ม success message
+        from django.contrib import messages
+        messages.success(self.request, 'บันทึกการสอบเทียบ Low Frequency เรียบร้อยแล้ว')
+        # ให้ Django จัดการ redirect ตาม success_url
+        return super().form_valid(form)
 
 class MicrowaveCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     model = MicrowaveCalibration
@@ -2448,6 +2505,17 @@ class MicrowaveCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ Microwave - {self.object.machine.name}'
         return context
+    
+    def form_valid(self, form):
+        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
+        form.instance.status = 'in_progress'
+        form.save()
+        
+        # เพิ่ม success message
+        from django.contrib import messages
+        messages.success(self.request, 'บันทึกการสอบเทียบ Microwave เรียบร้อยแล้ว')
+        # ให้ Django จัดการ redirect ตาม success_url
+        return super().form_valid(form)
 
 class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     model = DialGaugeCalibration
@@ -2459,6 +2527,17 @@ class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ Dial Gauge - {self.object.machine.name}'
         return context
+    
+    def form_valid(self, form):
+        # เปลี่ยนสถานะเป็น 'in_progress' เมื่อบันทึกการสอบเทียบ
+        form.instance.status = 'in_progress'
+        form.save()
+        
+        # เพิ่ม success message
+        from django.contrib import messages
+        messages.success(self.request, 'บันทึกการสอบเทียบ Dial Gauge เรียบร้อยแล้ว')
+        # ให้ Django จัดการ redirect ตาม success_url
+        return super().form_valid(form)
 
 class HighFrequencyCalibrationDeleteView(LoginRequiredMixin, DeleteView):
     model = HighFrequencyCalibration

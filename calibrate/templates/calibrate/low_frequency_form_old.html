@@ -1,0 +1,855 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการสอบเทียบ Low Frequency - {{ object.machine.name|default:'เครื่องมือ' }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-wave-square fa-lg"></i>
+                    {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการสอบเทียบ Low Frequency
+                </h1>
+                <p class="page-subtitle">
+                    {% if object.machine %}
+                        {{ object.machine.name }} - {{ object.machine.machine_type.name }}
+                    {% else %}
+                        เลือกเครื่องมือเพื่อบันทึกการสอบเทียบ
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- ข้อมูลเครื่องมือ -->
+        {% if object.machine %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    ข้อมูลเครื่องมือ
+                </h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-3">
+                        <small><strong>ชื่อ:</strong> {{ object.machine.name }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>รุ่น:</strong> {{ object.machine.model|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>หมายเลข:</strong> {{ object.machine.serial_number|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>ประเภท:</strong> {{ object.machine.machine_type.name }}</small>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <small><strong>ช่วงการวัด:</strong> {{ object.machine.range|default:"-" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ฟอร์มบันทึกการสอบเทียบ -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    ข้อมูลการสอบเทียบ Low Frequency
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- ข้อมูลการสอบเทียบ Low Frequency -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.measurement_range.id_for_label }}" class="form-label">
+                                <i class="fas fa-ruler me-1"></i>ช่วงการวัด
+                            </label>
+                            {{ form.measurement_range }}
+                            {% if form.measurement_range.errors %}
+                                <div class="text-danger small">{{ form.measurement_range.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="fas fa-calendar me-1"></i>วันที่สอบเทียบ
+                            </label>
+                            <input type="date" class="form-control" value="{{ object.date_calibration|date:'Y-m-d'|default:'' }}" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.next_due.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar-check me-1"></i>{{ form.next_due.label }}
+                            </label>
+                            {{ form.next_due }}
+                            {% if form.next_due.errors %}
+                                <div class="text-danger small">{{ form.next_due.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.calibrator.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-1"></i>{{ form.calibrator.label }}
+                            </label>
+                            {{ form.calibrator }}
+                            {% if form.calibrator.errors %}
+                                <div class="text-danger small">{{ form.calibrator.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.certificate_issuer.id_for_label }}" class="form-label">
+                                <i class="fas fa-certificate me-1"></i>{{ form.certificate_issuer.label }}
+                            </label>
+                            {{ form.certificate_issuer }}
+                            {% if form.certificate_issuer.errors %}
+                                <div class="text-danger small">{{ form.certificate_issuer.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.certificate_number.id_for_label }}" class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>{{ form.certificate_number.label }}
+                            </label>
+                            {{ form.certificate_number }}
+                            {% if form.certificate_number.errors %}
+                                <div class="text-danger small">{{ form.certificate_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
+                            </label>
+                            <div class="d-flex mb-2">
+                                <select name="{{ form.std_id.name }}" id="{{ form.std_id.id_for_label }}" class="form-control me-2">
+                                    <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                    {% for equipment in form.std_id.field.queryset %}
+                                        <option value="{{ equipment.id }}" {% if form.std_id.value == equipment.id %}selected{% endif %}>
+                                            {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-success btn-sm add-equipment-btn">
+                                    <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
+                                </button>
+                            </div>
+                            <div id="calibration-equipment-container">
+                                <!-- เครื่องมือเพิ่มเติมจะแสดงที่นี่ -->
+                            </div>
+                            {% if form.std_id.errors %}
+                                <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+
+                    <!-- 1. DC VOLTAGE -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-bolt me-2"></i>
+                                1. DC VOLTAGE
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>UUC Range</th>
+                                            <th>UUC. Setting</th>
+                                            <th>Measured Value</th>
+                                            <th>Uncertainty (±)</th>
+                                            <th>Tolerance Limit</th>
+                                            <th>Error</th>
+                                            <th>Pass/Fail</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                {{ form.dc_uuc_range }}
+                                                {% if form.dc_uuc_range.errors %}
+                                                    <div class="text-danger small">{{ form.dc_uuc_range.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.dc_uuc_setting }}
+                                                {% if form.dc_uuc_setting.errors %}
+                                                    <div class="text-danger small">{{ form.dc_uuc_setting.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.dc_measured_value }}
+                                                {% if form.dc_measured_value.errors %}
+                                                    <div class="text-danger small">{{ form.dc_measured_value.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.dc_uncertainty }}
+                                                {% if form.dc_uncertainty.errors %}
+                                                    <div class="text-danger small">{{ form.dc_uncertainty.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.dc_tolerance_limit }}
+                                                {% if form.dc_tolerance_limit.errors %}
+                                                    <div class="text-danger small">{{ form.dc_tolerance_limit.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.dc_error }}
+                                                {% if form.dc_error.errors %}
+                                                    <div class="text-danger small">{{ form.dc_error.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.dc_pass_fail }}
+                                                {% if form.dc_pass_fail.errors %}
+                                                    <div class="text-danger small">{{ form.dc_pass_fail.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.dc_remarks }}
+                                                {% if form.dc_remarks.errors %}
+                                                    <div class="text-danger small">{{ form.dc_remarks.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 100 mV" name="dc_uuc_range_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 100 mV" name="dc_uuc_setting_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 100 mV" name="dc_measured_value_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="dc_uncertainty_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 99.0065 – 100.0065 mV" name="dc_tolerance_limit_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="dc_error_2"></td>
+                                            <td>
+                                                <select class="form-control" name="dc_pass_fail_2">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="dc_remarks_2"></textarea></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 200 mV" name="dc_uuc_range_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 200 mV" name="dc_uuc_setting_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 200 mV" name="dc_measured_value_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="dc_uncertainty_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 199.0065 – 200.0065 mV" name="dc_tolerance_limit_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="dc_error_3"></td>
+                                            <td>
+                                                <select class="form-control" name="dc_pass_fail_3">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="dc_remarks_3"></textarea></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 500 mV" name="dc_uuc_range_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 500 mV" name="dc_uuc_setting_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 500 mV" name="dc_measured_value_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="dc_uncertainty_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 499.0065 – 500.0065 mV" name="dc_tolerance_limit_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="dc_error_4"></td>
+                                            <td>
+                                                <select class="form-control" name="dc_pass_fail_4">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="dc_remarks_4"></textarea></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1000 mV" name="dc_uuc_range_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1000 mV" name="dc_uuc_setting_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1000 mV" name="dc_measured_value_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="dc_uncertainty_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 999.0065 – 1000.0065 mV" name="dc_tolerance_limit_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="dc_error_5"></td>
+                                            <td>
+                                                <select class="form-control" name="dc_pass_fail_5">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="dc_remarks_5"></textarea></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>หมายเหตุ:</strong> ช่องที่ 2 กับ 3 ห้ามต่ำ หรือมากกว่า ช่องที่ 1 ± 0.0065 ให้ผลสอบเทียบไม่ผ่าน
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. AC VOLTAGE -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-bolt me-2"></i>
+                                2. AC VOLTAGE
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>UUC Range</th>
+                                            <th>UUC. Setting</th>
+                                            <th>Measured Value</th>
+                                            <th>Uncertainty (±)</th>
+                                            <th>Tolerance Limit</th>
+                                            <th>Error</th>
+                                            <th>Pass/Fail</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                {{ form.ac_uuc_range }}
+                                                {% if form.ac_uuc_range.errors %}
+                                                    <div class="text-danger small">{{ form.ac_uuc_range.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.ac_uuc_setting }}
+                                                {% if form.ac_uuc_setting.errors %}
+                                                    <div class="text-danger small">{{ form.ac_uuc_setting.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.ac_measured_value }}
+                                                {% if form.ac_measured_value.errors %}
+                                                    <div class="text-danger small">{{ form.ac_measured_value.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.ac_uncertainty }}
+                                                {% if form.ac_uncertainty.errors %}
+                                                    <div class="text-danger small">{{ form.ac_uncertainty.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.ac_tolerance_limit }}
+                                                {% if form.ac_tolerance_limit.errors %}
+                                                    <div class="text-danger small">{{ form.ac_tolerance_limit.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.ac_error }}
+                                                {% if form.ac_error.errors %}
+                                                    <div class="text-danger small">{{ form.ac_error.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.ac_pass_fail }}
+                                                {% if form.ac_pass_fail.errors %}
+                                                    <div class="text-danger small">{{ form.ac_pass_fail.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.ac_remarks }}
+                                                {% if form.ac_remarks.errors %}
+                                                    <div class="text-danger small">{{ form.ac_remarks.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 100 mV" name="ac_uuc_range_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 100 mV" name="ac_uuc_setting_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 100 mV" name="ac_measured_value_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="ac_uncertainty_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 99.0020 – 100.0020 mV" name="ac_tolerance_limit_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="ac_error_2"></td>
+                                            <td>
+                                                <select class="form-control" name="ac_pass_fail_2">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="ac_remarks_2"></textarea></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 200 mV" name="ac_uuc_range_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 200 mV" name="ac_uuc_setting_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 200 mV" name="ac_measured_value_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="ac_uncertainty_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 199.0020 – 200.0020 mV" name="ac_tolerance_limit_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="ac_error_3"></td>
+                                            <td>
+                                                <select class="form-control" name="ac_pass_fail_3">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="ac_remarks_3"></textarea></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 500 mV" name="ac_uuc_range_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 500 mV" name="ac_uuc_setting_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 500 mV" name="ac_measured_value_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="ac_uncertainty_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 499.0020 – 500.0020 mV" name="ac_tolerance_limit_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="ac_error_4"></td>
+                                            <td>
+                                                <select class="form-control" name="ac_pass_fail_4">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="ac_remarks_4"></textarea></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1000 mV" name="ac_uuc_range_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1000 mV" name="ac_uuc_setting_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1000 mV" name="ac_measured_value_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="ac_uncertainty_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 999.0020 – 1000.0020 mV" name="ac_tolerance_limit_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 mV" name="ac_error_5"></td>
+                                            <td>
+                                                <select class="form-control" name="ac_pass_fail_5">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="ac_remarks_5"></textarea></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>หมายเหตุ:</strong> ช่องที่ 2 กับ 3 ห้ามต่ำ หรือมากกว่า ช่องที่ 1 ± 0.0020 ให้ผลสอบเทียบไม่ผ่าน
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. RESISTANCE -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-resistor me-2"></i>
+                                3. RESISTANCE
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>UUC Range</th>
+                                            <th>UUC. Setting</th>
+                                            <th>Measured Value</th>
+                                            <th>Uncertainty (±)</th>
+                                            <th>Tolerance Limit</th>
+                                            <th>Error</th>
+                                            <th>Pass/Fail</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                {{ form.res_uuc_range }}
+                                                {% if form.res_uuc_range.errors %}
+                                                    <div class="text-danger small">{{ form.res_uuc_range.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.res_uuc_setting }}
+                                                {% if form.res_uuc_setting.errors %}
+                                                    <div class="text-danger small">{{ form.res_uuc_setting.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.res_measured_value }}
+                                                {% if form.res_measured_value.errors %}
+                                                    <div class="text-danger small">{{ form.res_measured_value.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.res_uncertainty }}
+                                                {% if form.res_uncertainty.errors %}
+                                                    <div class="text-danger small">{{ form.res_uncertainty.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.res_tolerance_limit }}
+                                                {% if form.res_tolerance_limit.errors %}
+                                                    <div class="text-danger small">{{ form.res_tolerance_limit.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.res_error }}
+                                                {% if form.res_error.errors %}
+                                                    <div class="text-danger small">{{ form.res_error.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.res_pass_fail }}
+                                                {% if form.res_pass_fail.errors %}
+                                                    <div class="text-danger small">{{ form.res_pass_fail.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.res_remarks }}
+                                                {% if form.res_remarks.errors %}
+                                                    <div class="text-danger small">{{ form.res_remarks.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1 kΩ" name="res_uuc_range_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1 kΩ" name="res_uuc_setting_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1 kΩ" name="res_measured_value_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 Ω" name="res_uncertainty_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 999.0033 – 1000.0033 Ω" name="res_tolerance_limit_2"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 Ω" name="res_error_2"></td>
+                                            <td>
+                                                <select class="form-control" name="res_pass_fail_2">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="res_remarks_2"></textarea></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 2 kΩ" name="res_uuc_range_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 2 kΩ" name="res_uuc_setting_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 2 kΩ" name="res_measured_value_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 Ω" name="res_uncertainty_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 1999.0033 – 2000.0033 Ω" name="res_tolerance_limit_3"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 Ω" name="res_error_3"></td>
+                                            <td>
+                                                <select class="form-control" name="res_pass_fail_3">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="res_remarks_3"></textarea></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 5 kΩ" name="res_uuc_range_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 5 kΩ" name="res_uuc_setting_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 5 kΩ" name="res_measured_value_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 Ω" name="res_uncertainty_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 4999.0033 – 5000.0033 Ω" name="res_tolerance_limit_4"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 Ω" name="res_error_4"></td>
+                                            <td>
+                                                <select class="form-control" name="res_pass_fail_4">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="res_remarks_4"></textarea></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 10 kΩ" name="res_uuc_range_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 10 kΩ" name="res_uuc_setting_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 10 kΩ" name="res_measured_value_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 Ω" name="res_uncertainty_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 9999.0033 – 10000.0033 Ω" name="res_tolerance_limit_5"></td>
+                                            <td><input type="text" class="form-control" placeholder="เช่น 0.0000 Ω" name="res_error_5"></td>
+                                            <td>
+                                                <select class="form-control" name="res_pass_fail_5">
+                                                    <option value="">เลือก</option>
+                                                    <option value="pass">ผ่าน</option>
+                                                    <option value="fail">ไม่ผ่าน</option>
+                                                </select>
+                                            </td>
+                                            <td><textarea class="form-control" rows="2" placeholder="หมายเหตุ..." name="res_remarks_5"></textarea></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>หมายเหตุ:</strong> ช่องที่ 2 กับ 3 ห้ามต่ำ หรือมากกว่า ช่องที่ 1 ± 0.0033 ให้ผลสอบเทียบไม่ผ่าน
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-1"></i>บันทึกการสอบเทียบ
+                                </button>
+                                <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>กลับไปรายการ
+                                </a>
+                                {% if object.pk %}
+                                <a href="{% url 'calibrate-low-frequency-delete' object.pk %}" class="btn btn-danger">
+                                    <i class="fas fa-trash me-1"></i>ลบ
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript สำหรับคำนวณ Uncertainty และตรวจสอบ Tolerance
+document.addEventListener('DOMContentLoaded', function() {
+    // DC Voltage calculation
+    const dcSetting = document.querySelector('input[name="dc_uuc_setting"]');
+    const dcMeasured = document.querySelector('input[name="dc_measured_value"]');
+    const dcUncertainty = document.querySelector('input[name="dc_uncertainty"]');
+    const dcTolerance = document.querySelector('input[name="dc_tolerance_limit"]');
+    
+    function calculateDCUncertainty() {
+        if (dcSetting && dcMeasured && dcUncertainty) {
+            const setting = parseFloat(dcSetting.value) || 0;
+            const measured = parseFloat(dcMeasured.value) || 0;
+            const uncertainty = measured - setting;
+            dcUncertainty.value = uncertainty.toFixed(4);
+            
+            // Calculate tolerance limit
+            if (dcTolerance) {
+                const minTolerance = (setting - 0.0065).toFixed(4);
+                const maxTolerance = (setting + 0.0065).toFixed(4);
+                dcTolerance.value = `${minTolerance} – ${maxTolerance}`;
+            }
+        }
+    }
+    
+    // AC Voltage calculation
+    const acSetting = document.querySelector('input[name="ac_uuc_setting"]');
+    const acMeasured = document.querySelector('input[name="ac_measured_value"]');
+    const acUncertainty = document.querySelector('input[name="ac_uncertainty"]');
+    const acTolerance = document.querySelector('input[name="ac_tolerance_limit"]');
+    
+    function calculateACUncertainty() {
+        if (acSetting && acMeasured && acUncertainty) {
+            const setting = parseFloat(acSetting.value) || 0;
+            const measured = parseFloat(acMeasured.value) || 0;
+            const uncertainty = measured - setting;
+            acUncertainty.value = uncertainty.toFixed(4);
+            
+            // Calculate tolerance limit
+            if (acTolerance) {
+                const minTolerance = (setting - 0.0020).toFixed(4);
+                const maxTolerance = (setting + 0.0020).toFixed(4);
+                acTolerance.value = `${minTolerance} – ${maxTolerance}`;
+            }
+        }
+    }
+    
+    // Resistance calculation
+    const resSetting = document.querySelector('input[name="res_uuc_setting"]');
+    const resMeasured = document.querySelector('input[name="res_measured_value"]');
+    const resUncertainty = document.querySelector('input[name="res_uncertainty"]');
+    const resTolerance = document.querySelector('input[name="res_tolerance_limit"]');
+    
+    function calculateResistanceUncertainty() {
+        if (resSetting && resMeasured && resUncertainty) {
+            const setting = parseFloat(resSetting.value) || 0;
+            const measured = parseFloat(resMeasured.value) || 0;
+            const uncertainty = measured - setting;
+            resUncertainty.value = uncertainty.toFixed(4);
+            
+            // Calculate tolerance limit
+            if (resTolerance) {
+                const minTolerance = (setting - 0.0033).toFixed(4);
+                const maxTolerance = (setting + 0.0033).toFixed(4);
+                resTolerance.value = `${minTolerance} – ${maxTolerance}`;
+            }
+        }
+    }
+    
+    // Add event listeners for all rows
+    // DC Voltage rows
+    for (let i = 1; i <= 5; i++) {
+        const dcSetting = document.querySelector(`input[name="dc_uuc_setting${i > 1 ? '_' + i : ''}"]`);
+        const dcMeasured = document.querySelector(`input[name="dc_measured_value${i > 1 ? '_' + i : ''}"]`);
+        const dcUncertainty = document.querySelector(`input[name="dc_uncertainty${i > 1 ? '_' + i : ''}"]`);
+        const dcTolerance = document.querySelector(`input[name="dc_tolerance_limit${i > 1 ? '_' + i : ''}"]`);
+        
+        if (dcSetting && dcMeasured) {
+            [dcSetting, dcMeasured].forEach(input => {
+                input.addEventListener('input', function() {
+                    calculateDCUncertaintyForRow(i);
+                });
+            });
+        }
+    }
+    
+    // AC Voltage rows
+    for (let i = 1; i <= 5; i++) {
+        const acSetting = document.querySelector(`input[name="ac_uuc_setting${i > 1 ? '_' + i : ''}"]`);
+        const acMeasured = document.querySelector(`input[name="ac_measured_value${i > 1 ? '_' + i : ''}"]`);
+        const acUncertainty = document.querySelector(`input[name="ac_uncertainty${i > 1 ? '_' + i : ''}"]`);
+        const acTolerance = document.querySelector(`input[name="ac_tolerance_limit${i > 1 ? '_' + i : ''}"]`);
+        
+        if (acSetting && acMeasured) {
+            [acSetting, acMeasured].forEach(input => {
+                input.addEventListener('input', function() {
+                    calculateACUncertaintyForRow(i);
+                });
+            });
+        }
+    }
+    
+    // Resistance rows
+    for (let i = 1; i <= 5; i++) {
+        const resSetting = document.querySelector(`input[name="res_uuc_setting${i > 1 ? '_' + i : ''}"]`);
+        const resMeasured = document.querySelector(`input[name="res_measured_value${i > 1 ? '_' + i : ''}"]`);
+        const resUncertainty = document.querySelector(`input[name="res_uncertainty${i > 1 ? '_' + i : ''}"]`);
+        const resTolerance = document.querySelector(`input[name="res_tolerance_limit${i > 1 ? '_' + i : ''}"]`);
+        
+        if (resSetting && resMeasured) {
+            [resSetting, resMeasured].forEach(input => {
+                input.addEventListener('input', function() {
+                    calculateResistanceUncertaintyForRow(i);
+                });
+            });
+        }
+    }
+    
+    // Helper functions for each row
+    function calculateDCUncertaintyForRow(rowNum) {
+        const dcSetting = document.querySelector(`input[name="dc_uuc_setting${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const dcMeasured = document.querySelector(`input[name="dc_measured_value${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const dcUncertainty = document.querySelector(`input[name="dc_uncertainty${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const dcTolerance = document.querySelector(`input[name="dc_tolerance_limit${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        
+        if (dcSetting && dcMeasured && dcUncertainty) {
+            const setting = parseFloat(dcSetting.value) || 0;
+            const measured = parseFloat(dcMeasured.value) || 0;
+            const uncertainty = measured - setting;
+            dcUncertainty.value = uncertainty.toFixed(4);
+            
+            if (dcTolerance) {
+                const minTolerance = (setting - 0.0065).toFixed(4);
+                const maxTolerance = (setting + 0.0065).toFixed(4);
+                dcTolerance.value = `${minTolerance} – ${maxTolerance}`;
+            }
+        }
+    }
+    
+    function calculateACUncertaintyForRow(rowNum) {
+        const acSetting = document.querySelector(`input[name="ac_uuc_setting${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const acMeasured = document.querySelector(`input[name="ac_measured_value${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const acUncertainty = document.querySelector(`input[name="ac_uncertainty${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const acTolerance = document.querySelector(`input[name="ac_tolerance_limit${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        
+        if (acSetting && acMeasured && acUncertainty) {
+            const setting = parseFloat(acSetting.value) || 0;
+            const measured = parseFloat(acMeasured.value) || 0;
+            const uncertainty = measured - setting;
+            acUncertainty.value = uncertainty.toFixed(4);
+            
+            if (acTolerance) {
+                const minTolerance = (setting - 0.0020).toFixed(4);
+                const maxTolerance = (setting + 0.0020).toFixed(4);
+                acTolerance.value = `${minTolerance} – ${maxTolerance}`;
+            }
+        }
+    }
+    
+    function calculateResistanceUncertaintyForRow(rowNum) {
+        const resSetting = document.querySelector(`input[name="res_uuc_setting${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const resMeasured = document.querySelector(`input[name="res_measured_value${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const resUncertainty = document.querySelector(`input[name="res_uncertainty${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        const resTolerance = document.querySelector(`input[name="res_tolerance_limit${rowNum > 1 ? '_' + rowNum : ''}"]`);
+        
+        if (resSetting && resMeasured && resUncertainty) {
+            const setting = parseFloat(resSetting.value) || 0;
+            const measured = parseFloat(resMeasured.value) || 0;
+            const uncertainty = measured - setting;
+            resUncertainty.value = uncertainty.toFixed(4);
+            
+            if (resTolerance) {
+                const minTolerance = (setting - 0.0033).toFixed(4);
+                const maxTolerance = (setting + 0.0033).toFixed(4);
+                resTolerance.value = `${minTolerance} – ${maxTolerance}`;
+            }
+        }
+    }
+
+    // ฟังก์ชันสำหรับเพิ่มเครื่องมือ
+    document.querySelectorAll('.add-equipment-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const container = document.getElementById('calibration-equipment-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-2 calibration-equipment-row';
+            newRow.innerHTML = `
+                <div class="col-md-10">
+                    <select name="std_id" class="form-control">
+                        <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                        {% for equipment in form.std_id.field.queryset %}
+                            <option value="{{ equipment.id }}">{{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+
+            // เพิ่ม event listener สำหรับปุ่มลบ
+            newRow.querySelector('.remove-equipment-btn').addEventListener('click', function() {
+                newRow.remove();
+            });
+        });
+    });
+});
+</script>
+
+<style>
+/* ซ่อนเฉพาะฟิลด์สถานะการสอบเทียบ */
+#id_status {
+    display: none !important;
+}
+
+label[for="id_status"] {
+    display: none !important;
+}
+
+/* ซ่อน div ที่มีฟิลด์ status */
+.col-md-3:has(#id_status) {
+    display: none !important;
+}
+</style>
+{% endblock %}

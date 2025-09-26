@@ -533,6 +533,7 @@ class HighFrequencyCalibration(models.Model):
     std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='high_frequency_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='high_frequency_certificates')
+    measurement_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="ช่วงการวัด")
     date_calibration = models.DateField(verbose_name="วันที่สอบเทียบ")
     update = models.DateTimeField(auto_now=True, verbose_name="วันที่อัปเดต")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
@@ -629,6 +630,7 @@ class LowFrequencyCalibration(models.Model):
     
     # ข้อมูลพื้นฐาน
     machine = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, verbose_name="เครื่องมือ Low Frequency")
+    measurement_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="ช่วงการวัด")
     std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='low_frequency_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='low_frequency_certificates')
@@ -645,9 +647,31 @@ class LowFrequencyCalibration(models.Model):
     dc_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC)")
     dc_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC)")
     dc_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC)")
-    dc_error = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (DC)")
-    dc_pass_fail = models.CharField(max_length=10, blank=True, null=True, verbose_name="Pass/Fail (DC)")
-    dc_remarks = models.TextField(blank=True, null=True, verbose_name="Remarks (DC)")
+    
+    # DC VOLTAGE แถว 2-5
+    dc_uuc_range_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (DC) 2")
+    dc_uuc_setting_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (DC) 2")
+    dc_measured_value_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC) 2")
+    dc_uncertainty_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC) 2")
+    dc_tolerance_limit_2 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC) 2")
+    
+    dc_uuc_range_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (DC) 3")
+    dc_uuc_setting_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (DC) 3")
+    dc_measured_value_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC) 3")
+    dc_uncertainty_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC) 3")
+    dc_tolerance_limit_3 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC) 3")
+    
+    dc_uuc_range_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (DC) 4")
+    dc_uuc_setting_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (DC) 4")
+    dc_measured_value_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC) 4")
+    dc_uncertainty_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC) 4")
+    dc_tolerance_limit_4 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC) 4")
+    
+    dc_uuc_range_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (DC) 5")
+    dc_uuc_setting_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (DC) 5")
+    dc_measured_value_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC) 5")
+    dc_uncertainty_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC) 5")
+    dc_tolerance_limit_5 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC) 5")
     
     # 2. AC VOLTAGE
     ac_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (AC)")
@@ -655,9 +679,31 @@ class LowFrequencyCalibration(models.Model):
     ac_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (AC)")
     ac_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (AC)")
     ac_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (AC)")
-    ac_error = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (AC)")
-    ac_pass_fail = models.CharField(max_length=10, blank=True, null=True, verbose_name="Pass/Fail (AC)")
-    ac_remarks = models.TextField(blank=True, null=True, verbose_name="Remarks (AC)")
+    
+    # AC VOLTAGE แถว 2-5
+    ac_uuc_range_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (AC) 2")
+    ac_uuc_setting_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (AC) 2")
+    ac_measured_value_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (AC) 2")
+    ac_uncertainty_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (AC) 2")
+    ac_tolerance_limit_2 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (AC) 2")
+    
+    ac_uuc_range_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (AC) 3")
+    ac_uuc_setting_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (AC) 3")
+    ac_measured_value_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (AC) 3")
+    ac_uncertainty_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (AC) 3")
+    ac_tolerance_limit_3 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (AC) 3")
+    
+    ac_uuc_range_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (AC) 4")
+    ac_uuc_setting_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (AC) 4")
+    ac_measured_value_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (AC) 4")
+    ac_uncertainty_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (AC) 4")
+    ac_tolerance_limit_4 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (AC) 4")
+    
+    ac_uuc_range_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (AC) 5")
+    ac_uuc_setting_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (AC) 5")
+    ac_measured_value_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (AC) 5")
+    ac_uncertainty_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (AC) 5")
+    ac_tolerance_limit_5 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (AC) 5")
     
     # 3. RESISTANCE
     res_uuc_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Resistance)")
@@ -665,9 +711,31 @@ class LowFrequencyCalibration(models.Model):
     res_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (Resistance)")
     res_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (Resistance)")
     res_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (Resistance)")
-    res_error = models.CharField(max_length=50, blank=True, null=True, verbose_name="Error (Resistance)")
-    res_pass_fail = models.CharField(max_length=10, blank=True, null=True, verbose_name="Pass/Fail (Resistance)")
-    res_remarks = models.TextField(blank=True, null=True, verbose_name="Remarks (Resistance)")
+    
+    # RESISTANCE แถว 2-5
+    res_uuc_range_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Resistance) 2")
+    res_uuc_setting_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (Resistance) 2")
+    res_measured_value_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (Resistance) 2")
+    res_uncertainty_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (Resistance) 2")
+    res_tolerance_limit_2 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (Resistance) 2")
+    
+    res_uuc_range_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Resistance) 3")
+    res_uuc_setting_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (Resistance) 3")
+    res_measured_value_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (Resistance) 3")
+    res_uncertainty_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (Resistance) 3")
+    res_tolerance_limit_3 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (Resistance) 3")
+    
+    res_uuc_range_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Resistance) 4")
+    res_uuc_setting_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (Resistance) 4")
+    res_measured_value_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (Resistance) 4")
+    res_uncertainty_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (Resistance) 4")
+    res_tolerance_limit_4 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (Resistance) 4")
+    
+    res_uuc_range_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (Resistance) 5")
+    res_uuc_setting_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (Resistance) 5")
+    res_measured_value_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (Resistance) 5")
+    res_uncertainty_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (Resistance) 5")
+    res_tolerance_limit_5 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (Resistance) 5")
     
     def __str__(self):
         return f"Low Frequency Calibration - {self.machine.name}"
@@ -715,6 +783,31 @@ class MicrowaveCalibration(models.Model):
     dc_measured_value = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC)")
     dc_uncertainty = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC)")
     dc_tolerance_limit = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC)")
+    
+    # DC VOLTAGE แถว 2-5
+    dc_uuc_range_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (DC) 2")
+    dc_uuc_setting_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (DC) 2")
+    dc_measured_value_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC) 2")
+    dc_uncertainty_2 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC) 2")
+    dc_tolerance_limit_2 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC) 2")
+    
+    dc_uuc_range_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (DC) 3")
+    dc_uuc_setting_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (DC) 3")
+    dc_measured_value_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC) 3")
+    dc_uncertainty_3 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC) 3")
+    dc_tolerance_limit_3 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC) 3")
+    
+    dc_uuc_range_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (DC) 4")
+    dc_uuc_setting_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (DC) 4")
+    dc_measured_value_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC) 4")
+    dc_uncertainty_4 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC) 4")
+    dc_tolerance_limit_4 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC) 4")
+    
+    dc_uuc_range_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Range (DC) 5")
+    dc_uuc_setting_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="UUC Setting (DC) 5")
+    dc_measured_value_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Measured Value (DC) 5")
+    dc_uncertainty_5 = models.CharField(max_length=50, blank=True, null=True, verbose_name="Uncertainty (±) (DC) 5")
+    dc_tolerance_limit_5 = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tolerance Limit (DC) 5")
     
     def __str__(self):
         return f"Microwave Calibration - {self.machine.name} ({self.date_calibration})"
