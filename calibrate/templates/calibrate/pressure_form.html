@@ -201,9 +201,9 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {{ form.avg }}
-                                        {% if form.avg.errors %}
-                                            <div class="text-danger small">{{ form.avg.errors.0 }}</div>
+                                        {{ form.actual }}
+                                        {% if form.actual.errors %}
+                                            <div class="text-danger small">{{ form.actual.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -240,9 +240,9 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="avg_2" class="form-control" step="0.01" value="{{ form.avg_2.value|default:'' }}">
-                                        {% if form.avg_2.errors %}
-                                            <div class="text-danger small">{{ form.avg_2.errors.0 }}</div>
+                                        <input type="number" name="actual_2" class="form-control" step="0.01" value="{{ form.actual_2.value|default:'' }}">
+                                        {% if form.actual_2.errors %}
+                                            <div class="text-danger small">{{ form.actual_2.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -273,9 +273,9 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="avg_3" class="form-control" step="0.01" value="{{ form.avg_3.value|default:'' }}">
-                                        {% if form.avg_3.errors %}
-                                            <div class="text-danger small">{{ form.avg_3.errors.0 }}</div>
+                                        <input type="number" name="actual_3" class="form-control" step="0.01" value="{{ form.actual_3.value|default:'' }}">
+                                        {% if form.actual_3.errors %}
+                                            <div class="text-danger small">{{ form.actual_3.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -306,9 +306,9 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="avg_4" class="form-control" step="0.01" value="{{ form.avg_4.value|default:'' }}">
-                                        {% if form.avg_4.errors %}
-                                            <div class="text-danger small">{{ form.avg_4.errors.0 }}</div>
+                                        <input type="number" name="actual_4" class="form-control" step="0.01" value="{{ form.actual_4.value|default:'' }}">
+                                        {% if form.actual_4.errors %}
+                                            <div class="text-danger small">{{ form.actual_4.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -339,9 +339,9 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="avg_5" class="form-control" step="0.01" value="{{ form.avg_5.value|default:'' }}">
-                                        {% if form.avg_5.errors %}
-                                            <div class="text-danger small">{{ form.avg_5.errors.0 }}</div>
+                                        <input type="number" name="actual_5" class="form-control" step="0.01" value="{{ form.actual_5.value|default:'' }}">
+                                        {% if form.actual_5.errors %}
+                                            <div class="text-danger small">{{ form.actual_5.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -372,9 +372,9 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <input type="number" name="avg_6" class="form-control" step="0.01" value="{{ form.avg_6.value|default:'' }}">
-                                        {% if form.avg_6.errors %}
-                                            <div class="text-danger small">{{ form.avg_6.errors.0 }}</div>
+                                        <input type="number" name="actual_6" class="form-control" step="0.01" value="{{ form.actual_6.value|default:'' }}">
+                                        {% if form.actual_6.errors %}
+                                            <div class="text-danger small">{{ form.actual_6.errors.0 }}</div>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -550,4 +550,62 @@ label[for="id_status"] {
     display: none !important;
 }
 </style>
+
+<script>
+// JavaScript สำหรับคำนวณ Error และ Tolerance สำหรับ Pressure
+document.addEventListener('DOMContentLoaded', function() {
+    // หาตาราง Pressure Verification
+    const pressureTable = document.querySelector('table.table-bordered');
+    if (!pressureTable) return;
+    
+    const pressureRows = pressureTable.querySelectorAll('tbody tr');
+    
+    pressureRows.forEach((row, rowIndex) => {
+        const uucSetInput = row.querySelector('input[name^="set"]');
+        const actualInput = row.querySelector('input[name*="actual"]');
+        const errorInput = row.querySelector('input[name^="error"]');
+        const toleranceStartInput = row.querySelector('input[name^="tolerance_start"]');
+        const toleranceEndInput = row.querySelector('input[name^="tolerance_end"]');
+        
+        // ฟังก์ชันคำนวณ Error (Actual - UUC Set)
+        function calculateError() {
+            if (uucSetInput && actualInput) {
+                const uucSet = parseFloat(uucSetInput.value) || 0;
+                const actual = parseFloat(actualInput.value) || 0;
+                const error = actual - uucSet;
+                if (errorInput) {
+                    errorInput.value = error.toFixed(1);
+                }
+            }
+        }
+        
+        // ฟังก์ชันคำนวณ Tolerance (UUC Set ± 3)
+        function calculateTolerance() {
+            if (uucSetInput) {
+                const uucSet = parseFloat(uucSetInput.value) || 0;
+                const minValue = (uucSet - 3).toFixed(1);
+                const maxValue = (uucSet + 3).toFixed(1);
+                if (toleranceStartInput) {
+                    toleranceStartInput.value = minValue;
+                }
+                if (toleranceEndInput) {
+                    toleranceEndInput.value = maxValue;
+                }
+            }
+        }
+        
+        // เพิ่ม event listener
+        if (uucSetInput) {
+            uucSetInput.addEventListener('input', () => {
+                calculateError();
+                calculateTolerance();
+            });
+        }
+        
+        if (actualInput) {
+            actualInput.addEventListener('input', calculateError);
+        }
+    });
+});
+</script>
 {% endblock %} 

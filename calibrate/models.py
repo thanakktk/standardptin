@@ -27,6 +27,7 @@ class CalibrationPressure(models.Model):
     m3 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3")
     m4 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4")
     avg = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย")
+    actual = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง")
     error = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (Error)")
     
     # แถวเพิ่มเติม
@@ -36,6 +37,7 @@ class CalibrationPressure(models.Model):
     m3_2 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3 (แถว 2)")
     m4_2 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4 (แถว 2)")
     avg_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย (แถว 2)")
+    actual_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง (แถว 2)")
     error_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (แถว 2)")
     
     set_3 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าตั้งต้น (แถว 3)")
@@ -44,6 +46,7 @@ class CalibrationPressure(models.Model):
     m3_3 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3 (แถว 3)")
     m4_3 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4 (แถว 3)")
     avg_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย (แถว 3)")
+    actual_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง (แถว 3)")
     error_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (แถว 3)")
     
     set_4 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าตั้งต้น (แถว 4)")
@@ -52,6 +55,7 @@ class CalibrationPressure(models.Model):
     m3_4 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3 (แถว 4)")
     m4_4 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4 (แถว 4)")
     avg_4 = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย (แถว 4)")
+    actual_4 = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง (แถว 4)")
     error_4 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (แถว 4)")
     
     set_5 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าตั้งต้น (แถว 5)")
@@ -60,6 +64,7 @@ class CalibrationPressure(models.Model):
     m3_5 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3 (แถว 5)")
     m4_5 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4 (แถว 5)")
     avg_5 = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย (แถว 5)")
+    actual_5 = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง (แถว 5)")
     error_5 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (แถว 5)")
     
     set_6 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าตั้งต้น (แถว 6)")
@@ -68,6 +73,7 @@ class CalibrationPressure(models.Model):
     m3_6 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 3 (แถว 6)")
     m4_6 = models.CharField(max_length=10, blank=True, null=True, verbose_name="ค่าที่ 4 (แถว 6)")
     avg_6 = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย (แถว 6)")
+    actual_6 = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง (แถว 6)")
     error_6 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน (แถว 6)")
     uncer = models.FloatField(blank=True, null=True, verbose_name="ค่าความไม่แน่นอน (Uncertainty)")
     tolerance_start = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น")
@@ -128,7 +134,8 @@ class CalibrationTorque(models.Model):
         ('very_urgent', 'ด่วนมาก'),
     ]
     
-    cal_torque_id = models.AutoField(primary_key=True, verbose_name="รหัสการสอบเทียบแรงบิด")
+    cal_torque_id = models.AutoField(primary_key=True, verbose_name="รหัสการสอบเทียบ Torque")
+    measurement_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="ช่วงการวัด")
     cwset = models.FloatField(blank=True, null=True, verbose_name="ตั้งค่า CW")
     cw0 = models.FloatField(blank=True, null=True, verbose_name="CW 0 องศา")
     cw90 = models.FloatField(blank=True, null=True, verbose_name="CW 90 องศา")
@@ -136,6 +143,7 @@ class CalibrationTorque(models.Model):
     cw270 = models.FloatField(blank=True, null=True, verbose_name="CW 270 องศา")
     cw_reading = models.FloatField(blank=True, null=True, verbose_name="ค่าอ่าน CW")
     cw_avg = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย CW")
+    cw_actual = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง CW")
     cw_error = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน CW")
     cw_uncen = models.FloatField(blank=True, null=True, verbose_name="ค่าความไม่แน่นอน CW")
     cw_tolerance_start = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น CW")
@@ -147,10 +155,36 @@ class CalibrationTorque(models.Model):
     ccw270 = models.FloatField(blank=True, null=True, verbose_name="CCW 270 องศา")
     ccw_reading = models.FloatField(blank=True, null=True, verbose_name="ค่าอ่าน CCW")
     ccw_avg = models.FloatField(blank=True, null=True, verbose_name="ค่าเฉลี่ย CCW")
+    ccw_actual = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง CCW")
     ccw_error = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน CCW")
     ccw_uncen = models.FloatField(blank=True, null=True, verbose_name="ค่าความไม่แน่นอน CCW")
     ccw_tolerance_start = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น CCW")
     ccw_tolerance_end = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด CCW")
+    
+    # ฟิลด์สำหรับแถวที่ 2
+    cwset_2 = models.FloatField(blank=True, null=True, verbose_name="ตั้งค่า CW 2")
+    cw_actual_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง CW 2")
+    cw_error_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน CW 2")
+    cw_tolerance_start_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น CW 2")
+    cw_tolerance_end_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด CW 2")
+    ccwset_2 = models.FloatField(blank=True, null=True, verbose_name="ตั้งค่า CCW 2")
+    ccw_actual_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง CCW 2")
+    ccw_error_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน CCW 2")
+    ccw_tolerance_start_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น CCW 2")
+    ccw_tolerance_end_2 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด CCW 2")
+    
+    # ฟิลด์สำหรับแถวที่ 3
+    cwset_3 = models.FloatField(blank=True, null=True, verbose_name="ตั้งค่า CW 3")
+    cw_actual_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง CW 3")
+    cw_error_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน CW 3")
+    cw_tolerance_start_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น CW 3")
+    cw_tolerance_end_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด CW 3")
+    ccwset_3 = models.FloatField(blank=True, null=True, verbose_name="ตั้งค่า CCW 3")
+    ccw_actual_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าจริง CCW 3")
+    ccw_error_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อน CCW 3")
+    ccw_tolerance_start_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนเริ่มต้น CCW 3")
+    ccw_tolerance_end_3 = models.FloatField(blank=True, null=True, verbose_name="ค่าความคลาดเคลื่อนสิ้นสุด CCW 3")
+    
     update = models.DateField(blank=True, null=True, verbose_name="วันที่สอบเทียบ")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_set', verbose_name="สถานะปรับเเทียบ")
@@ -162,8 +196,8 @@ class CalibrationTorque(models.Model):
     certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
 
     class Meta:
-        verbose_name = "ข้อมูลสอบเทียบแรงบิด"
-        verbose_name_plural = "ข้อมูลสอบเทียบแรงบิด"
+        verbose_name = "ข้อมูลสอบเทียบ Torque"
+        verbose_name_plural = "ข้อมูลสอบเทียบ Torque"
     
     def calculate_cw_average(self):
         """คำนวณค่าเฉลี่ย CW จาก cw0, cw90, cw180, cw270"""
@@ -238,6 +272,7 @@ class DialGaugeCalibration(models.Model):
     
     # ข้อมูลพื้นฐาน
     machine = models.ForeignKey('machine.Machine', on_delete=models.CASCADE, verbose_name="เครื่องมือ Dial Gauge")
+    measurement_range = models.CharField(max_length=50, blank=True, null=True, verbose_name="ช่วงการวัด")
     std_id = models.ForeignKey('machine.CalibrationEquipment', on_delete=models.CASCADE, blank=True, null=True, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
     calibrator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้สอบเทียบ", related_name='dial_gauge_calibrations')
     certificate_issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="ผู้ออกใบรับรอง", related_name='dial_gauge_certificates')

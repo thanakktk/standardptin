@@ -8,12 +8,12 @@ from std.models import Standard
 class CalibrationPressureForm(forms.ModelForm):
     class Meta:
         model = CalibrationPressure
-        fields = ['measurement_range', 'set', 'm1', 'm2', 'm3', 'm4', 'avg', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
-                 'set_2', 'm1_2', 'm2_2', 'm3_2', 'm4_2', 'avg_2', 'error_2',
-                 'set_3', 'm1_3', 'm2_3', 'm3_3', 'm4_3', 'avg_3', 'error_3',
-                 'set_4', 'm1_4', 'm2_4', 'm3_4', 'm4_4', 'avg_4', 'error_4',
-                 'set_5', 'm1_5', 'm2_5', 'm3_5', 'm4_5', 'avg_5', 'error_5',
-                 'set_6', 'm1_6', 'm2_6', 'm3_6', 'm4_6', 'avg_6', 'error_6']
+        fields = ['measurement_range', 'set', 'm1', 'm2', 'm3', 'm4', 'avg', 'actual', 'error', 'tolerance_start', 'tolerance_end', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
+                 'set_2', 'm1_2', 'm2_2', 'm3_2', 'm4_2', 'avg_2', 'actual_2', 'error_2',
+                 'set_3', 'm1_3', 'm2_3', 'm3_3', 'm4_3', 'avg_3', 'actual_3', 'error_3',
+                 'set_4', 'm1_4', 'm2_4', 'm3_4', 'm4_4', 'avg_4', 'actual_4', 'error_4',
+                 'set_5', 'm1_5', 'm2_5', 'm3_5', 'm4_5', 'avg_5', 'actual_5', 'error_5',
+                 'set_6', 'm1_6', 'm2_6', 'm3_6', 'm4_6', 'avg_6', 'actual_6', 'error_6']
         widgets = {
             'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 bar'}),
             'set': forms.TextInput(attrs={'class': 'form-control'}),
@@ -22,6 +22,7 @@ class CalibrationPressureForm(forms.ModelForm):
             'm3': forms.TextInput(attrs={'class': 'form-control'}),
             'm4': forms.TextInput(attrs={'class': 'form-control'}),
             'avg': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'actual': forms.NumberInput(attrs={'class': 'form-control'}),
             'error': forms.NumberInput(attrs={'class': 'form-control'}),
             'tolerance_start': forms.NumberInput(attrs={'class': 'form-control'}),
             'tolerance_end': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -50,8 +51,15 @@ class CalibrationPressureForm(forms.ModelForm):
 class CalibrationTorqueForm(forms.ModelForm):
     class Meta:
         model = CalibrationTorque
-        fields = ['cwset', 'cw0', 'cw90', 'cw180', 'cw270', 'cw_reading', 'cw_avg', 'cw_error', 'cw_tolerance_start', 'cw_tolerance_end', 'ccwset', 'ccw0', 'ccw90', 'ccw180', 'ccw270', 'ccw_reading', 'ccw_avg', 'ccw_error', 'ccw_tolerance_start', 'ccw_tolerance_end', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number']
+        fields = ['measurement_range', 'cwset', 'cw0', 'cw90', 'cw180', 'cw270', 'cw_reading', 'cw_avg', 'cw_actual', 'cw_error', 'cw_tolerance_start', 'cw_tolerance_end', 
+                 'ccwset', 'ccw0', 'ccw90', 'ccw180', 'ccw270', 'ccw_reading', 'ccw_avg', 'ccw_actual', 'ccw_error', 'ccw_tolerance_start', 'ccw_tolerance_end',
+                 'cwset_2', 'cw_actual_2', 'cw_error_2', 'cw_tolerance_start_2', 'cw_tolerance_end_2',
+                 'ccwset_2', 'ccw_actual_2', 'ccw_error_2', 'ccw_tolerance_start_2', 'ccw_tolerance_end_2',
+                 'cwset_3', 'cw_actual_3', 'cw_error_3', 'cw_tolerance_start_3', 'cw_tolerance_end_3',
+                 'ccwset_3', 'ccw_actual_3', 'ccw_error_3', 'ccw_tolerance_start_3', 'ccw_tolerance_end_3',
+                 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number']
         widgets = {
+            'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 bar'}),
             'cwset': forms.NumberInput(attrs={'class': 'form-control'}),
             'cw0': forms.NumberInput(attrs={'class': 'form-control'}),
             'cw90': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -59,6 +67,7 @@ class CalibrationTorqueForm(forms.ModelForm):
             'cw270': forms.NumberInput(attrs={'class': 'form-control'}),
             'cw_reading': forms.NumberInput(attrs={'class': 'form-control'}),
             'cw_avg': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'cw_actual': forms.NumberInput(attrs={'class': 'form-control'}),
             'cw_error': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'cw_tolerance_start': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'cw_tolerance_end': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
@@ -69,9 +78,32 @@ class CalibrationTorqueForm(forms.ModelForm):
             'ccw270': forms.NumberInput(attrs={'class': 'form-control'}),
             'ccw_reading': forms.NumberInput(attrs={'class': 'form-control'}),
             'ccw_avg': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'ccw_actual': forms.NumberInput(attrs={'class': 'form-control'}),
             'ccw_error': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'ccw_tolerance_start': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'ccw_tolerance_end': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            # ฟิลด์สำหรับแถวที่ 2
+            'cwset_2': forms.NumberInput(attrs={'class': 'form-control'}),
+            'cw_actual_2': forms.NumberInput(attrs={'class': 'form-control'}),
+            'cw_error_2': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'cw_tolerance_start_2': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'cw_tolerance_end_2': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'ccwset_2': forms.NumberInput(attrs={'class': 'form-control'}),
+            'ccw_actual_2': forms.NumberInput(attrs={'class': 'form-control'}),
+            'ccw_error_2': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'ccw_tolerance_start_2': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'ccw_tolerance_end_2': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            # ฟิลด์สำหรับแถวที่ 3
+            'cwset_3': forms.NumberInput(attrs={'class': 'form-control'}),
+            'cw_actual_3': forms.NumberInput(attrs={'class': 'form-control'}),
+            'cw_error_3': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'cw_tolerance_start_3': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'cw_tolerance_end_3': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'ccwset_3': forms.NumberInput(attrs={'class': 'form-control'}),
+            'ccw_actual_3': forms.NumberInput(attrs={'class': 'form-control'}),
+            'ccw_error_3': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'ccw_tolerance_start_3': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'ccw_tolerance_end_3': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),

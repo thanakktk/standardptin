@@ -87,7 +87,7 @@
                             <label class="form-label">
                                 <i class="fas fa-ruler me-1"></i>ช่วงการวัด
                             </label>
-                            <input type="text" class="form-control" value="{{ object.machine.range|default:'-' }}" readonly>
+                            <input type="text" class="form-control" name="measurement_range" value="{{ object.machine.range|default:'' }}" placeholder="เช่น 0-100 bar">
                         </div>
                         <div class="col-md-3">
                             <label for="{{ form.date_calibration.id_for_label }}" class="form-label">

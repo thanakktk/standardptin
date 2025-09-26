@@ -100,7 +100,7 @@
                                     <div class="col-md-3">
                                         <div class="mb-3">
                                             <label class="form-label">ช่วงการวัด</label>
-                                            <input type="text" class="form-control" value="{{ object.machine.range|default:'-' }}" readonly>
+                                            <input type="text" class="form-control" name="measurement_range" value="{{ object.machine.range|default:'' }}" placeholder="เช่น 0-100 bar">
                                         </div>
                                     </div>
                                     <div class="col-md-3">

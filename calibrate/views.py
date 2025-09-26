@@ -320,7 +320,7 @@ def calibration_dashboard(request):
         all_calibrations.append({
             'id': cal.cal_torque_id,
             'type': 'torque',
-            'type_name': 'การสอบเทียบแรงบิด',
+            'type_name': 'การสอบเทียบ Torque',
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
@@ -1224,7 +1224,7 @@ def calibration_report(request):
         all_calibrations.append({
             'id': cal.cal_torque_id,
             'type': 'torque',
-            'type_name': 'การสอบเทียบแรงบิด',
+            'type_name': 'การสอบเทียบ Torque',
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
@@ -1356,7 +1356,7 @@ def calibration_report_detail(request):
         all_calibrations.append({
             'id': cal.cal_torque_id,
             'type': 'torque',
-            'type_name': 'การสอบเทียบแรงบิด',
+            'type_name': 'การสอบเทียบ Torque',
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
@@ -1548,7 +1548,7 @@ def export_to_word(request):
         all_calibrations.append({
             'id': cal.cal_torque_id,
             'type': 'torque',
-            'type_name': 'การสอบเทียบแรงบิด',
+            'type_name': 'การสอบเทียบ Torque',
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
@@ -1803,7 +1803,7 @@ def export_to_excel(request):
         all_calibrations.append({
             'id': cal.cal_torque_id,
             'type': 'torque',
-            'type_name': 'การสอบเทียบแรงบิด',
+            'type_name': 'การสอบเทียบ Torque',
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',

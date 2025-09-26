@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}รายการบันทึกการสอบเทียบแรงบิด - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+{% block title %}รายการบันทึกการสอบเทียบ Torque - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
@@ -10,10 +10,10 @@
             <div class="col-md-8">
                 <h1 class="page-title">
                     <i class="fas fa-cog me-3"></i>
-                    รายการบันทึกการสอบเทียบแรงบิด (Torque)
+                    รายการบันทึกการสอบเทียบ Torque
                 </h1>
                 <p class="page-subtitle">
-                    จัดการข้อมูลการสอบเทียบเครื่องมือวัดแรงบิด
+                    จัดการข้อมูลการสอบเทียบเครื่องมือวัด Torque
                 </p>
             </div>
             <div class="col-md-4 text-md-end">
@@ -32,7 +32,7 @@
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-table me-2"></i>
-                รายการบันทึกการสอบเทียบแรงบิด ({{ calibrations.count }} รายการ)
+                รายการบันทึกการสอบเทียบ Torque ({{ calibrations.count }} รายการ)
             </h5>
         </div>
         <div class="card-body">
@@ -134,7 +134,7 @@
                             <td colspan="9" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="fas fa-info-circle fa-3x mb-3"></i>
-                                    <h5>ไม่พบข้อมูลการสอบเทียบแรงบิด</h5>
+                                    <h5>ไม่พบข้อมูลการสอบเทียบ Torque</h5>
                                     <p>กรุณาเพิ่มบันทึกการสอบเทียบใหม่</p>
                                     <a href="{% url 'calibrate-torque-add' %}" class="btn btn-primary">
                                         <i class="fas fa-plus me-2"></i>เพิ่มบันทึกการสอบเทียบ
@@ -179,8 +179,8 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center">
                     <i class="fas fa-cog fa-2x text-warning mb-2"></i>
-                    <h6>บันทึกการสอบเทียบแรงบิด</h6>
-                    <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัดแรงบิด</p>
+                    <h6>บันทึกการสอบเทียบ Torque</h6>
+                    <p class="text-muted small">จัดการข้อมูลการสอบเทียบเครื่องมือวัด Torque</p>
                     <a href="{% url 'calibrate-torque-add' %}" class="btn btn-outline-warning btn-sm">
                         <i class="fas fa-plus me-1"></i>เพิ่มใหม่
                     </a>
