@@ -11,6 +11,7 @@ from .views import (
     select_machine_for_calibration, create_calibration_with_machine, calibration_report, calibration_report_detail, export_to_word, export_to_excel,
     increase_priority, close_work, export_certificate_excel, export_balance_certificate_docx
 )
+from .views_pressure_new import CalibrationPressureUpdateViewNew
 
 urlpatterns = [
     # หน้าหลักการสอบเทียบ
@@ -37,6 +38,7 @@ urlpatterns = [
     path('pressure/', CalibrationPressureListView.as_view(), name='calibrate-pressure-list'),
     path('pressure/add/', CalibrationPressureCreateView.as_view(), name='calibrate-pressure-add'),
     path('pressure/<int:pk>/edit/', CalibrationPressureUpdateView.as_view(), name='calibrate-pressure-edit'),
+    path('pressure/<int:pk>/edit-new/', CalibrationPressureUpdateViewNew.as_view(), name='calibrate-pressure-edit-new'),
     path('pressure/<int:pk>/delete/', CalibrationPressureDeleteView.as_view(), name='calibrate-pressure-delete'),
 
     path('torque/', CalibrationTorqueListView.as_view(), name='calibrate-torque-list'),

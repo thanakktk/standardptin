@@ -74,39 +74,94 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         return form
     
     def form_valid(self, form):
-        # บันทึกข้อมูลการสอบเทียบ
-        form.save()
+        print("=== DEBUG: ก่อนบันทึก Pressure ===")
+        print(f"POST data: {dict(self.request.POST)}")
         
-        # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
-        selected_equipment = self.request.POST.get('selected_equipment', '')
-        if selected_equipment:
-            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session
-            self.request.session['selected_equipment'] = selected_equipment
-            print(f"=== DEBUG: Selected equipment: {selected_equipment}")
+        # ตรวจสอบ form errors
+        if form.errors:
+            print(f"❌ Form errors: {form.errors}")
+            return self.form_invalid(form)
         
-        # จัดการข้อมูลเครื่องมือจาก form fields
+        # ดูข้อมูลเครื่องมือก่อนบันทึก
+        from calibrate.models import CalibrationEquipmentUsed
+        old_equipment = CalibrationEquipmentUsed.objects.filter(
+            calibration_type='pressure',
+            calibration_id=self.object.cal_pressure_id if self.object else None
+        )
+        print(f"เครื่องมือเก่าที่มีอยู่: {list(old_equipment.values('equipment__name', 'equipment__id'))}")
+        
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.cal_pressure_id}")
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            return self.form_invalid(form)
+        
+        # รวบรวมเครื่องมือทั้งหมดที่จะบันทึก (เหมือน Low Frequency)
         equipment_ids = []
+        
+        # 1. จัดการข้อมูลเครื่องมือจาก selected_equipment
+        selected_equipment = self.request.POST.get('selected_equipment', '')
+        print(f"=== DEBUG: selected_equipment = '{selected_equipment}'")
+        if selected_equipment:
+            equipment_ids.extend([eid.strip() for eid in selected_equipment.split(',') if eid.strip()])
+        
+        # 2. จัดการข้อมูลเครื่องมือจาก form field หลัก (std_id)
+        std_id_value = self.request.POST.get('std_id', '')
+        if std_id_value:
+            equipment_ids.append(std_id_value)
+        
+        # 3. จัดการข้อมูลเครื่องมือจาก form fields (std_id_*)
         for key, value in self.request.POST.items():
-            if key.startswith('std_id_') and value:
+            if key.startswith('std_id_') and value and not key.startswith('std_id_existing_'):
                 equipment_ids.append(value)
         
-        if equipment_ids:
-            # บันทึกข้อมูลเครื่องมือใน database
-            from machine.models import Machine
-            equipment_objects = Machine.objects.filter(id__in=equipment_ids)
-            print(f"=== DEBUG: Equipment objects: {list(equipment_objects.values('id', 'name'))}")
-            
-            # เก็บข้อมูลใน session สำหรับ export
-            self.request.session['calibration_equipment'] = list(equipment_objects.values('id', 'name', 'model', 'serial_number'))
+        # 4. จัดการข้อมูลเครื่องมือที่มีอยู่แล้ว (std_id_existing_*)
+        for key, value in self.request.POST.items():
+            if key.startswith('std_id_existing_') and value:
+                equipment_ids.append(value)
+        
+        print(f"=== DEBUG: Final equipment_ids = {equipment_ids}")
+        
+        # ลบเครื่องมือเก่าทั้งหมด
+        from calibrate.models import CalibrationEquipmentUsed
+        CalibrationEquipmentUsed.objects.filter(
+            calibration_type='pressure',
+            calibration_id=calibration.cal_pressure_id
+        ).delete()
+        
+        # บันทึกเครื่องมือใหม่ทั้งหมด
+        for equipment_id in equipment_ids:
+            try:
+                from machine.models import CalibrationEquipment
+                equipment = CalibrationEquipment.objects.get(id=equipment_id)
+                CalibrationEquipmentUsed.objects.create(
+                    calibration_type='pressure',
+                    calibration_id=calibration.cal_pressure_id,
+                    equipment=equipment
+                )
+                print(f"=== DEBUG: Saved equipment {equipment.name} (ID: {equipment_id})")
+            except CalibrationEquipment.DoesNotExist:
+                print(f"=== DEBUG: Equipment ID {equipment_id} not found")
+                continue
+        
+        # ดูข้อมูลเครื่องมือหลังบันทึก
+        new_equipment = CalibrationEquipmentUsed.objects.filter(
+            calibration_type='pressure',
+            calibration_id=calibration.cal_pressure_id
+        )
+        print(f"เครื่องมือใหม่ที่บันทึกแล้ว: {list(new_equipment.values('equipment__name', 'equipment__id'))}")
+        print("=== DEBUG: หลังบันทึก Pressure ===")
         
         # ตรวจสอบสถานะอัตโนมัติ
-        self.auto_check_status(form.instance)
+        self.auto_check_status(calibration)
         
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Pressure เรียบร้อยแล้ว')
         
-        # ใช้ super().form_valid เหมือน Low Frequency ที่ทำงานได้
+        # ให้ Django จัดการ redirect ตาม success_url (เหมือน Low Frequency)
         return super().form_valid(form)
     
     def auto_check_status(self, calibration):
@@ -331,24 +386,75 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         form.fields['certificate_issuer'].queryset = users
         return form
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # เพิ่มข้อมูลเครื่องมือที่ใช้ในการสอบเทียบนี้
+        if self.object:
+            from calibrate.models import CalibrationEquipmentUsed
+            used_equipment = CalibrationEquipmentUsed.objects.filter(
+                calibration_type='balance',
+                calibration_id=self.object.pk
+            ).select_related('equipment')
+            context['used_equipment'] = used_equipment
+        return context
+    
     def form_valid(self, form):
-        # บันทึกข้อมูลการสอบเทียบ
-        form.save()
+        print("=== DEBUG: ก่อนบันทึก Balance ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        
+        # ตรวจสอบ form errors
+        if form.errors:
+            print(f"❌ Form errors: {form.errors}")
+            return self.form_invalid(form)
+        
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.pk}")
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            return self.form_invalid(form)
         
         # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
         selected_equipment = self.request.POST.get('selected_equipment', '')
         if selected_equipment:
-            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
-            self.request.session['selected_equipment'] = selected_equipment
+            print(f"Selected equipment: {selected_equipment}")
+            # ลบข้อมูลเครื่องมือเก่าที่เกี่ยวข้องกับการสอบเทียบนี้
+            from calibrate.models import CalibrationEquipmentUsed
+            CalibrationEquipmentUsed.objects.filter(
+                calibration_type='balance',
+                calibration_id=calibration.pk
+            ).delete()
+            
+            # เพิ่มข้อมูลเครื่องมือใหม่ (ใช้ set เพื่อหลีกเลี่ยงการซ้ำ)
+            equipment_ids = set()
+            for eid in selected_equipment.split(','):
+                eid = eid.strip()
+                if eid:
+                    equipment_ids.add(eid)
+            
+            for equipment_id in equipment_ids:
+                try:
+                    from machine.models import CalibrationEquipment
+                    equipment = CalibrationEquipment.objects.get(id=equipment_id)
+                    CalibrationEquipmentUsed.objects.get_or_create(
+                        calibration_type='balance',
+                        calibration_id=calibration.pk,
+                        equipment=equipment
+                    )
+                    print(f"Added equipment: {equipment.name}")
+                except Exception as e:
+                    print(f"Error adding equipment {equipment_id}: {e}")
         
         # ตรวจสอบสถานะอัตโนมัติ
-        self.auto_check_status(form.instance)
+        self.auto_check_status(calibration)
         
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Balance เรียบร้อยแล้ว')
-        # ให้ Django จัดการ redirect ตาม success_url
-        return super().form_valid(form)
+        
+        # Redirect ไปยัง success_url โดยตรง
+        return redirect(self.success_url)
     
     def auto_check_status(self, calibration):
         """ตรวจสอบสถานะอัตโนมัติสำหรับ Balance"""
@@ -517,7 +623,7 @@ def calibration_dashboard(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -537,7 +643,7 @@ def calibration_dashboard(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -557,7 +663,7 @@ def calibration_dashboard(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -577,7 +683,7 @@ def calibration_dashboard(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -597,7 +703,7 @@ def calibration_dashboard(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update or cal.date_calibration,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -617,7 +723,7 @@ def calibration_dashboard(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -637,7 +743,7 @@ def calibration_dashboard(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1422,7 +1528,7 @@ def calibration_report(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1442,7 +1548,7 @@ def calibration_report(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1462,7 +1568,7 @@ def calibration_report(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1539,7 +1645,7 @@ def calibration_report_detail(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1559,7 +1665,7 @@ def calibration_report_detail(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1579,7 +1685,7 @@ def calibration_report_detail(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1599,7 +1705,7 @@ def calibration_report_detail(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1619,7 +1725,7 @@ def calibration_report_detail(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update or cal.date_calibration,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1639,7 +1745,7 @@ def calibration_report_detail(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1659,7 +1765,7 @@ def calibration_report_detail(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1679,7 +1785,7 @@ def calibration_report_detail(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1815,7 +1921,7 @@ def export_to_word(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1835,7 +1941,7 @@ def export_to_word(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -1855,7 +1961,7 @@ def export_to_word(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -2070,7 +2176,7 @@ def export_to_excel(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -2090,7 +2196,7 @@ def export_to_excel(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -2110,7 +2216,7 @@ def export_to_excel(request):
             'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
             'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
             'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
-            'std_name': cal.std_id.name if cal.std_id else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
             'status': cal.status,
@@ -2744,26 +2850,60 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ High Frequency - {self.object.machine.name}'
+        # เพิ่มข้อมูลเครื่องมือที่ใช้ในการสอบเทียบนี้
+        if self.object:
+            from calibrate.models import CalibrationEquipmentUsed
+            used_equipment = CalibrationEquipmentUsed.objects.filter(
+                calibration_type='high_frequency',
+                calibration_id=self.object.pk
+            ).select_related('equipment')
+            context['used_equipment'] = used_equipment
         return context
     
     def form_valid(self, form):
         # บันทึกข้อมูลการสอบเทียบ
-        form.save()
+        calibration = form.save()
         
         # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
         selected_equipment = self.request.POST.get('selected_equipment', '')
         if selected_equipment:
-            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
-            self.request.session['selected_equipment'] = selected_equipment
+            print(f"Selected equipment: {selected_equipment}")
+            # ลบข้อมูลเครื่องมือเก่าที่เกี่ยวข้องกับการสอบเทียบนี้
+            from calibrate.models import CalibrationEquipmentUsed
+            CalibrationEquipmentUsed.objects.filter(
+                calibration_type='high_frequency',
+                calibration_id=calibration.pk
+            ).delete()
+            
+            # เพิ่มข้อมูลเครื่องมือใหม่ (ใช้ set เพื่อหลีกเลี่ยงการซ้ำ)
+            equipment_ids = set()
+            for eid in selected_equipment.split(','):
+                eid = eid.strip()
+                if eid:
+                    equipment_ids.add(eid)
+            
+            for equipment_id in equipment_ids:
+                try:
+                    from machine.models import CalibrationEquipment
+                    equipment = CalibrationEquipment.objects.get(id=equipment_id)
+                    CalibrationEquipmentUsed.objects.get_or_create(
+                        calibration_type='high_frequency',
+                        calibration_id=calibration.pk,
+                        equipment=equipment
+                    )
+                    print(f"Added equipment: {equipment.name}")
+                except Exception as e:
+                    print(f"Error adding equipment {equipment_id}: {e}")
         
         # ตรวจสอบสถานะอัตโนมัติ
-        self.auto_check_status(form.instance)
+        self.auto_check_status(calibration)
         
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ High Frequency เรียบร้อยแล้ว')
-        # ให้ Django จัดการ redirect ตาม success_url
-        return super().form_valid(form)
+        
+        # Redirect ไปยัง success_url โดยตรง
+        return redirect(self.success_url)
     
     def auto_check_status(self, calibration):
         """ตรวจสอบสถานะอัตโนมัติสำหรับ High Frequency"""
@@ -2831,16 +2971,67 @@ class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     
     def form_valid(self, form):
         # บันทึกข้อมูลการสอบเทียบ
-        form.save()
+        calibration = form.save()
         
-        # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
+        # Debug: ดูข้อมูลที่ส่งมา
+        print(f"=== DEBUG: POST data for equipment (Low Frequency) ===")
+        for key, value in self.request.POST.items():
+            if 'std_id' in key:
+                print(f"{key}: {value}")
+        
+        # รวบรวมเครื่องมือทั้งหมดที่จะบันทึก (ใช้ set เพื่อหลีกเลี่ยงการซ้ำ)
+        equipment_ids = set()
+        
+        # 1. จัดการข้อมูลเครื่องมือจาก selected_equipment
         selected_equipment = self.request.POST.get('selected_equipment', '')
+        print(f"=== DEBUG: selected_equipment = '{selected_equipment}'")
         if selected_equipment:
-            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
-            self.request.session['selected_equipment'] = selected_equipment
+            for eid in selected_equipment.split(','):
+                eid = eid.strip()
+                if eid:
+                    equipment_ids.add(eid)
+        
+        # 2. จัดการข้อมูลเครื่องมือจาก form field หลัก (std_id)
+        std_id_value = self.request.POST.get('std_id', '')
+        if std_id_value:
+            equipment_ids.add(std_id_value)
+        
+        # 3. จัดการข้อมูลเครื่องมือจาก form fields (std_id_*)
+        for key, value in self.request.POST.items():
+            if key.startswith('std_id_') and value and not key.startswith('std_id_existing_'):
+                equipment_ids.add(value)
+        
+        # 4. จัดการข้อมูลเครื่องมือที่มีอยู่แล้ว (std_id_existing_*)
+        for key, value in self.request.POST.items():
+            if key.startswith('std_id_existing_') and value:
+                equipment_ids.add(value)
+        
+        print(f"=== DEBUG: Final equipment_ids = {list(equipment_ids)}")
+        
+        # ลบเครื่องมือเก่าทั้งหมด
+        from calibrate.models import CalibrationEquipmentUsed
+        CalibrationEquipmentUsed.objects.filter(
+            calibration_type='low_frequency',
+            calibration_id=calibration.pk
+        ).delete()
+        
+        # บันทึกเครื่องมือใหม่ทั้งหมด (ใช้ get_or_create เพื่อหลีกเลี่ยง duplicate)
+        for equipment_id in equipment_ids:
+            try:
+                from machine.models import CalibrationEquipment
+                equipment = CalibrationEquipment.objects.get(id=equipment_id)
+                CalibrationEquipmentUsed.objects.get_or_create(
+                    calibration_type='low_frequency',
+                    calibration_id=calibration.pk,
+                    equipment=equipment
+                )
+                print(f"=== DEBUG: Saved equipment {equipment.name} (ID: {equipment_id})")
+            except CalibrationEquipment.DoesNotExist:
+                print(f"=== DEBUG: Equipment ID {equipment_id} not found")
+                continue
         
         # ตรวจสอบสถานะอัตโนมัติ
-        self.auto_check_status(form.instance)
+        self.auto_check_status(calibration)
         
         # เพิ่ม success message
         from django.contrib import messages
@@ -2945,26 +3136,73 @@ class MicrowaveCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ Microwave - {self.object.machine.name}'
+        # เพิ่มข้อมูลเครื่องมือที่ใช้ในการสอบเทียบนี้
+        if self.object:
+            from calibrate.models import CalibrationEquipmentUsed
+            used_equipment = CalibrationEquipmentUsed.objects.filter(
+                calibration_type='microwave',
+                calibration_id=self.object.pk
+            ).select_related('equipment')
+            context['used_equipment'] = used_equipment
         return context
     
     def form_valid(self, form):
-        # บันทึกข้อมูลการสอบเทียบ
-        form.save()
+        print("=== DEBUG: ก่อนบันทึก Microwave ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        
+        # ตรวจสอบ form errors
+        if form.errors:
+            print(f"❌ Form errors: {form.errors}")
+            return self.form_invalid(form)
+        
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.pk}")
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            return self.form_invalid(form)
         
         # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
         selected_equipment = self.request.POST.get('selected_equipment', '')
         if selected_equipment:
-            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
-            self.request.session['selected_equipment'] = selected_equipment
+            print(f"Selected equipment: {selected_equipment}")
+            # ลบข้อมูลเครื่องมือเก่าที่เกี่ยวข้องกับการสอบเทียบนี้
+            from calibrate.models import CalibrationEquipmentUsed
+            CalibrationEquipmentUsed.objects.filter(
+                calibration_type='microwave',
+                calibration_id=calibration.pk
+            ).delete()
+            
+            # เพิ่มข้อมูลเครื่องมือใหม่ (ใช้ set เพื่อหลีกเลี่ยงการซ้ำ)
+            equipment_ids = set()
+            for eid in selected_equipment.split(','):
+                eid = eid.strip()
+                if eid:
+                    equipment_ids.add(eid)
+            
+            for equipment_id in equipment_ids:
+                try:
+                    from machine.models import CalibrationEquipment
+                    equipment = CalibrationEquipment.objects.get(id=equipment_id)
+                    CalibrationEquipmentUsed.objects.get_or_create(
+                        calibration_type='microwave',
+                        calibration_id=calibration.pk,
+                        equipment=equipment
+                    )
+                    print(f"Added equipment: {equipment.name}")
+                except Exception as e:
+                    print(f"Error adding equipment {equipment_id}: {e}")
         
         # ตรวจสอบสถานะอัตโนมัติ
-        self.auto_check_status(form.instance)
+        self.auto_check_status(calibration)
         
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Microwave เรียบร้อยแล้ว')
-        # ให้ Django จัดการ redirect ตาม success_url
-        return super().form_valid(form)
+        
+        # Redirect ไปยัง success_url โดยตรง
+        return redirect(self.success_url)
     
     def auto_check_status(self, calibration):
         """ตรวจสอบสถานะอัตโนมัติสำหรับ Microwave"""
@@ -3023,26 +3261,73 @@ class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ Dial Gauge - {self.object.machine.name}'
+        # เพิ่มข้อมูลเครื่องมือที่ใช้ในการสอบเทียบนี้
+        if self.object:
+            from calibrate.models import CalibrationEquipmentUsed
+            used_equipment = CalibrationEquipmentUsed.objects.filter(
+                calibration_type='dial_gauge',
+                calibration_id=self.object.pk
+            ).select_related('equipment')
+            context['used_equipment'] = used_equipment
         return context
     
     def form_valid(self, form):
-        # บันทึกข้อมูลการสอบเทียบ
-        form.save()
+        print("=== DEBUG: ก่อนบันทึก Dial Gauge ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        
+        # ตรวจสอบ form errors
+        if form.errors:
+            print(f"❌ Form errors: {form.errors}")
+            return self.form_invalid(form)
+        
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.pk}")
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            return self.form_invalid(form)
         
         # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
         selected_equipment = self.request.POST.get('selected_equipment', '')
         if selected_equipment:
-            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
-            self.request.session['selected_equipment'] = selected_equipment
+            print(f"Selected equipment: {selected_equipment}")
+            # ลบข้อมูลเครื่องมือเก่าที่เกี่ยวข้องกับการสอบเทียบนี้
+            from calibrate.models import CalibrationEquipmentUsed
+            CalibrationEquipmentUsed.objects.filter(
+                calibration_type='dial_gauge',
+                calibration_id=calibration.pk
+            ).delete()
+            
+            # เพิ่มข้อมูลเครื่องมือใหม่ (ใช้ set เพื่อหลีกเลี่ยงการซ้ำ)
+            equipment_ids = set()
+            for eid in selected_equipment.split(','):
+                eid = eid.strip()
+                if eid:
+                    equipment_ids.add(eid)
+            
+            for equipment_id in equipment_ids:
+                try:
+                    from machine.models import CalibrationEquipment
+                    equipment = CalibrationEquipment.objects.get(id=equipment_id)
+                    CalibrationEquipmentUsed.objects.get_or_create(
+                        calibration_type='dial_gauge',
+                        calibration_id=calibration.pk,
+                        equipment=equipment
+                    )
+                    print(f"Added equipment: {equipment.name}")
+                except Exception as e:
+                    print(f"Error adding equipment {equipment_id}: {e}")
         
         # ตรวจสอบสถานะอัตโนมัติ
-        self.auto_check_status(form.instance)
+        self.auto_check_status(calibration)
         
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Dial Gauge เรียบร้อยแล้ว')
-        # ให้ Django จัดการ redirect ตาม success_url
-        return super().form_valid(form)
+        
+        # Redirect ไปยัง success_url โดยตรง
+        return redirect(self.success_url)
     
     def auto_check_status(self, calibration):
         """ตรวจสอบสถานะอัตโนมัติสำหรับ Dial Gauge"""

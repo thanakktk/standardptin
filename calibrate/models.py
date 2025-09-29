@@ -1,6 +1,22 @@
 from django.db import models
-from machine.models import Machine
+from machine.models import Machine, CalibrationEquipment
 from django.conf import settings
+
+
+class CalibrationEquipmentUsed(models.Model):
+    """เครื่องมือที่ใช้ในการสอบเทียบ (Many-to-Many relationship)"""
+    calibration_type = models.CharField(max_length=50, verbose_name="ประเภทการสอบเทียบ")
+    calibration_id = models.PositiveIntegerField(verbose_name="รหัสการสอบเทียบ")
+    equipment = models.ForeignKey(CalibrationEquipment, on_delete=models.CASCADE, verbose_name="เครื่องมือที่ใช้สอบเทียบ")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="วันที่สร้าง")
+    
+    class Meta:
+        verbose_name = "เครื่องมือที่ใช้ในการสอบเทียบ"
+        verbose_name_plural = "เครื่องมือที่ใช้ในการสอบเทียบ"
+        unique_together = ['calibration_type', 'calibration_id', 'equipment']
+    
+    def __str__(self):
+        return f"{self.calibration_type} - {self.equipment.name}"
 
 
 class CalibrationPressure(models.Model):
@@ -127,6 +143,15 @@ class CalibrationPressure(models.Model):
         """คำนวณค่าเฉลี่ยก่อนบันทึก"""
         self.avg = self.calculate_average()
         super().save(*args, **kwargs)
+    
+    @property
+    def calibration_equipment_used(self):
+        """เครื่องมือที่ใช้ในการสอบเทียบ"""
+        from calibrate.models import CalibrationEquipmentUsed
+        return CalibrationEquipmentUsed.objects.filter(
+            calibration_type='pressure',
+            calibration_id=self.cal_pressure_id
+        )
 
 class CalibrationTorque(models.Model):
     STATUS_CHOICES = [
@@ -238,6 +263,15 @@ class CalibrationTorque(models.Model):
         self.cw_avg = self.calculate_cw_average()
         self.ccw_avg = self.calculate_ccw_average()
         super().save(*args, **kwargs)
+    
+    @property
+    def calibration_equipment_used(self):
+        """เครื่องมือที่ใช้ในการสอบเทียบ"""
+        from calibrate.models import CalibrationEquipmentUsed
+        return CalibrationEquipmentUsed.objects.filter(
+            calibration_type='torque',
+            calibration_id=self.cal_torque_id
+        )
 
 class UUC(models.Model):
     name = models.CharField(max_length=100, verbose_name="ชื่อเครื่องที่สอบเทียบ (UUC)")
@@ -342,6 +376,15 @@ class DialGaugeCalibration(models.Model):
     
     def __str__(self):
         return f"Dial Gauge Calibration - {self.machine.name} ({self.date_calibration})"
+    
+    @property
+    def calibration_equipment_used(self):
+        """เครื่องมือที่ใช้ในการสอบเทียบ"""
+        from calibrate.models import CalibrationEquipmentUsed
+        return CalibrationEquipmentUsed.objects.filter(
+            calibration_type='dial_gauge',
+            calibration_id=self.pk
+        )
 
     class Meta:
         verbose_name = "ข้อมูลสอบเทียบ Dial Gauge"
@@ -472,6 +515,15 @@ class BalanceCalibration(models.Model):
     
     def __str__(self):
         return f"Balance Calibration - {self.machine.name} ({self.date_calibration})"
+    
+    @property
+    def calibration_equipment_used(self):
+        """เครื่องมือที่ใช้ในการสอบเทียบ"""
+        from calibrate.models import CalibrationEquipmentUsed
+        return CalibrationEquipmentUsed.objects.filter(
+            calibration_type='balance',
+            calibration_id=self.pk
+        )
 
     class Meta:
         verbose_name = "ข้อมูลสอบเทียบ Balance"
@@ -608,6 +660,15 @@ class HighFrequencyCalibration(models.Model):
     def __str__(self):
         return f"High Frequency Calibration - {self.machine.name}"
     
+    @property
+    def calibration_equipment_used(self):
+        """เครื่องมือที่ใช้ในการสอบเทียบ"""
+        from calibrate.models import CalibrationEquipmentUsed
+        return CalibrationEquipmentUsed.objects.filter(
+            calibration_type='high_frequency',
+            calibration_id=self.pk
+        )
+    
     class Meta:
         verbose_name = "การสอบเทียบ High Frequency"
         verbose_name_plural = "การสอบเทียบ High Frequency"
@@ -740,6 +801,15 @@ class LowFrequencyCalibration(models.Model):
     def __str__(self):
         return f"Low Frequency Calibration - {self.machine.name}"
     
+    @property
+    def calibration_equipment_used(self):
+        """เครื่องมือที่ใช้ในการสอบเทียบ"""
+        from calibrate.models import CalibrationEquipmentUsed
+        return CalibrationEquipmentUsed.objects.filter(
+            calibration_type='low_frequency',
+            calibration_id=self.pk
+        )
+    
     class Meta:
         verbose_name = "การสอบเทียบ Low Frequency"
         verbose_name_plural = "การสอบเทียบ Low Frequency"
@@ -811,6 +881,15 @@ class MicrowaveCalibration(models.Model):
     
     def __str__(self):
         return f"Microwave Calibration - {self.machine.name} ({self.date_calibration})"
+    
+    @property
+    def calibration_equipment_used(self):
+        """เครื่องมือที่ใช้ในการสอบเทียบ"""
+        from calibrate.models import CalibrationEquipmentUsed
+        return CalibrationEquipmentUsed.objects.filter(
+            calibration_type='microwave',
+            calibration_id=self.pk
+        )
 
     class Meta:
         verbose_name = "ข้อมูลสอบเทียบ Microwave"

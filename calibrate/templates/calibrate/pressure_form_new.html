@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการสอบเทียบ Pressure - {{ object.uuc_id.name|default:'เครื่องมือ' }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-tachometer-alt fa-lg"></i>
+                    {{ view.object.pk|yesno:'แก้ไข,เพิ่ม' }} บันทึกการสอบเทียบ Pressure
+                </h1>
+                <p class="page-subtitle">
+                    {% if object.uuc_id %}
+                        {{ object.uuc_id.name }} - {{ object.uuc_id.machine_type.name }}
+                    {% else %}
+                        เลือกเครื่องมือเพื่อบันทึกการสอบเทียบ
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- ข้อมูลเครื่องมือ -->
+        {% if object.uuc_id %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    ข้อมูลเครื่องมือ
+                </h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-3">
+                        <small><strong>ชื่อ:</strong> {{ object.uuc_id.name }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>รุ่น:</strong> {{ object.uuc_id.model|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>หมายเลข:</strong> {{ object.uuc_id.serial_number|default:"-" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small><strong>ประเภท:</strong> {{ object.uuc_id.machine_type.name }}</small>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <small><strong>ช่วงการวัด:</strong> {{ object.uuc_id.range|default:"-" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ฟอร์มบันทึกการสอบเทียบ -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    ข้อมูลการสอบเทียบ Pressure
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <!-- Hidden input for status -->
+                    <input type="hidden" name="status" value="in_progress">
+                    
+                    <!-- ข้อมูลการสอบเทียบ Pressure -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.measurement_range.id_for_label }}" class="form-label">
+                                <i class="fas fa-ruler me-1"></i>ช่วงการวัด
+                            </label>
+                            {{ form.measurement_range }}
+                            {% if form.measurement_range.errors %}
+                                <div class="text-danger small">{{ form.measurement_range.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.update.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>วันที่สอบเทียบ
+                            </label>
+                            {{ form.update }}
+                            {% if form.update.errors %}
+                                <div class="text-danger small">{{ form.update.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.next_due.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar-check me-1"></i>{{ form.next_due.label }}
+                            </label>
+                            {{ form.next_due }}
+                            {% if form.next_due.errors %}
+                                <div class="text-danger small">{{ form.next_due.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                <i class="fas fa-flag me-1"></i>{{ form.status.label }}
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="text-danger small">{{ form.status.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.calibrator.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-1"></i>{{ form.calibrator.label }}
+                            </label>
+                            {{ form.calibrator }}
+                            {% if form.calibrator.errors %}
+                                <div class="text-danger small">{{ form.calibrator.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.certificate_issuer.id_for_label }}" class="form-label">
+                                <i class="fas fa-certificate me-1"></i>{{ form.certificate_issuer.label }}
+                            </label>
+                            {{ form.certificate_issuer }}
+                            {% if form.certificate_issuer.errors %}
+                                <div class="text-danger small">{{ form.certificate_issuer.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.certificate_number.id_for_label }}" class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>{{ form.certificate_number.label }}
+                            </label>
+                            {{ form.certificate_number }}
+                            {% if form.certificate_number.errors %}
+                                <div class="text-danger small">{{ form.certificate_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
+                            </label>
+                            <div id="calibration-equipment-container">
+                                <!-- แสดงเครื่องมือที่ใช้อยู่แล้ว -->
+                                {% if object.pk %}
+                                    {% for equipment_used in object.calibration_equipment_used.all %}
+                                        <div class="row mb-2 calibration-equipment-row">
+                                            <div class="col-md-10">
+                                                <select name="std_id_existing_{{ equipment_used.equipment.id }}" class="form-control equipment-select">
+                                                    <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                                    {% for equipment in form.std_id.field.queryset %}
+                                                        <option value="{{ equipment.id }}" {% if equipment.id == equipment_used.equipment.id %}selected{% endif %}>
+                                                            {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                                                    <i class="fas fa-minus"></i> ลบ
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                <!-- เครื่องมือหลัก (std_id) -->
+                                <div class="row mb-2 calibration-equipment-row">
+                                    <div class="col-md-10">
+                                        <select name="{{ form.std_id.name }}" id="{{ form.std_id.id_for_label }}" class="form-control equipment-select">
+                                            <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                            {% for equipment in form.std_id.field.queryset %}
+                                                <option value="{{ equipment.id }}" {% if form.std_id.value == equipment.id %}selected{% endif %}>
+                                                    {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.std_id.errors %}
+                                            <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-success btn-sm add-equipment-btn">
+                                            <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if form.std_id.errors %}
+                                <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- ตารางการสอบเทียบ Pressure -->
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>UUC Range</th>
+                                    <th>UUC Set</th>
+                                    <th>Actual</th>
+                                    <th>Error</th>
+                                    <th>Tolerance Limit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" class="form-control measurement-range-display" readonly></td>
+                                    <td>{{ form.set }}</td>
+                                    <td>{{ form.actual }}</td>
+                                    <td>{{ form.error }}</td>
+                                    <td>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                {{ form.tolerance_start }}
+                                            </div>
+                                            <div class="col-6">
+                                                {{ form.tolerance_end }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="text" name="measurement_range_2" id="id_measurement_range_2" class="form-control" value="{{ form.measurement_range.value|default:'' }}" aria-label="Measurement Range 2">
+                                    </td>
+                                    <td>{{ form.set_2 }}</td>
+                                    <td>{{ form.actual_2 }}</td>
+                                    <td>{{ form.error_2 }}</td>
+                                    <td>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                {{ form.tolerance_start_2 }}
+                                            </div>
+                                            <div class="col-6">
+                                                {{ form.tolerance_end_2 }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="text" name="measurement_range_3" id="id_measurement_range_3" class="form-control" value="{{ form.measurement_range.value|default:'' }}" aria-label="Measurement Range 3">
+                                    </td>
+                                    <td>{{ form.set_3 }}</td>
+                                    <td>{{ form.actual_3 }}</td>
+                                    <td>{{ form.error_3 }}</td>
+                                    <td>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                {{ form.tolerance_start_3 }}
+                                            </div>
+                                            <div class="col-6">
+                                                {{ form.tolerance_end_3 }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="text" name="measurement_range_4" id="id_measurement_range_4" class="form-control" value="{{ form.measurement_range.value|default:'' }}" aria-label="Measurement Range 4">
+                                    </td>
+                                    <td>{{ form.set_4 }}</td>
+                                    <td>{{ form.actual_4 }}</td>
+                                    <td>{{ form.error_4 }}</td>
+                                    <td>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                {{ form.tolerance_start_4 }}
+                                            </div>
+                                            <div class="col-6">
+                                                {{ form.tolerance_end_4 }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="text" name="measurement_range_5" id="id_measurement_range_5" class="form-control" value="{{ form.measurement_range.value|default:'' }}" aria-label="Measurement Range 5">
+                                    </td>
+                                    <td>{{ form.set_5 }}</td>
+                                    <td>{{ form.actual_5 }}</td>
+                                    <td>{{ form.error_5 }}</td>
+                                    <td>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                {{ form.tolerance_start_5 }}
+                                            </div>
+                                            <div class="col-6">
+                                                {{ form.tolerance_end_5 }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="text" name="measurement_range_6" id="id_measurement_range_6" class="form-control" value="{{ form.measurement_range.value|default:'' }}" aria-label="Measurement Range 6">
+                                    </td>
+                                    <td>{{ form.set_6 }}</td>
+                                    <td>{{ form.actual_6 }}</td>
+                                    <td>{{ form.error_6 }}</td>
+                                    <td>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                {{ form.tolerance_start_6 }}
+                                            </div>
+                                            <div class="col-6">
+                                                {{ form.tolerance_end_6 }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ปุ่มบันทึก -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-end">
+                                <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary me-2">
+                                    <i class="fas fa-arrow-left me-1"></i>กลับ
+                                </a>
+                                <button type="submit" class="btn btn-primary" onclick="console.log('Submit button clicked'); return true;">
+                                    <i class="fas fa-save me-1"></i>บันทึก
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ฟังก์ชันสำหรับเพิ่มเครื่องมือ
+    let equipmentCounter = 1;
+    
+    // เก็บข้อมูล equipment options ไว้ในตัวแปร
+    const equipmentOptions = `
+        {% for equipment in form.std_id.field.queryset %}
+            <option value="{{ equipment.id }}">{{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}</option>
+        {% endfor %}
+    `;
+    
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-equipment-btn')) {
+            equipmentCounter++;
+            const container = document.getElementById('calibration-equipment-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-2 calibration-equipment-row';
+            newRow.innerHTML = `
+                <div class="col-md-10">
+                    <select name="std_id_${equipmentCounter}" id="id_std_id_${equipmentCounter}" class="form-control equipment-select">
+                        <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                        ${equipmentOptions}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                        <i class="fas fa-minus"></i> ลบ
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        if (e.target.classList.contains('remove-equipment-btn')) {
+            const row = e.target.closest('.calibration-equipment-row');
+            row.remove();
+        }
+    });
+    
+    // จัดการข้อมูลเครื่องมือหลายตัวก่อนส่งฟอร์ม
+    document.addEventListener('submit', function(e) {
+        console.log("=== DEBUG: JavaScript ก่อนส่งฟอร์ม Pressure New ===");
+        console.log("Event target:", e.target);
+        console.log("Event type:", e.type);
+        const form = e.target;
+        
+        // ตรวจสอบว่าเป็นฟอร์มที่ถูกต้อง
+        if (!form || !form.tagName || form.tagName.toLowerCase() !== 'form') {
+            console.log("Not a form element, skipping...");
+            return true;
+        }
+        
+        // ตรวจสอบว่าเป็นฟอร์มที่ถูกต้อง (มี action หรือ method)
+        if (!form.action && !form.method) {
+            console.log("Not a valid form, skipping...");
+            return true;
+        }
+        
+        const equipmentSelects = form.querySelectorAll('.equipment-select');
+        const selectedEquipment = [];
+        
+        console.log(`พบ equipment selects: ${equipmentSelects.length} ตัว`);
+        
+        equipmentSelects.forEach((select, index) => {
+            console.log(`Equipment ${index + 1}: name="${select.name}", value="${select.value}"`);
+            if (select.value && select.value.trim() !== '') {
+                selectedEquipment.push(select.value.trim());
+            }
+        });
+        
+        console.log(`Selected equipment: [${selectedEquipment.join(', ')}]`);
+        
+        // ลบ hidden input เก่าถ้ามี
+        const existingHidden = form.querySelector('input[name="selected_equipment"]');
+        if (existingHidden) {
+            existingHidden.remove();
+        }
+        
+        // สร้าง hidden input สำหรับเก็บข้อมูลเครื่องมือหลายตัว
+        if (selectedEquipment.length > 0) {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'selected_equipment';
+            hiddenInput.value = selectedEquipment.join(',');
+            form.appendChild(hiddenInput);
+            
+            console.log(`Hidden input value: "${hiddenInput.value}"`);
+        }
+        
+        console.log("=== DEBUG: JavaScript ส่งฟอร์มแล้ว ===");
+        
+        // ให้ฟอร์ม submit ตามปกติ
+        return true;
+    });
+    
+    // ฟังก์ชันคัดลอกค่าช่วงการวัดไปยังตาราง
+    function updateMeasurementRangeInTable() {
+        const mainRangeInput = document.querySelector('input[name="measurement_range"]');
+        const tableRangeInputs = document.querySelectorAll('.measurement-range-display');
+        
+        if (mainRangeInput && tableRangeInputs.length > 0) {
+            const value = mainRangeInput.value;
+            tableRangeInputs.forEach(input => {
+                input.value = value;
+            });
+        }
+    }
+    
+    // เพิ่ม event listener สำหรับฟิลด์ช่วงการวัดหลัก
+    const mainRangeInput = document.querySelector('input[name="measurement_range"]');
+    if (mainRangeInput) {
+        mainRangeInput.addEventListener('input', updateMeasurementRangeInTable);
+        // คัดลอกค่าครั้งแรกเมื่อโหลดหน้า
+        updateMeasurementRangeInTable();
+    }
+});
+</script>
+
+<style>
+/* ซ่อนเฉพาะฟิลด์สถานะการสอบเทียบ */
+#id_status {
+    display: none !important;
+}
+
+label[for="id_status"] {
+    display: none !important;
+}
+
+/* ซ่อน div ที่มีฟิลด์ status */
+.col-md-3:has(#id_status) {
+    display: none !important;
+}
+</style>
+{% endblock %}

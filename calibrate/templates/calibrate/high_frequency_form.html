@@ -151,25 +151,56 @@
                             <label class="form-label">
                                 <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
                             </label>
-                            <div class="d-flex mb-2">
-                                <select name="{{ form.std_id.name }}" id="{{ form.std_id.id_for_label }}" class="form-control me-2 equipment-select">
-                                    <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
-                                    {% for equipment in form.std_id.field.queryset %}
-                                        <option value="{{ equipment.id }}" {% if form.std_id.value == equipment.id %}selected{% endif %}>
-                                            {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                                <button type="button" class="btn btn-success btn-sm add-equipment-btn">
-                                    <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
-                                </button>
-                            </div>
                             <div id="calibration-equipment-container">
-                                <!-- เครื่องมือเพิ่มเติมจะแสดงที่นี่ -->
+                                <!-- เครื่องมือแรก (หลัก) -->
+                                <div class="row mb-2 calibration-equipment-row">
+                                    <div class="col-md-10">
+                                        <select name="{{ form.std_id.name }}" id="{{ form.std_id.id_for_label }}" class="form-control equipment-select">
+                                            <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                            {% for equipment in form.std_id.field.queryset %}
+                                                <option value="{{ equipment.id }}" {% if form.std_id.value == equipment.id %}selected{% endif %}>
+                                                    {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.std_id.errors %}
+                                            <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-success btn-sm add-equipment-btn">
+                                            <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- เครื่องมือเพิ่มเติม (จะถูกเพิ่มด้วย JavaScript) -->
+                                <div id="additional-equipment-container">
+                                    {% if used_equipment %}
+                                        {% for equipment in used_equipment %}
+                                            {% if not forloop.first %}
+                                            <div class="row mb-2 calibration-equipment-row">
+                                                <div class="col-md-10">
+                                                    <select name="additional_equipment_{{ forloop.counter0 }}" class="form-control equipment-select">
+                                                        <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                                        {% for eq in form.std_id.field.queryset %}
+                                                            <option value="{{ eq.id }}" {% if eq.id == equipment.equipment.id %}selected{% endif %}>
+                                                                {{ eq.name }}-{{ eq.model|default:"" }}-{{ eq.serial_number|default:"" }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                                                        <i class="fas fa-trash"></i> ลบ
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
                             </div>
-                            {% if form.std_id.errors %}
-                                <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
-                            {% endif %}
                         </div>
                     </div>
 
@@ -318,34 +349,52 @@ document.addEventListener('DOMContentLoaded', function() {
     // เริ่มต้นการคำนวณ
     calculateFrequencyAccuracy();
     
-    // ฟังก์ชันสำหรับเพิ่มเครื่องมือ
-    document.querySelectorAll('.add-equipment-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const container = document.getElementById('calibration-equipment-container');
-            const newRow = document.createElement('div');
-            newRow.className = 'row mb-2 calibration-equipment-row';
-            newRow.innerHTML = `
-                <div class="col-md-10">
-                    <select name="std_id" class="form-control equipment-select">
-                        <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
-                        {% for equipment in form.std_id.field.queryset %}
-                            <option value="{{ equipment.id }}">{{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `;
-            container.appendChild(newRow);
-            
-            // เพิ่ม event listener สำหรับปุ่มลบ
-            newRow.querySelector('.remove-equipment-btn').addEventListener('click', function() {
-                newRow.remove();
-            });
-        });
+    let equipmentCounter = 0;
+    
+    // ฟังก์ชันเพิ่มเครื่องมือใหม่
+    function addEquipmentRow() {
+        equipmentCounter++;
+        const container = document.getElementById('additional-equipment-container');
+        
+        // ดึงข้อมูลเครื่องมือจาก select แรก
+        const firstSelect = document.querySelector('.equipment-select');
+        const options = Array.from(firstSelect.options).map(option => ({
+            value: option.value,
+            text: option.textContent
+        }));
+        
+        const newRow = document.createElement('div');
+        newRow.className = 'row mb-2 calibration-equipment-row';
+        newRow.innerHTML = `
+            <div class="col-md-10">
+                <select name="additional_equipment_${equipmentCounter}" class="form-control equipment-select">
+                    <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                    ${options.map(opt => `<option value="${opt.value}">${opt.text}</option>`).join('')}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                    <i class="fas fa-trash"></i> ลบ
+                </button>
+            </div>
+        `;
+        
+        container.appendChild(newRow);
+        console.log(`Added equipment row ${equipmentCounter}`);
+    }
+    
+    // เพิ่ม event listener สำหรับปุ่มเพิ่มเครื่องมือ (ใช้ event delegation)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.add-equipment-btn')) {
+            addEquipmentRow();
+        }
+    });
+    
+    // เพิ่ม event listener สำหรับปุ่มลบเครื่องมือ (ใช้ event delegation)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-equipment-btn')) {
+            e.target.closest('.calibration-equipment-row').remove();
+        }
     });
     // จัดการข้อมูลเครื่องมือหลายตัวก่อนส่งฟอร์ม
     document.addEventListener('submit', function(e) {

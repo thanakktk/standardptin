@@ -129,6 +129,7 @@
                                 <div class="text-danger small">{{ form.certificate_issuer.errors.0 }}</div>
                             {% endif %}
                         </div>
+                        <div class="col-md-4">
                             {% if form.uuc_id.errors %}
                                 <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
                             {% endif %}
@@ -152,27 +153,47 @@
                             <label class="form-label">
                                 <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
                             </label>
+                            <div class="d-flex mb-2">
+                                <label for="id_std_id_main" class="form-label visually-hidden">เครื่องมือหลัก</label>
+                                <select name="{{ form.std_id.name }}" id="id_std_id_main" class="form-control me-2 equipment-select">
+                                    <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                    {% for equipment in form.std_id.field.queryset %}
+                                        <option value="{{ equipment.id }}" {% if form.std_id.value == equipment.id %}selected{% endif %}>
+                                            {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-success btn-sm add-equipment-btn">
+                                    <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
+                                </button>
+                            </div>
+                            {% if form.std_id.errors %}
+                                <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
+                            {% endif %}
                             <div id="calibration-equipment-container">
-                                <div class="row mb-2 calibration-equipment-row">
-                                    <div class="col-md-10">
-                                        <select name="{{ form.std_id.name }}" id="id_std_id_1" class="form-control equipment-select">
-                                            <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
-                                            {% for equipment in form.std_id.field.queryset %}
-                                                <option value="{{ equipment.id }}" {% if form.std_id.value == equipment.id %}selected{% endif %}>
-                                                    {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
-                                        {% if form.std_id.errors %}
-                                            <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-2">
-                                        <button type="button" class="btn btn-success btn-sm add-equipment-btn">
-                                            <i class="fas fa-plus"></i> เพิ่มเครื่องมือ
-                                        </button>
-                                    </div>
-                                </div>
+                                <!-- แสดงเครื่องมือที่ใช้อยู่แล้ว -->
+                                {% if object.pk %}
+                                    {% for equipment_used in object.calibration_equipment_used.all %}
+                                        <div class="row mb-2 calibration-equipment-row">
+                                            <div class="col-md-10">
+                                                <label for="std_id_existing_{{ equipment_used.equipment.id }}" class="form-label visually-hidden">เครื่องมือที่ใช้สอบเทียบ</label>
+                                                <select name="std_id_existing_{{ equipment_used.equipment.id }}" id="std_id_existing_{{ equipment_used.equipment.id }}" class="form-control equipment-select">
+                                                    <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                                                    {% for equipment in form.std_id.field.queryset %}
+                                                        <option value="{{ equipment.id }}" {% if equipment.id == equipment_used.equipment.id %}selected{% endif %}>
+                                                            {{ equipment.name }}-{{ equipment.model|default:"" }}-{{ equipment.serial_number|default:"" }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                                                    <i class="fas fa-minus"></i> ลบ
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -231,7 +252,7 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        {{ form.measurement_range }}
+                                        <input type="text" name="measurement_range_2" id="id_measurement_range_2" class="form-control" value="{{ form.measurement_range_2.value|default:form.measurement_range.value|default:'' }}" aria-label="Measurement Range 2">
                                     </td>
                                     <td>
                                         <input type="text" name="set_2" id="id_set_2" class="form-control" value="{{ form.set_2.value|default:'' }}" aria-label="Set 2">
@@ -264,7 +285,7 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        {{ form.measurement_range }}
+                                        <input type="text" name="measurement_range_3" id="id_measurement_range_3" class="form-control" value="{{ form.measurement_range_3.value|default:form.measurement_range.value|default:'' }}" aria-label="Measurement Range 3">
                                     </td>
                                     <td>
                                         <input type="text" name="set_3" id="id_set_3" class="form-control" value="{{ form.set_3.value|default:'' }}" aria-label="Set 3">
@@ -297,7 +318,7 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        {{ form.measurement_range }}
+                                        <input type="text" name="measurement_range_4" id="id_measurement_range_4" class="form-control" value="{{ form.measurement_range_4.value|default:form.measurement_range.value|default:'' }}" aria-label="Measurement Range 4">
                                     </td>
                                     <td>
                                         <input type="text" name="set_4" class="form-control" value="{{ form.set_4.value|default:'' }}">
@@ -330,7 +351,7 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        {{ form.measurement_range }}
+                                        <input type="text" name="measurement_range_5" id="id_measurement_range_5" class="form-control" value="{{ form.measurement_range_5.value|default:form.measurement_range.value|default:'' }}" aria-label="Measurement Range 5">
                                     </td>
                                     <td>
                                         <input type="text" name="set_5" class="form-control" value="{{ form.set_5.value|default:'' }}">
@@ -363,7 +384,7 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        {{ form.measurement_range }}
+                                        <input type="text" name="measurement_range_6" id="id_measurement_range_6" class="form-control" value="{{ form.measurement_range_6.value|default:form.measurement_range.value|default:'' }}" aria-label="Measurement Range 6">
                                     </td>
                                     <td>
                                         <input type="text" name="set_6" class="form-control" value="{{ form.set_6.value|default:'' }}">
@@ -512,61 +533,92 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('add-equipment-btn')) {
-            console.log('=== DEBUG: กดปุ่มเพิ่มเครื่องมือแล้ว ===');
             equipmentCounter++;
-            console.log(`Equipment counter: ${equipmentCounter}`);
-            
             const container = document.getElementById('calibration-equipment-container');
-            console.log('Container found:', container);
-            
             const newRow = document.createElement('div');
             newRow.className = 'row mb-2 calibration-equipment-row';
-            newRow.innerHTML = `
-                <div class="col-md-10">
-                    <select name="std_id_${equipmentCounter}" id="id_std_id_${equipmentCounter}" class="form-control equipment-select">
-                        <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
-                        ${equipmentOptions}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
-                        <i class="fas fa-minus"></i> ลบ
-                    </button>
-                </div>
-            `;
+            
+            // สร้าง select element แบบปลอดภัย
+            const selectDiv = document.createElement('div');
+            selectDiv.className = 'col-md-10';
+            
+            // เพิ่ม label
+            const label = document.createElement('label');
+            label.htmlFor = 'id_std_id_' + equipmentCounter;
+            label.className = 'form-label visually-hidden';
+            label.textContent = 'เครื่องมือที่ใช้สอบเทียบ';
+            selectDiv.appendChild(label);
+            
+            const select = document.createElement('select');
+            select.name = 'std_id_' + equipmentCounter;
+            select.id = 'id_std_id_' + equipmentCounter;
+            select.className = 'form-control equipment-select';
+            
+            // เพิ่ม default option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'เลือกเครื่องมือที่ใช้สอบเทียบ';
+            select.appendChild(defaultOption);
+            
+            // เพิ่ม options จาก equipmentOptions
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = equipmentOptions;
+            const options = tempDiv.querySelectorAll('option');
+            options.forEach(option => {
+                select.appendChild(option.cloneNode(true));
+            });
+            
+            selectDiv.appendChild(select);
+            
+            // สร้างปุ่มลบ
+            const buttonDiv = document.createElement('div');
+            buttonDiv.className = 'col-md-2';
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-danger btn-sm remove-equipment-btn';
+            removeBtn.innerHTML = '<i class="fas fa-minus"></i> ลบ';
+            
+            buttonDiv.appendChild(removeBtn);
+            
+            // รวม elements
+            newRow.appendChild(selectDiv);
+            newRow.appendChild(buttonDiv);
             container.appendChild(newRow);
-            console.log(`เพิ่มเครื่องมือตัวที่ ${equipmentCounter} เรียบร้อยแล้ว`);
         }
         
         if (e.target.classList.contains('remove-equipment-btn')) {
             const row = e.target.closest('.calibration-equipment-row');
             row.remove();
-            console.log('ลบเครื่องมือเรียบร้อยแล้ว');
         }
     });
     
     // จัดการข้อมูลเครื่องมือหลายตัวก่อนส่งฟอร์ม
     document.addEventListener('submit', function(e) {
-        console.log('=== DEBUG: Form submit event ถูกเรียกแล้ว ===');
+        console.log("=== DEBUG: JavaScript ก่อนส่งฟอร์ม Pressure ===");
         const form = e.target;
         const equipmentSelects = form.querySelectorAll('.equipment-select');
-        const allSelects = form.querySelectorAll('select[name^="std_id"]');
         const selectedEquipment = [];
         
-        console.log(`Found ${equipmentSelects.length} equipment selects with class`);
-        console.log(`Found ${allSelects.length} all std_id selects`);
+        console.log(`พบ equipment selects: ${equipmentSelects.length} ตัว`);
         
-        // ใช้ allSelects แทน equipmentSelects
-        const selectsToProcess = allSelects.length > 0 ? allSelects : equipmentSelects;
-        
-        selectsToProcess.forEach((select, index) => {
+        equipmentSelects.forEach((select, index) => {
             console.log(`Equipment ${index + 1}: name="${select.name}", value="${select.value}"`);
-            if (select.value) {
-                selectedEquipment.push(select.value);
+            if (select.value && select.value.trim() !== '') {
+                // ตรวจสอบไม่ให้ซ้ำ
+                if (!selectedEquipment.includes(select.value)) {
+                    selectedEquipment.push(select.value);
+                }
             }
         });
         
-        console.log('Selected equipment:', selectedEquipment);
+        console.log(`Selected equipment: [${selectedEquipment.join(', ')}]`);
+        
+        // ลบ hidden input เก่า (ถ้ามี)
+        const existingHidden = form.querySelector('input[name="selected_equipment"]');
+        if (existingHidden) {
+            existingHidden.remove();
+        }
         
         // สร้าง hidden input สำหรับเก็บข้อมูลเครื่องมือหลายตัว
         const hiddenInput = document.createElement('input');
@@ -575,19 +627,13 @@ document.addEventListener('DOMContentLoaded', function() {
         hiddenInput.value = selectedEquipment.join(',');
         form.appendChild(hiddenInput);
         
-        console.log('Hidden input created with value:', hiddenInput.value);
-        console.log('=== DEBUG: Form จะ submit ไปแล้ว ===');
+        console.log(`Hidden input value: "${hiddenInput.value}"`);
+        console.log("=== DEBUG: JavaScript ส่งฟอร์มแล้ว ===");
         
         // ให้ฟอร์ม submit ตามปกติ
         return true;
     });
     
-    // เพิ่ม event listener สำหรับปุ่ม submit โดยตรง
-    document.addEventListener('click', function(e) {
-        if (e.target.type === 'submit' || e.target.closest('button[type="submit"]')) {
-            console.log('=== DEBUG: ปุ่ม submit ถูกกดแล้ว ===');
-        }
-    });
 });
 </script>
 
