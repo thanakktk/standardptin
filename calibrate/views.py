@@ -73,6 +73,19 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         form.fields['certificate_issuer'].queryset = users
         return form
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'แก้ไขการสอบเทียบ Pressure - {self.object.uuc_id.name if self.object.uuc_id else "เครื่องมือ"}'
+        # เพิ่มข้อมูลเครื่องมือที่ใช้ในการสอบเทียบนี้
+        if self.object:
+            from calibrate.models import CalibrationEquipmentUsed
+            used_equipment = CalibrationEquipmentUsed.objects.filter(
+                calibration_type='pressure',
+                calibration_id=self.object.cal_pressure_id
+            ).select_related('equipment')
+            context['used_equipment'] = used_equipment
+        return context
+    
     def form_valid(self, form):
         print("=== DEBUG: ก่อนบันทึก Pressure ===")
         print(f"POST data: {dict(self.request.POST)}")
@@ -161,8 +174,8 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Pressure เรียบร้อยแล้ว')
         
-        # ให้ Django จัดการ redirect ตาม success_url (เหมือน Low Frequency)
-        return super().form_valid(form)
+        # Redirect ไปยัง success_url โดยตรง
+        return redirect(self.success_url)
     
     def auto_check_status(self, calibration):
         """ตรวจสอบสถานะอัตโนมัติสำหรับ Pressure"""
@@ -263,24 +276,76 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
         form.fields['certificate_issuer'].queryset = users
         return form
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'แก้ไขการสอบเทียบ Torque - {self.object.uuc_id.name if self.object.uuc_id else "เครื่องมือ"}'
+        # เพิ่มข้อมูลเครื่องมือที่ใช้ในการสอบเทียบนี้
+        if self.object:
+            from calibrate.models import CalibrationEquipmentUsed
+            used_equipment = CalibrationEquipmentUsed.objects.filter(
+                calibration_type='torque',
+                calibration_id=self.object.cal_torque_id
+            ).select_related('equipment')
+            context['used_equipment'] = used_equipment
+        return context
+    
     def form_valid(self, form):
-        # บันทึกข้อมูลการสอบเทียบ
-        form.save()
+        print("=== DEBUG: ก่อนบันทึก Torque ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        
+        # ตรวจสอบ form errors
+        if form.errors:
+            print(f"❌ Form errors: {form.errors}")
+            return self.form_invalid(form)
+        
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.pk}")
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            return self.form_invalid(form)
         
         # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
         selected_equipment = self.request.POST.get('selected_equipment', '')
         if selected_equipment:
-            # เก็บข้อมูลเครื่องมือเพิ่มเติมใน session หรือ database
-            self.request.session['selected_equipment'] = selected_equipment
+            print(f"Selected equipment: {selected_equipment}")
+            # ลบข้อมูลเครื่องมือเก่าที่เกี่ยวข้องกับการสอบเทียบนี้
+            from calibrate.models import CalibrationEquipmentUsed
+            CalibrationEquipmentUsed.objects.filter(
+                calibration_type='torque',
+                calibration_id=calibration.cal_torque_id
+            ).delete()
+            
+            # เพิ่มข้อมูลเครื่องมือใหม่ (ใช้ set เพื่อหลีกเลี่ยงการซ้ำ)
+            equipment_ids = set()
+            for eid in selected_equipment.split(','):
+                eid = eid.strip()
+                if eid:
+                    equipment_ids.add(eid)
+            
+            for equipment_id in equipment_ids:
+                try:
+                    from machine.models import CalibrationEquipment
+                    equipment = CalibrationEquipment.objects.get(id=equipment_id)
+                    CalibrationEquipmentUsed.objects.get_or_create(
+                        calibration_type='torque',
+                        calibration_id=calibration.cal_torque_id,
+                        equipment=equipment
+                    )
+                    print(f"Added equipment: {equipment.name}")
+                except Exception as e:
+                    print(f"Error adding equipment {equipment_id}: {e}")
         
         # ตรวจสอบสถานะอัตโนมัติ
-        self.auto_check_status(form.instance)
+        self.auto_check_status(calibration)
         
         # เพิ่ม success message
         from django.contrib import messages
         messages.success(self.request, 'บันทึกการสอบเทียบ Torque เรียบร้อยแล้ว')
-        # ให้ Django จัดการ redirect ตาม success_url
-        return super().form_valid(form)
+        
+        # Redirect ไปยัง success_url โดยตรง
+        return redirect(self.success_url)
     
     def auto_check_status(self, calibration):
         """ตรวจสอบสถานะอัตโนมัติสำหรับ Torque"""

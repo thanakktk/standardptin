@@ -708,6 +708,80 @@ document.addEventListener('DOMContentLoaded', function() {
             actualInput.addEventListener('input', calculateError);
         }
     });
+    
+    // จัดการเครื่องมือหลายตัว
+    let equipmentCounter = 0;
+    
+    // ฟังก์ชันเพิ่มเครื่องมือใหม่
+    function addEquipmentRow() {
+        equipmentCounter++;
+        const container = document.getElementById('calibration-equipment-container');
+        
+        // ดึงข้อมูลเครื่องมือจาก select แรก
+        const firstSelect = document.querySelector('.equipment-select');
+        const options = Array.from(firstSelect.options).map(option => ({
+            value: option.value,
+            text: option.textContent
+        }));
+        
+        const newRow = document.createElement('div');
+        newRow.className = 'row mb-2 calibration-equipment-row';
+        newRow.innerHTML = `
+            <div class="col-md-10">
+                <select name="additional_equipment_${equipmentCounter}" class="form-control equipment-select">
+                    <option value="">เลือกเครื่องมือที่ใช้สอบเทียบ</option>
+                    ${options.map(opt => `<option value="${opt.value}">${opt.text}</option>`).join('')}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm remove-equipment-btn">
+                    <i class="fas fa-trash"></i> ลบ
+                </button>
+            </div>
+        `;
+        
+        container.appendChild(newRow);
+        console.log(`Added equipment row ${equipmentCounter}`);
+    }
+    
+    // เพิ่ม event listener สำหรับปุ่มเพิ่มเครื่องมือ (ใช้ event delegation)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.add-equipment-btn')) {
+            addEquipmentRow();
+        }
+    });
+    
+    // เพิ่ม event listener สำหรับปุ่มลบเครื่องมือ (ใช้ event delegation)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-equipment-btn')) {
+            e.target.closest('.calibration-equipment-row').remove();
+        }
+    });
+    
+    // จัดการข้อมูลเครื่องมือหลายตัวก่อนส่งฟอร์ม
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        const equipmentSelects = form.querySelectorAll('.equipment-select');
+        const selectedEquipment = [];
+        
+        equipmentSelects.forEach(select => {
+            if (select.value) {
+                selectedEquipment.push(select.value);
+            }
+        });
+        
+        // สร้าง hidden input สำหรับเก็บข้อมูลเครื่องมือหลายตัว
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'selected_equipment';
+        hiddenInput.value = selectedEquipment.join(',');
+        form.appendChild(hiddenInput);
+        
+        console.log('Selected equipment:', selectedEquipment);
+        
+        // ให้ฟอร์ม submit ตามปกติ
+        return true;
+    });
 });
 </script>
 {% endblock %} 
