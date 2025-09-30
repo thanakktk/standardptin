@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CalibrationPressure, CalibrationTorque, UUC, UUCStdMap, DialGaugeCalibration, DialGaugeReading, BalanceCalibration, BalanceReading, MicrowaveCalibration, MicrowaveReading
+from .models import CalibrationPressure, CalibrationTorque, UUC, UUCStdMap, DialGaugeCalibration, DialGaugeReading, BalanceCalibration, BalanceReading, MicrowaveCalibration, MicrowaveReading, LowFrequencyCalibration, HighFrequencyCalibration
 
 
 
@@ -262,3 +262,113 @@ class MicrowaveReadingAdmin(admin.ModelAdmin):
         'notes',
     )
     list_filter = ('calibration',)
+
+
+@admin.register(LowFrequencyCalibration)
+class LowFrequencyCalibrationAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'machine',
+        'std_id',
+        'calibrator',
+        'certificate_issuer',
+        'date_calibration',
+        'update',
+        'next_due',
+        'certificate_number',
+        'measurement_range',
+        'status',
+        'priority',
+        'dc_uuc_range',
+        'dc_uuc_setting',
+        'dc_measured_value',
+        'dc_uncertainty',
+        'dc_tolerance_limit',
+        'ac_uuc_range',
+        'ac_uuc_setting',
+        'ac_measured_value',
+        'ac_uncertainty',
+        'ac_tolerance_limit',
+        'res_uuc_range',
+        'res_uuc_setting',
+        'res_measured_value',
+        'res_uncertainty',
+        'res_tolerance_limit',
+    )
+    list_filter = (
+        'machine',
+        'std_id',
+        'calibrator',
+        'certificate_issuer',
+        'date_calibration',
+        'update',
+        'next_due',
+        'status',
+        'priority',
+    )
+    search_fields = (
+        'machine__name',
+        'machine__serial_number',
+        'certificate_number',
+    )
+    date_hierarchy = 'date_calibration'
+
+
+@admin.register(HighFrequencyCalibration)
+class HighFrequencyCalibrationAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'machine',
+        'std_id',
+        'calibrator',
+        'certificate_issuer',
+        'date_calibration',
+        'update',
+        'next_due',
+        'certificate_number',
+        'measurement_range',
+        'status',
+        'priority',
+    )
+    list_filter = (
+        'machine',
+        'std_id',
+        'calibrator',
+        'certificate_issuer',
+        'date_calibration',
+        'update',
+        'next_due',
+        'status',
+        'priority',
+    )
+    search_fields = (
+        'machine__name',
+        'machine__serial_number',
+        'certificate_number',
+    )
+    date_hierarchy = 'date_calibration'
+
+
+# Import CalibrationEquipmentUsed if it exists
+try:
+    from .models import CalibrationEquipmentUsed
+    
+    @admin.register(CalibrationEquipmentUsed)
+    class CalibrationEquipmentUsedAdmin(admin.ModelAdmin):
+        list_display = (
+            'id',
+            'calibration_type',
+            'calibration_id',
+            'equipment',
+            'created_at',
+        )
+        list_filter = ('calibration_type', 'equipment')
+        search_fields = (
+            'calibration_type',
+            'equipment__name',
+            'equipment__model',
+        )
+        readonly_fields = ('created_at',)
+        
+except ImportError:
+    pass
