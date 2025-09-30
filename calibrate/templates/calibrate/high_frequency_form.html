@@ -79,6 +79,9 @@
                 <form method="post">
                     {% csrf_token %}
                     
+                    <!-- Hidden input สำหรับ status -->
+                    <input type="hidden" name="status" value="{{ form.instance.status|default:'in_progress' }}">
+                    
                     <!-- ข้อมูลการสอบเทียบ High Frequency -->
                     <div class="row mb-3">
                         <div class="col-md-4">
@@ -108,7 +111,8 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <!-- ซ่อน status field -->
+                        <!-- <div class="col-md-4">
                             <label for="{{ form.status.id_for_label }}" class="form-label">
                                 <i class="fas fa-flag me-1"></i>{{ form.status.label }}
                             </label>
@@ -116,7 +120,7 @@
                             {% if form.status.errors %}
                                 <div class="text-danger small">{{ form.status.errors.0 }}</div>
                             {% endif %}
-                        </div>
+                        </div> -->
                         <div class="col-md-4">
                             <label for="{{ form.certificate_number.id_for_label }}" class="form-label">
                                 <i class="fas fa-file-alt me-1"></i>{{ form.certificate_number.label }}

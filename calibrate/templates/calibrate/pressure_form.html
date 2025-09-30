@@ -70,8 +70,29 @@
                 <form method="post">
                     {% csrf_token %}
                     
+                    <!-- Hidden input สำหรับ priority, status และ uuc_id -->
+                    <input type="hidden" name="priority" value="{{ form.instance.priority|default:'normal' }}">
+                    <input type="hidden" name="status" value="{{ form.instance.status|default:'in_progress' }}">
+                    <input type="hidden" name="uuc_id" value="{{ form.instance.uuc_id.id|default:form.uuc_id.value|default:'' }}">
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    
                     <!-- ข้อมูลทั่วไป -->
                     <div class="row mb-3">
+                        <!-- ซ่อน uuc_id field -->
+                        <!-- <div class="col-md-3">
+                            <label for="{{ form.uuc_id.id_for_label }}" class="form-label">
+                                <i class="fas fa-tools me-1"></i>{{ form.uuc_id.label }}
+                            </label>
+                            {{ form.uuc_id }}
+                            {% if form.uuc_id.errors %}
+                                <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
+                            {% endif %}
+                        </div> -->
                         <div class="col-md-3">
                             <label class="form-label">
                                 <i class="fas fa-ruler me-1"></i>ช่วงการวัด
@@ -130,14 +151,6 @@
                             {% endif %}
                         </div>
                         <div class="col-md-4">
-                            {% if form.uuc_id.errors %}
-                                <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
                             <label for="{{ form.certificate_number.id_for_label }}" class="form-label">
                                 <i class="fas fa-certificate me-1"></i>{{ form.certificate_number.label }}
                             </label>
@@ -147,6 +160,7 @@
                             {% endif %}
                         </div>
                     </div>
+
 
                     <div class="row mb-3">
                         <div class="col-md-12">
@@ -213,7 +227,7 @@
                             <tbody>
                                 <tr>
                                     <td>
-                                        {{ form.measurement_range }}
+                                        <input type="text" value="{{ form.instance.measurement_range|default:form.measurement_range.value|default:'' }}" class="form-control" readonly>
                                     </td>
                                     <td>
                                         {{ form.set }}
@@ -531,67 +545,7 @@ document.addEventListener('DOMContentLoaded', function() {
         {% endfor %}
     `;
     
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('add-equipment-btn')) {
-            equipmentCounter++;
-            const container = document.getElementById('calibration-equipment-container');
-            const newRow = document.createElement('div');
-            newRow.className = 'row mb-2 calibration-equipment-row';
-            
-            // สร้าง select element แบบปลอดภัย
-            const selectDiv = document.createElement('div');
-            selectDiv.className = 'col-md-10';
-            
-            // เพิ่ม label
-            const label = document.createElement('label');
-            label.htmlFor = 'id_std_id_' + equipmentCounter;
-            label.className = 'form-label visually-hidden';
-            label.textContent = 'เครื่องมือที่ใช้สอบเทียบ';
-            selectDiv.appendChild(label);
-            
-            const select = document.createElement('select');
-            select.name = 'std_id_' + equipmentCounter;
-            select.id = 'id_std_id_' + equipmentCounter;
-            select.className = 'form-control equipment-select';
-            
-            // เพิ่ม default option
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.textContent = 'เลือกเครื่องมือที่ใช้สอบเทียบ';
-            select.appendChild(defaultOption);
-            
-            // เพิ่ม options จาก equipmentOptions
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = equipmentOptions;
-            const options = tempDiv.querySelectorAll('option');
-            options.forEach(option => {
-                select.appendChild(option.cloneNode(true));
-            });
-            
-            selectDiv.appendChild(select);
-            
-            // สร้างปุ่มลบ
-            const buttonDiv = document.createElement('div');
-            buttonDiv.className = 'col-md-2';
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.className = 'btn btn-danger btn-sm remove-equipment-btn';
-            removeBtn.innerHTML = '<i class="fas fa-minus"></i> ลบ';
-            
-            buttonDiv.appendChild(removeBtn);
-            
-            // รวม elements
-            newRow.appendChild(selectDiv);
-            newRow.appendChild(buttonDiv);
-            container.appendChild(newRow);
-        }
-        
-        if (e.target.classList.contains('remove-equipment-btn')) {
-            const row = e.target.closest('.calibration-equipment-row');
-            row.remove();
-        }
-    });
+    // ลบ event listener ซ้ำออก - ใช้แค่ตัวเดียวด้านล่าง
     
     // จัดการข้อมูลเครื่องมือหลายตัวก่อนส่งฟอร์ม
     document.addEventListener('submit', function(e) {

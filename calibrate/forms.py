@@ -8,7 +8,7 @@ from .models import (
 class CalibrationPressureForm(forms.ModelForm):
     class Meta:
         model = CalibrationPressure
-        fields = ['measurement_range', 'update', 'next_due', 'set', 'm1', 'm2', 'm3', 'm4', 'actual', 'error', 'tolerance_start', 'tolerance_end',
+        fields = ['uuc_id', 'measurement_range', 'update', 'next_due', 'set', 'm1', 'm2', 'm3', 'm4', 'actual', 'error', 'tolerance_start', 'tolerance_end',
                   'set_2', 'm1_2', 'm2_2', 'm3_2', 'm4_2', 'actual_2', 'error_2', 'tolerance_start_2', 'tolerance_end_2',
                   'set_3', 'm1_3', 'm2_3', 'm3_3', 'm4_3', 'actual_3', 'error_3', 'tolerance_start_3', 'tolerance_end_3',
                   'set_4', 'm1_4', 'm2_4', 'm3_4', 'm4_4', 'actual_4', 'error_4', 'tolerance_start_4', 'tolerance_end_4',
@@ -16,6 +16,7 @@ class CalibrationPressureForm(forms.ModelForm):
                   'set_6', 'm1_6', 'm2_6', 'm3_6', 'm4_6', 'actual_6', 'error_6', 'tolerance_start_6', 'tolerance_end_6',
                   'std_id', 'calibrator', 'certificate_issuer', 'certificate_number', 'status', 'priority']
         widgets = {
+            'uuc_id': forms.Select(attrs={'class': 'form-control'}),
             'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 bar'}),
             'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -93,11 +94,16 @@ class CalibrationPressureForm(forms.ModelForm):
         from machine.models import CalibrationEquipment
         self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
         self.fields['std_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
+        
+        # ตั้งค่า queryset สำหรับเครื่องมือที่สอบเทียบ (UUC)
+        from machine.models import Machine
+        self.fields['uuc_id'].queryset = Machine.objects.all().order_by('name')
+        self.fields['uuc_id'].empty_label = "เลือกเครื่องมือที่สอบเทียบ (UUC)"
 
 class CalibrationTorqueForm(forms.ModelForm):
     class Meta:
         model = CalibrationTorque
-        fields = ['measurement_range', 'update', 'next_due', 'cwset', 'cw0', 'cw90', 'cw180', 'cw270', 'ccwset', 'ccw0', 'ccw90', 'ccw180', 'ccw270', 
+        fields = ['uuc_id', 'measurement_range', 'update', 'next_due', 'cwset', 'cw0', 'cw90', 'cw180', 'cw270', 'ccwset', 'ccw0', 'ccw90', 'ccw180', 'ccw270', 
                   'cw_actual', 'cw_error', 'cw_tolerance_start', 'cw_tolerance_end',
                  'cwset_2', 'cw_actual_2', 'cw_error_2', 'cw_tolerance_start_2', 'cw_tolerance_end_2',
                   'cwset_3', 'cw_actual_3', 'cw_error_3', 'cw_tolerance_start_3', 'cw_tolerance_end_3',
@@ -106,6 +112,7 @@ class CalibrationTorqueForm(forms.ModelForm):
                  'ccwset_3', 'ccw_actual_3', 'ccw_error_3', 'ccw_tolerance_start_3', 'ccw_tolerance_end_3',
                   'std_id', 'calibrator', 'certificate_issuer', 'certificate_number', 'status', 'priority']
         widgets = {
+            'uuc_id': forms.Select(attrs={'class': 'form-control'}),
             'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 Nm'}),
             'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -167,6 +174,11 @@ class CalibrationTorqueForm(forms.ModelForm):
         from machine.models import CalibrationEquipment
         self.fields['std_id'].queryset = CalibrationEquipment.objects.all().order_by('name')
         self.fields['std_id'].empty_label = "เลือกเครื่องมือที่ใช้สอบเทียบ"
+        
+        # ตั้งค่า queryset สำหรับเครื่องมือที่สอบเทียบ (UUC)
+        from machine.models import Machine
+        self.fields['uuc_id'].queryset = Machine.objects.all().order_by('name')
+        self.fields['uuc_id'].empty_label = "เลือกเครื่องมือที่สอบเทียบ (UUC)"
 
 class BalanceCalibrationForm(forms.ModelForm):
     class Meta:

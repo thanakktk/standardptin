@@ -1,14 +1,38 @@
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib.auth.decorators import login_required
+from __future__ import annotations
+
+from typing import List
+
 from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
-from .models import CalibrationPressure, CalibrationTorque, DialGaugeCalibration, BalanceCalibration, MicrowaveCalibration, HighFrequencyCalibration, LowFrequencyCalibration
-from .forms import CalibrationPressureForm, CalibrationTorqueForm, DialGaugeCalibrationForm, BalanceCalibrationForm, MicrowaveCalibrationForm, HighFrequencyCalibrationForm, LowFrequencyCalibrationForm
-from machine.models import Machine, MachineType
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models
+from django.http import HttpRequest, QueryDict
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+
+# ==== Imports: adjust to your app structure ====
+from calibrate.models import (
+    CalibrationPressure,
+    CalibrationTorque,
+    CalibrationEquipmentUsed,
+    DialGaugeCalibration, 
+    BalanceCalibration, 
+    MicrowaveCalibration, 
+    HighFrequencyCalibration, 
+    LowFrequencyCalibration
+)
+from calibrate.forms import (
+    CalibrationPressureForm,
+    CalibrationTorqueForm,
+    DialGaugeCalibrationForm, 
+    BalanceCalibrationForm, 
+    MicrowaveCalibrationForm, 
+    HighFrequencyCalibrationForm, 
+    LowFrequencyCalibrationForm
+)
+from machine.models import Machine, MachineType, CalibrationEquipment
+
+# Additional imports for document generation
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -19,6 +43,8 @@ import io
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, JsonResponse
 
 
 
@@ -56,6 +82,44 @@ class CalibrationPressureCreateView(LoginRequiredMixin, PermissionRequiredMixin,
         form.fields['calibrator'].queryset = users
         form.fields['certificate_issuer'].queryset = users
         return form
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            data = kwargs.get('data')
+            if data is None:
+                from django.http import QueryDict
+                data = QueryDict(mutable=True)
+            else:
+                data = data.copy()
+            if 'status' not in self.request.POST:
+                data['status'] = 'in_progress'
+            if 'priority' not in self.request.POST:
+                data['priority'] = 'normal'
+            kwargs['data'] = data
+        return kwargs
+    
+    def form_valid(self, form):
+        print("=== DEBUG: ก่อนบันทึก Pressure Create ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        print(f"Form is_valid: {form.is_valid()}")
+        print(f"Form cleaned_data: {form.cleaned_data}")
+        
+        # ตรวจสอบ form errors
+        if form.errors:
+            print(f"❌ Form errors: {form.errors}")
+            return self.form_invalid(form)
+        
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.cal_pressure_id}")
+            messages.success(self.request, 'บันทึกการสอบเทียบ Pressure เรียบร้อยแล้ว')
+            return redirect(self.success_url)
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            messages.error(self.request, f'เกิดข้อผิดพลาดในการบันทึก: {str(e)}')
+            return self.form_invalid(form)
 
 class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = CalibrationPressure
@@ -73,6 +137,34 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         form.fields['certificate_issuer'].queryset = users
         return form
     
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            data = kwargs.get('data')
+            if data is None:
+                from django.http import QueryDict
+                data = QueryDict(mutable=True)
+            else:
+                data = data.copy()
+
+            # inject status ถ้าไม่ส่งมา
+            if 'status' not in self.request.POST:
+                data['status'] = getattr(getattr(self, 'object', None), 'status', None) or 'in_progress'
+
+            # ✅ inject priority ถ้าไม่ส่งมา
+            if 'priority' not in self.request.POST:
+                data['priority'] = getattr(getattr(self, 'object', None), 'priority', None) or 'normal'
+
+            kwargs['data'] = data
+        return kwargs
+    
+    def form_invalid(self, form):
+        print("❌ Pressure form invalid")
+        print("Errors:", form.errors)
+        print("Non-field:", form.non_field_errors())
+        print("POST data:", dict(self.request.POST))
+        return super().form_invalid(form)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ Pressure - {self.object.uuc_id.name if self.object.uuc_id else "เครื่องมือ"}'
@@ -87,13 +179,26 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         return context
     
     def form_valid(self, form):
-        print("=== DEBUG: ก่อนบันทึก Pressure ===")
+        print("=== DEBUG: ก่อนบันทึก Pressure Update ===")
         print(f"POST data: {dict(self.request.POST)}")
+        print(f"Form is_valid: {form.is_valid()}")
+        print(f"Form cleaned_data: {form.cleaned_data}")
+        print(f"Object ID: {self.object.cal_pressure_id if self.object else 'None'}")
+        print(f"Request method: {self.request.method}")
+        print(f"Request user: {self.request.user}")
         
         # ตรวจสอบ form errors
         if form.errors:
             print(f"❌ Form errors: {form.errors}")
             return self.form_invalid(form)
+        
+        # ตรวจสอบ required fields
+        required_fields = ['uuc_id', 'measurement_range', 'update', 'next_due']
+        for field in required_fields:
+            if field in form.cleaned_data and form.cleaned_data[field]:
+                print(f"✅ {field}: {form.cleaned_data[field]}")
+            else:
+                print(f"⚠️ {field}: {form.cleaned_data.get(field, 'MISSING')}")
         
         # ดูข้อมูลเครื่องมือก่อนบันทึก
         from calibrate.models import CalibrationEquipmentUsed
@@ -105,7 +210,11 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         
         try:
             # บันทึกข้อมูลการสอบเทียบ
-            calibration = form.save()
+            obj = form.save(commit=False)
+            if obj.uuc_id_id is None:
+                obj.uuc_id_id = self.get_object().uuc_id_id  # อุ้มของเดิมไว้
+            obj.save()
+            calibration = obj
             print(f"✅ บันทึก calibration ID: {calibration.cal_pressure_id}")
         except Exception as e:
             print(f"❌ Error saving calibration: {e}")
@@ -134,6 +243,10 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         for key, value in self.request.POST.items():
             if key.startswith('std_id_existing_') and value:
                 equipment_ids.append(value)
+        
+        # ทำ equipment_ids ให้ unique และกรองค่าว่าง
+        equipment_ids = [e for e in equipment_ids if e]
+        equipment_ids = list(dict.fromkeys(equipment_ids))  # รักษา order และ unique
         
         print(f"=== DEBUG: Final equipment_ids = {equipment_ids}")
         
@@ -259,6 +372,44 @@ class CalibrationTorqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, C
         form.fields['calibrator'].queryset = users
         form.fields['certificate_issuer'].queryset = users
         return form
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            data = kwargs.get('data')
+            if data is None:
+                from django.http import QueryDict
+                data = QueryDict(mutable=True)
+            else:
+                data = data.copy()
+            if 'status' not in self.request.POST:
+                data['status'] = 'in_progress'
+            if 'priority' not in self.request.POST:
+                data['priority'] = 'normal'
+            kwargs['data'] = data
+        return kwargs
+    
+    def form_valid(self, form):
+        print("=== DEBUG: ก่อนบันทึก Torque Create ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        print(f"Form is_valid: {form.is_valid()}")
+        print(f"Form cleaned_data: {form.cleaned_data}")
+        
+        # ตรวจสอบ form errors
+        if form.errors:
+            print(f"❌ Form errors: {form.errors}")
+            return self.form_invalid(form)
+        
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.cal_torque_id}")
+            messages.success(self.request, 'บันทึกการสอบเทียบ Torque เรียบร้อยแล้ว')
+            return redirect(self.success_url)
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            messages.error(self.request, f'เกิดข้อผิดพลาดในการบันทึก: {str(e)}')
+            return self.form_invalid(form)
 
 class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = CalibrationTorque
@@ -276,6 +427,34 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
         form.fields['certificate_issuer'].queryset = users
         return form
     
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            data = kwargs.get('data')
+            if data is None:
+                from django.http import QueryDict
+                data = QueryDict(mutable=True)
+            else:
+                data = data.copy()
+
+            # inject status ถ้าไม่ส่งมา
+            if 'status' not in self.request.POST:
+                data['status'] = getattr(getattr(self, 'object', None), 'status', None) or 'in_progress'
+
+            # ✅ inject priority ถ้าไม่ส่งมา
+            if 'priority' not in self.request.POST:
+                data['priority'] = getattr(getattr(self, 'object', None), 'priority', None) or 'normal'
+
+            kwargs['data'] = data
+        return kwargs
+    
+    def form_invalid(self, form):
+        print("=== DEBUG: Torque Update Form Invalid ===")
+        print(f"Form errors: {form.errors}")
+        print(f"Form non_field_errors: {form.non_field_errors}")
+        print(f"POST data: {dict(self.request.POST)}")
+        return super().form_invalid(form)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ Torque - {self.object.uuc_id.name if self.object.uuc_id else "เครื่องมือ"}'
@@ -290,13 +469,26 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
         return context
     
     def form_valid(self, form):
-        print("=== DEBUG: ก่อนบันทึก Torque ===")
+        print("=== DEBUG: ก่อนบันทึก Torque Update ===")
         print(f"POST data: {dict(self.request.POST)}")
+        print(f"Form is_valid: {form.is_valid()}")
+        print(f"Form cleaned_data: {form.cleaned_data}")
+        print(f"Object ID: {self.object.cal_torque_id if self.object else 'None'}")
+        print(f"Request method: {self.request.method}")
+        print(f"Request user: {self.request.user}")
         
         # ตรวจสอบ form errors
         if form.errors:
             print(f"❌ Form errors: {form.errors}")
             return self.form_invalid(form)
+        
+        # ตรวจสอบ required fields
+        required_fields = ['uuc_id', 'measurement_range', 'update', 'next_due']
+        for field in required_fields:
+            if field in form.cleaned_data and form.cleaned_data[field]:
+                print(f"✅ {field}: {form.cleaned_data[field]}")
+            else:
+                print(f"⚠️ {field}: {form.cleaned_data.get(field, 'MISSING')}")
         
         try:
             # บันทึกข้อมูลการสอบเทียบ
@@ -434,6 +626,20 @@ class BalanceCalibrationCreateView(LoginRequiredMixin, PermissionRequiredMixin, 
         form.fields['calibrator'].queryset = users
         form.fields['certificate_issuer'].queryset = users
         return form
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            data = kwargs.get('data')
+            if data is None:
+                from django.http import QueryDict
+                data = QueryDict(mutable=True)
+            else:
+                data = data.copy()
+            if 'priority' not in self.request.POST:
+                data['priority'] = 'normal'
+            kwargs['data'] = data
+        return kwargs
 
 class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = BalanceCalibration
@@ -450,6 +656,20 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         form.fields['calibrator'].queryset = users
         form.fields['certificate_issuer'].queryset = users
         return form
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            data = kwargs.get('data')
+            if data is None:
+                from django.http import QueryDict
+                data = QueryDict(mutable=True)
+            else:
+                data = data.copy()
+            if 'priority' not in self.request.POST:
+                data['priority'] = getattr(getattr(self, 'object', None), 'priority', None) or 'normal'
+            kwargs['data'] = data
+        return kwargs
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -2912,6 +3132,20 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'calibrate/high_frequency_form.html'
     success_url = reverse_lazy('calibrate-dashboard')
     
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            data = kwargs.get('data')
+            if data is None:
+                from django.http import QueryDict
+                data = QueryDict(mutable=True)
+            else:
+                data = data.copy()
+            if 'status' not in self.request.POST:
+                data['status'] = getattr(getattr(self, 'object', None), 'status', None) or 'in_progress'
+            kwargs['data'] = data
+        return kwargs
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'แก้ไขการสอบเทียบ High Frequency - {self.object.machine.name}'
@@ -3322,6 +3556,20 @@ class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     form_class = DialGaugeCalibrationForm
     template_name = 'calibrate/dial_gauge_form.html'
     success_url = reverse_lazy('calibrate-dashboard')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            data = kwargs.get('data')
+            if data is None:
+                from django.http import QueryDict
+                data = QueryDict(mutable=True)
+            else:
+                data = data.copy()
+            if 'status' not in self.request.POST:
+                data['status'] = getattr(getattr(self, 'object', None), 'status', None) or 'in_progress'
+            kwargs['data'] = data
+        return kwargs
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

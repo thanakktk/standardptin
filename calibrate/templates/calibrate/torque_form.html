@@ -70,8 +70,29 @@
                 <form method="post">
                     {% csrf_token %}
                     
+                    <!-- Hidden input สำหรับ priority, status และ uuc_id -->
+                    <input type="hidden" name="priority" value="{{ form.instance.priority|default:'normal' }}">
+                    <input type="hidden" name="status" value="{{ form.instance.status|default:'in_progress' }}">
+                    <input type="hidden" name="uuc_id" value="{{ form.instance.uuc_id.id|default:form.uuc_id.value|default:'' }}">
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    
                     <!-- ข้อมูลทั่วไป -->
                     <div class="row mb-3">
+                        <!-- ซ่อน uuc_id field -->
+                        <!-- <div class="col-md-3">
+                            <label for="{{ form.uuc_id.id_for_label }}" class="form-label">
+                                <i class="fas fa-tools me-1"></i>{{ form.uuc_id.label }}
+                            </label>
+                            {{ form.uuc_id }}
+                            {% if form.uuc_id.errors %}
+                                <div class="text-danger small">{{ form.uuc_id.errors.0 }}</div>
+                            {% endif %}
+                        </div> -->
                         <div class="col-md-3">
                             <label class="form-label">
                                 <i class="fas fa-ruler me-1"></i>ช่วงการวัด
@@ -129,19 +150,7 @@
                                 <div class="text-danger small">{{ form.certificate_issuer.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        <div class="col-md-4" style="display: none !important;">
-                            <label for="{{ form.std_id.id_for_label }}" class="form-label">
-                                <i class="fas fa-tools me-1"></i>{{ form.std_id.label }}
-                            </label>
-                            {{ form.std_id }}
-                            {% if form.std_id.errors %}
-                                <div class="text-danger small">{{ form.std_id.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="{{ form.certificate_number.id_for_label }}" class="form-label">
                                 <i class="fas fa-certificate me-1"></i>{{ form.certificate_number.label }}
                             </label>
@@ -151,6 +160,7 @@
                             {% endif %}
                         </div>
                     </div>
+
 
                     <div class="row mb-3">
                         <div class="col-md-12">
