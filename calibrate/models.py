@@ -152,6 +152,108 @@ class CalibrationPressure(models.Model):
             calibration_type='pressure',
             calibration_id=self.cal_pressure_id
         )
+    
+    def check_tolerance_limits(self):
+        """ตรวจสอบเงื่อนไขการคำนวณตาม Tolerance Limit"""
+        results = []
+        
+        # ตรวจสอบแถวที่ 1
+        if self.set and self.actual and self.tolerance_start and self.tolerance_end:
+            try:
+                set_val = float(self.set)
+                actual_val = float(self.actual)
+                tolerance_start = float(self.tolerance_start)
+                tolerance_end = float(self.tolerance_end)
+                
+                # ตรวจสอบ UUC Set
+                set_in_range = tolerance_start <= set_val <= tolerance_end
+                # ตรวจสอบ Actual
+                actual_in_range = tolerance_start <= actual_val <= tolerance_end
+                
+                results.append({
+                    'row': 1,
+                    'set': set_val,
+                    'actual': actual_val,
+                    'tolerance_start': tolerance_start,
+                    'tolerance_end': tolerance_end,
+                    'set_in_range': set_in_range,
+                    'actual_in_range': actual_in_range,
+                    'passed': set_in_range and actual_in_range
+                })
+            except (ValueError, TypeError):
+                results.append({
+                    'row': 1,
+                    'error': 'Invalid data format'
+                })
+        
+        # ตรวจสอบแถวที่ 2-6
+        for i in range(2, 7):
+            set_field = getattr(self, f'set_{i}', None)
+            actual_field = getattr(self, f'actual_{i}', None)
+            tolerance_start_field = getattr(self, f'tolerance_start_{i}', None)
+            tolerance_end_field = getattr(self, f'tolerance_end_{i}', None)
+            
+            if set_field and actual_field and tolerance_start_field and tolerance_end_field:
+                try:
+                    set_val = float(set_field)
+                    actual_val = float(actual_field)
+                    tolerance_start = float(tolerance_start_field)
+                    tolerance_end = float(tolerance_end_field)
+                    
+                    # ตรวจสอบ UUC Set
+                    set_in_range = tolerance_start <= set_val <= tolerance_end
+                    # ตรวจสอบ Actual
+                    actual_in_range = tolerance_start <= actual_val <= tolerance_end
+                    
+                    results.append({
+                        'row': i,
+                        'set': set_val,
+                        'actual': actual_val,
+                        'tolerance_start': tolerance_start,
+                        'tolerance_end': tolerance_end,
+                        'set_in_range': set_in_range,
+                        'actual_in_range': actual_in_range,
+                        'passed': set_in_range and actual_in_range
+                    })
+                except (ValueError, TypeError):
+                    results.append({
+                        'row': i,
+                        'error': 'Invalid data format'
+                    })
+        
+        return results
+    
+    def get_calibration_result(self):
+        """คำนวณผลการสอบเทียบโดยรวม"""
+        results = self.check_tolerance_limits()
+        
+        if not results:
+            return 'no_data'
+        
+        # ตรวจสอบว่ามี error หรือไม่
+        if any('error' in result for result in results):
+            return 'error'
+        
+        # ตรวจสอบว่าทุกแถวผ่านหรือไม่
+        all_passed = all(result.get('passed', False) for result in results)
+        
+        if all_passed:
+            return 'passed'
+        else:
+            return 'failed'
+    
+    def auto_update_status(self):
+        """อัพเดต status อัตโนมัติตามผลการสอบเทียบ"""
+        result = self.get_calibration_result()
+        
+        if result == 'passed':
+            self.status = 'passed'
+        elif result == 'failed':
+            self.status = 'failed'
+        elif result == 'error':
+            self.status = 'in_progress'  # ยังไม่สามารถประเมินได้
+        
+        return result
 
 class CalibrationTorque(models.Model):
     STATUS_CHOICES = [
@@ -272,6 +374,106 @@ class CalibrationTorque(models.Model):
             calibration_type='torque',
             calibration_id=self.cal_torque_id
         )
+    
+    def check_tolerance_limits(self):
+        """ตรวจสอบเงื่อนไขการคำนวณตาม Tolerance Limit"""
+        results = []
+        
+        # ตรวจสอบแถวที่ 1 (CW)
+        if self.cwset and self.cw_avg and self.cw_tolerance_start and self.cw_tolerance_end:
+            try:
+                set_val = float(self.cwset)
+                actual_val = float(self.cw_avg)
+                tolerance_start = float(self.cw_tolerance_start)
+                tolerance_end = float(self.cw_tolerance_end)
+                
+                # ตรวจสอบ UUC Set
+                set_in_range = tolerance_start <= set_val <= tolerance_end
+                # ตรวจสอบ Actual
+                actual_in_range = tolerance_start <= actual_val <= tolerance_end
+                
+                results.append({
+                    'row': 1,
+                    'direction': 'CW',
+                    'set': set_val,
+                    'actual': actual_val,
+                    'tolerance_start': tolerance_start,
+                    'tolerance_end': tolerance_end,
+                    'set_in_range': set_in_range,
+                    'actual_in_range': actual_in_range,
+                    'passed': set_in_range and actual_in_range
+                })
+            except (ValueError, TypeError):
+                results.append({
+                    'row': 1,
+                    'direction': 'CW',
+                    'error': 'Invalid data format'
+                })
+        
+        # ตรวจสอบแถวที่ 1 (CCW)
+        if self.ccwset and self.ccw_avg and self.ccw_tolerance_start and self.ccw_tolerance_end:
+            try:
+                set_val = float(self.ccwset)
+                actual_val = float(self.ccw_avg)
+                tolerance_start = float(self.ccw_tolerance_start)
+                tolerance_end = float(self.ccw_tolerance_end)
+                
+                # ตรวจสอบ UUC Set
+                set_in_range = tolerance_start <= set_val <= tolerance_end
+                # ตรวจสอบ Actual
+                actual_in_range = tolerance_start <= actual_val <= tolerance_end
+                
+                results.append({
+                    'row': 1,
+                    'direction': 'CCW',
+                    'set': set_val,
+                    'actual': actual_val,
+                    'tolerance_start': tolerance_start,
+                    'tolerance_end': tolerance_end,
+                    'set_in_range': set_in_range,
+                    'actual_in_range': actual_in_range,
+                    'passed': set_in_range and actual_in_range
+                })
+            except (ValueError, TypeError):
+                results.append({
+                    'row': 1,
+                    'direction': 'CCW',
+                    'error': 'Invalid data format'
+                })
+        
+        return results
+    
+    def get_calibration_result(self):
+        """คำนวณผลการสอบเทียบโดยรวม"""
+        results = self.check_tolerance_limits()
+        
+        if not results:
+            return 'no_data'
+        
+        # ตรวจสอบว่ามี error หรือไม่
+        if any('error' in result for result in results):
+            return 'error'
+        
+        # ตรวจสอบว่าทุกแถวผ่านหรือไม่
+        all_passed = all(result.get('passed', False) for result in results)
+        
+        if all_passed:
+            return 'passed'
+        else:
+            return 'failed'
+    
+    def auto_update_status(self):
+        """อัพเดต status อัตโนมัติตามผลการสอบเทียบ"""
+        result = self.get_calibration_result()
+        
+        if result == 'passed':
+            self.status = 'passed'
+        elif result == 'failed':
+            self.status = 'failed'
+        elif result == 'error':
+            self.status = 'in_progress'  # ยังไม่สามารถประเมินได้
+        
+        return result
 
 class UUC(models.Model):
     name = models.CharField(max_length=100, verbose_name="ชื่อเครื่องที่สอบเทียบ (UUC)")
@@ -524,6 +726,119 @@ class BalanceCalibration(models.Model):
             calibration_type='balance',
             calibration_id=self.pk
         )
+    
+    def check_tolerance_limits(self):
+        """ตรวจสอบเงื่อนไขการคำนวณตาม Tolerance Limit (Nominal Value ± 0.003)"""
+        results = []
+        tolerance = 0.003  # ค่าความคลาดเคลื่อนที่อนุญาต
+        
+        # ตรวจสอบแถวที่ 1
+        if (self.linear_nominal_value and self.linear_conventional_mass and 
+            self.linear_displayed_value):
+            try:
+                nominal_val = float(self.linear_nominal_value)
+                conventional_mass = float(self.linear_conventional_mass)
+                displayed_value = float(self.linear_displayed_value)
+                
+                # คำนวณช่วงที่อนุญาต
+                min_allowed = nominal_val - tolerance
+                max_allowed = nominal_val + tolerance
+                
+                # ตรวจสอบ Conventional Mass
+                conventional_in_range = min_allowed <= conventional_mass <= max_allowed
+                # ตรวจสอบ Displayed Value
+                displayed_in_range = min_allowed <= displayed_value <= max_allowed
+                
+                results.append({
+                    'row': 1,
+                    'nominal_value': nominal_val,
+                    'conventional_mass': conventional_mass,
+                    'displayed_value': displayed_value,
+                    'tolerance': tolerance,
+                    'min_allowed': min_allowed,
+                    'max_allowed': max_allowed,
+                    'conventional_in_range': conventional_in_range,
+                    'displayed_in_range': displayed_in_range,
+                    'passed': conventional_in_range and displayed_in_range
+                })
+            except (ValueError, TypeError):
+                results.append({
+                    'row': 1,
+                    'error': 'Invalid data format'
+                })
+        
+        # ตรวจสอบแถวที่ 2-5
+        for i in range(2, 6):
+            nominal_field = getattr(self, f'linear_nominal_value_{i}', None)
+            conventional_field = getattr(self, f'linear_conventional_mass_{i}', None)
+            displayed_field = getattr(self, f'linear_displayed_value_{i}', None)
+            
+            if nominal_field and conventional_field and displayed_field:
+                try:
+                    nominal_val = float(nominal_field)
+                    conventional_mass = float(conventional_field)
+                    displayed_value = float(displayed_field)
+                    
+                    # คำนวณช่วงที่อนุญาต
+                    min_allowed = nominal_val - tolerance
+                    max_allowed = nominal_val + tolerance
+                    
+                    # ตรวจสอบ Conventional Mass
+                    conventional_in_range = min_allowed <= conventional_mass <= max_allowed
+                    # ตรวจสอบ Displayed Value
+                    displayed_in_range = min_allowed <= displayed_value <= max_allowed
+                    
+                    results.append({
+                        'row': i,
+                        'nominal_value': nominal_val,
+                        'conventional_mass': conventional_mass,
+                        'displayed_value': displayed_value,
+                        'tolerance': tolerance,
+                        'min_allowed': min_allowed,
+                        'max_allowed': max_allowed,
+                        'conventional_in_range': conventional_in_range,
+                        'displayed_in_range': displayed_in_range,
+                        'passed': conventional_in_range and displayed_in_range
+                    })
+                except (ValueError, TypeError):
+                    results.append({
+                        'row': i,
+                        'error': 'Invalid data format'
+                    })
+        
+        return results
+    
+    def get_calibration_result(self):
+        """คำนวณผลการสอบเทียบโดยรวม"""
+        results = self.check_tolerance_limits()
+        
+        if not results:
+            return 'no_data'
+        
+        # ตรวจสอบว่ามี error หรือไม่
+        if any('error' in result for result in results):
+            return 'error'
+        
+        # ตรวจสอบว่าทุกแถวผ่านหรือไม่
+        all_passed = all(result.get('passed', False) for result in results)
+        
+        if all_passed:
+            return 'passed'
+        else:
+            return 'failed'
+    
+    def auto_update_status(self):
+        """อัพเดต status อัตโนมัติตามผลการสอบเทียบ"""
+        result = self.get_calibration_result()
+        
+        if result == 'passed':
+            self.status = 'passed'
+        elif result == 'failed':
+            self.status = 'failed'
+        elif result == 'error':
+            self.status = 'in_progress'  # ยังไม่สามารถประเมินได้
+        
+        return result
 
     class Meta:
         verbose_name = "ข้อมูลสอบเทียบ Balance"
@@ -668,6 +983,148 @@ class HighFrequencyCalibration(models.Model):
             calibration_type='high_frequency',
             calibration_id=self.pk
         )
+    
+    def check_tolerance_limits(self):
+        """ตรวจสอบเงื่อนไขการคำนวณตาม Tolerance Limit"""
+        results = []
+        
+        # ตรวจสอบ Frequency Accuracy (แถวที่ 1-5)
+        for i in range(1, 6):
+            setting_field = getattr(self, f'freq_uuc_setting_{i}' if i > 1 else 'freq_uuc_setting', None)
+            measured_field = getattr(self, f'freq_measured_value_{i}' if i > 1 else 'freq_measured_value', None)
+            tolerance_field = getattr(self, f'freq_tolerance_limit_{i}' if i > 1 else 'freq_tolerance_limit', None)
+            
+            if setting_field and measured_field and tolerance_field:
+                try:
+                    setting_val = float(setting_field)
+                    measured_val = float(measured_field)
+                    
+                    # แปลง Tolerance Limit (รูปแบบ: "min - max" หรือ "min to max")
+                    tolerance_str = str(tolerance_field).strip()
+                    if ' - ' in tolerance_str:
+                        min_tolerance, max_tolerance = tolerance_str.split(' - ')
+                    elif ' to ' in tolerance_str:
+                        min_tolerance, max_tolerance = tolerance_str.split(' to ')
+                    else:
+                        # ถ้าเป็นตัวเลขเดียว ให้ใช้เป็น ±tolerance
+                        try:
+                            center = float(tolerance_str)
+                            min_tolerance = center - abs(center * 0.01)  # ±1%
+                            max_tolerance = center + abs(center * 0.01)
+                        except:
+                            continue
+                    
+                    min_tolerance = float(min_tolerance.strip())
+                    max_tolerance = float(max_tolerance.strip())
+                    
+                    # ตรวจสอบ UUC Setting
+                    setting_in_range = min_tolerance <= setting_val <= max_tolerance
+                    # ตรวจสอบ Measured Value
+                    measured_in_range = min_tolerance <= measured_val <= max_tolerance
+                    
+                    results.append({
+                        'row': i,
+                        'type': 'Frequency',
+                        'setting': setting_val,
+                        'measured': measured_val,
+                        'tolerance_min': min_tolerance,
+                        'tolerance_max': max_tolerance,
+                        'setting_in_range': setting_in_range,
+                        'measured_in_range': measured_in_range,
+                        'passed': setting_in_range and measured_in_range
+                    })
+                except (ValueError, TypeError):
+                    results.append({
+                        'row': i,
+                        'type': 'Frequency',
+                        'error': 'Invalid data format'
+                    })
+        
+        # ตรวจสอบ Digital Voltmeter (แถวที่ 1-5)
+        for i in range(1, 6):
+            setting_field = getattr(self, f'volt_uuc_setting_{i}' if i > 1 else 'volt_uuc_setting', None)
+            measured_field = getattr(self, f'volt_measured_value_{i}' if i > 1 else 'volt_measured_value', None)
+            tolerance_field = getattr(self, f'volt_tolerance_limit_{i}' if i > 1 else 'volt_tolerance_limit', None)
+            
+            if setting_field and measured_field and tolerance_field:
+                try:
+                    setting_val = float(setting_field)
+                    measured_val = float(measured_field)
+                    
+                    # แปลง Tolerance Limit (รูปแบบ: "min - max" หรือ "min to max")
+                    tolerance_str = str(tolerance_field).strip()
+                    if ' - ' in tolerance_str:
+                        min_tolerance, max_tolerance = tolerance_str.split(' - ')
+                    elif ' to ' in tolerance_str:
+                        min_tolerance, max_tolerance = tolerance_str.split(' to ')
+                    else:
+                        # ถ้าเป็นตัวเลขเดียว ให้ใช้เป็น ±tolerance
+                        try:
+                            center = float(tolerance_str)
+                            min_tolerance = center - abs(center * 0.01)  # ±1%
+                            max_tolerance = center + abs(center * 0.01)
+                        except:
+                            continue
+                    
+                    min_tolerance = float(min_tolerance.strip())
+                    max_tolerance = float(max_tolerance.strip())
+                    
+                    # ตรวจสอบ UUC Setting
+                    setting_in_range = min_tolerance <= setting_val <= max_tolerance
+                    # ตรวจสอบ Measured Value
+                    measured_in_range = min_tolerance <= measured_val <= max_tolerance
+                    
+                    results.append({
+                        'row': i,
+                        'type': 'Voltage',
+                        'setting': setting_val,
+                        'measured': measured_val,
+                        'tolerance_min': min_tolerance,
+                        'tolerance_max': max_tolerance,
+                        'setting_in_range': setting_in_range,
+                        'measured_in_range': measured_in_range,
+                        'passed': setting_in_range and measured_in_range
+                    })
+                except (ValueError, TypeError):
+                    results.append({
+                        'row': i,
+                        'type': 'Voltage',
+                        'error': 'Invalid data format'
+                    })
+        
+        return results
+    
+    def get_calibration_result(self):
+        """คำนวณผลการสอบเทียบโดยรวม"""
+        results = self.check_tolerance_limits()
+        
+        if not results:
+            return 'no_data'
+        
+        # ตรวจสอบว่ามี error หรือไม่
+        if any('error' in result for result in results):
+            return 'error'
+        
+        # ตรวจสอบว่าทุกแถวผ่านหรือไม่
+        all_passed = all(result.get('passed', False) for result in results)
+        
+        if all_passed:
+            return 'passed'
+        else:
+            return 'failed'
+    
+    def auto_update_status(self):
+        """อัพเดต status อัตโนมัติตามผลการสอบเทียบ"""
+        result = self.get_calibration_result()
+        
+        if result == 'passed':
+            self.status = 'passed'
+        elif result == 'failed':
+            self.status = 'failed'
+        elif result == 'error':
+            self.status = 'in_progress'  # ยังไม่สามารถประเมินได้
+        
+        return result
     
     class Meta:
         verbose_name = "การสอบเทียบ High Frequency"

@@ -2901,135 +2901,116 @@ def export_certificate_excel(request, cal_id, cal_type):
         messages.error(request, f'เกิดข้อผิดพลาดในการสร้างใบรับรอง: {str(e)}')
         return redirect('calibrate-report-detail')
 
+from datetime import datetime
+import os
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from docx import Document
+from docx.oxml.ns import qn
+
+from calibrate.models import LowFrequencyCalibration, CalibrationEquipmentUsed
+
 @login_required
 def export_low_frequency_certificate_docx(request, cal_id):
-    """Export ใบรับรอง Low Frequency แบบ DOCX พร้อมเติมข้อมูลตาราง & อุปกรณ์ที่ใช้"""
     try:
-        cal = get_object_or_404(LowFrequencyCalibration, pk=cal_id)
-
-        # อนุญาตเฉพาะผ่าน/ออกใบรับรองแล้ว (สอดคล้อง STATUS_CHOICES)
+        cal = get_object_or_404(
+            LowFrequencyCalibration.objects.select_related('machine','std_id','calibrator','certificate_issuer'),
+            pk=cal_id
+        )
         if cal.status not in ["passed", "cert_issued"]:
             messages.error(request, "ไม่สามารถออกใบรับรองได้ เนื่องจากยังไม่ผ่านการสอบเทียบ")
             return redirect("calibrate-report-detail")
 
-        # โหลด template (ตรวจ path ให้เข้าถึงไฟล์จริง)
-        template_path = "Low Frequency_template.docx"
+        template_path = os.path.join(settings.BASE_DIR, 'cert_templates', 'Low Frequency_template.docx')
         doc = Document(template_path)
 
-        machine = cal.machine
-        std = cal.std_id  # อุปกรณ์มาตรฐานตัวหลัก
+        m = cal.machine
+        std = cal.std_id
 
-        # หน่วยงาน (ออปชัน)
-        organization = None
+        # องค์กร (ออปชัน)
         try:
             from organize.models import Organize
-            organization = Organize.objects.filter(is_main_unit=True).first() or Organize.objects.first()
+            org = Organize.objects.filter(is_main_unit=True).first() or Organize.objects.first()
         except Exception:
-            organization = None
+            org = None
 
         def fmt(v, dash="-"):
             return v if v not in (None, "") else dash
 
         def fmt_date(d):
-            if not d:
-                return "-"
-            # รองรับทั้ง date/datetime/str
+            if not d: return "-"
             if isinstance(d, str):
-                try:
-                    d = datetime.fromisoformat(d).date()
-                except Exception:
-                    return d
+                try: d = datetime.fromisoformat(d).date()
+                except Exception: return d
             if hasattr(d, "date"):
-                d = d.date() if hasattr(d, "hour") else d
-            try:
-                return d.strftime("%d-%b-%Y")
-            except Exception:
-                return str(d)
+                try: d = d.date()
+                except Exception: pass
+            try: return d.strftime("%d-%b-%Y")
+            except Exception: return str(d)
 
-        # ===== 1) ตัวแทนค่าเบื้องต้น (หัวเอกสาร) =====
+        # ---------- mappings ส่วนหัว ----------
         replacements = {
-            # เครื่องมือ UUC
-            "{{MODEL}}": fmt(machine.model),
-            "{{MANUFACTURER}}": fmt(str(machine.manufacture) if getattr(machine, "manufacture", None) else None),
-            "{{DESCRIPTION}}": fmt(machine.name),
-            "{{SERIAL_NUMBER}}": fmt(machine.serial_number),
-            "{{RANGE}}": fmt(machine.range),
-            "{{GRADUATION}}": fmt(machine.res_uuc),
-            "{{OPTION}}": fmt(machine.option, "N/A"),
-            "{{CUSTOMER_ASSET_ID}}": fmt(machine.customer_asset_id),
+            "{{MODEL}}": fmt(getattr(m, "model", None)),
+            "{{MANUFACTURER}}": fmt(str(getattr(m, "manufacture", "")) if getattr(m, "manufacture", None) else None),
+            "{{DESCRIPTION}}": fmt(getattr(m, "name", None)),
+            "{{SERIAL_NUMBER}}": fmt(getattr(m, "serial_number", None)),
+            "{{RANGE}}": fmt(getattr(m, "range", None)),
+            "{{GRADUATION}}": fmt(getattr(m, "res_uuc", None)),
+            "{{OPTION}}": fmt(getattr(m, "option", None), "N/A"),
+            "{{CUSTOMER_ASSET_ID}}": fmt(getattr(m, "customer_asset_id", None)),
 
-            # งานสอบเทียบ
             "{{RECEIVED_DATE}}": fmt_date(getattr(cal, "received_date", None)),
-            "{{DATE_OF_CALIBRATION}}": fmt_date(cal.date_calibration),
-            "{{DUE_DATE}}": fmt_date(cal.next_due),
+            "{{DATE_OF_CALIBRATION}}": fmt_date(getattr(cal, "date_calibration", None)),
+            "{{DUE_DATE}}": fmt_date(getattr(cal, "next_due", None)),
             "{{ISSUE_DATE}}": fmt_date(getattr(cal, "issue_date", None)),
-            "{{CERTIFICATE_NUMBER}}": fmt(cal.certificate_number),
+            "{{CERTIFICATE_NUMBER}}": fmt(getattr(cal, "certificate_number", None)),
             "{{PROCEDURE}}": fmt(getattr(cal, "procedure_number", None)),
 
-            # มาตรฐานหลัก (std_id)
             "{{STANDARD_ASSET_NO}}": fmt(getattr(std, "asset_number", None)),
             "{{STANDARD_DESCRIPTION}}": fmt(getattr(std, "name", None)),
             "{{STANDARD_MAKER_MODEL}}": fmt(getattr(std, "description", None)),
-            "{{STANDARD_SERIAL}}": fmt(getattr(std, "name", None)),  # ถ้าไม่มี field serial แยก
+            "{{STANDARD_SERIAL}}": fmt(getattr(std, "name", None)),
             "{{STANDARD_CERTIFICATE}}": fmt(getattr(std, "certificate_number", None)),
             "{{STANDARD_DUE_DATE}}": fmt_date(getattr(std, "due_date", None)),
 
-            # ผู้เกี่ยวข้อง
             "{{CALIBRATOR}}": fmt(str(cal.calibrator) if cal.calibrator else None),
             "{{APPROVER}}": fmt(str(cal.certificate_issuer) if cal.certificate_issuer else None),
 
-            # องค์กร/สถานที่
-            "{{CUSTOMER}}": fmt(organization.name if organization else "Physical Lab, Metrology Division, DC&E (Royal Thai Air Force)"),
-            "{{CUSTOMER_ADDRESS}}": fmt(organization.address if organization and organization.address else "171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210"),
-            "{{LOCATION_OF_CALIBRATION}}": fmt(organization.name if organization else "Metrology Division, DC&E (Royal Thai Air Force)"),
-            "{{LOCATION_ADDRESS}}": fmt(organization.address if organization and organization.address else "171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210"),
+            "{{CUSTOMER}}": fmt(org.name if org else "Physical Lab, Metrology Division, DC&E (Royal Thai Air Force)"),
+            "{{CUSTOMER_ADDRESS}}": fmt(org.address if (org and org.address) else "171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210"),
+            "{{LOCATION_OF_CALIBRATION}}": fmt(org.name if org else "Metrology Division, DC&E (Royal Thai Air Force)"),
+            "{{LOCATION_ADDRESS}}": fmt(org.address if (org and org.address) else "171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210"),
         }
 
-        # ===== 2) เติม mapping สำหรับตาราง DC/AC/RES 1..5 =====
-        def add_block(prefix, field_names):
-            """
-            prefix: 'DC', 'AC', 'RES'
-            field_names: ('uuc_range', 'uuc_setting', 'measured_value', 'uncertainty', 'tolerance_limit')
-            สำหรับแถว 1 ใช้ฟิลด์พื้นฐาน (ไม่มี _2), ตั้งชื่อ placeholder ด้วย _1
-            """
-            base_map = {
-                "DC": ("dc_", cal),
-                "AC": ("ac_", cal),
-                "RES": ("res_", cal),
-            }[prefix]
-
-            model_prefix, obj = base_map
-
+        # ---------- เติม DC/AC/RES 1..5 ----------
+        def add_block(prefix, model_prefix):
             def field_value(base, idx):
-                # idx = 1 ใช้ฟิลด์ไม่มี suffix / idx>=2 ใช้ _{idx}
                 suffix = "" if idx == 1 else f"_{idx}"
-                return fmt(getattr(obj, f"{model_prefix}{base}{suffix}", None))
-
+                return fmt(getattr(cal, f"{model_prefix}{base}{suffix}", None))
             for i in range(1, 6):
-                replacements[f"{{{{{prefix}_UUC_RANGE_{i}}}}}"] = field_value("uuc_range", i)
-                replacements[f"{{{{{prefix}_UUC_SETTING_{i}}}}}"] = field_value("uuc_setting", i)
+                replacements[f"{{{{{prefix}_UUC_RANGE_{i}}}}}"]      = field_value("uuc_range", i)
+                replacements[f"{{{{{prefix}_UUC_SETTING_{i}}}}}"]    = field_value("uuc_setting", i)
                 replacements[f"{{{{{prefix}_MEASURED_VALUE_{i}}}}}"] = field_value("measured_value", i)
-                replacements[f"{{{{{prefix}_UNCERTAINTY_{i}}}}}"] = field_value("uncertainty", i)
-                replacements[f"{{{{{prefix}_TOLERANCE_LIMIT_{i}}}}}"] = field_value("tolerance_limit", i)
+                replacements[f"{{{{{prefix}_UNCERTAINTY_{i}}}}}"]    = field_value("uncertainty", i)
+                replacements[f"{{{{{prefix}_TOLERANCE_LIMIT_{i}}}}}"]= field_value("tolerance_limit", i)
 
-        add_block("DC", ("uuc_range", "uuc_setting", "measured_value", "uncertainty", "tolerance_limit"))
-        add_block("AC", ("uuc_range", "uuc_setting", "measured_value", "uncertainty", "tolerance_limit"))
-        add_block("RES", ("uuc_range", "uuc_setting", "measured_value", "uncertainty", "tolerance_limit"))
+        add_block("DC",  "dc_")
+        add_block("AC",  "ac_")
+        add_block("RES", "res_")
 
-        # ===== 3) รวบรวม "เครื่องมือที่ใช้สอบเทียบ" =====
-        # รวม std_id หลัก + รายการจาก CalibrationEquipmentUsed ให้ไม่ซ้ำ
-        equip_qs = CalibrationEquipmentUsed.objects.filter(
-            calibration_type="low_frequency", calibration_id=cal.pk
-        ).select_related("equipment")
-
+        # ---------- รายการเครื่องมือที่ใช้สอบเทียบ ----------
+        equip_qs = (CalibrationEquipmentUsed.objects
+                    .filter(calibration_type="low_frequency", calibration_id=cal.pk)
+                    .select_related("equipment"))
         eqs = []
-        if std:
-            eqs.append(std)
+        if std: eqs.append(std)
         for r in equip_qs:
             if r.equipment and all(getattr(r.equipment, "id", None) != getattr(x, "id", None) for x in eqs):
                 eqs.append(r.equipment)
 
-        # ทำรายการสำหรับใส่ตารางอุปกรณ์ หรือข้อความ
         eq_rows = []
         for idx, e in enumerate(eqs, start=1):
             eq_rows.append({
@@ -3041,75 +3022,32 @@ def export_low_frequency_certificate_docx(request, cal_id):
                 "due": fmt_date(getattr(e, "due_date", None)),
             })
 
-        # ทำข้อความรายการกรณีใช้ {{EQUIPMENT_LIST}}
         replacements["{{EQUIPMENT_LIST}}"] = "\n".join(
             f"{r['no']}. {r['name']} / {r['model']} / Asset:{r['asset']} / Cert:{r['cert']} / Due:{r['due']}"
             for r in eq_rows
         ) or "-"
 
-        # ===== 4) ฟังก์ชันแทนค่า =====
-        def replace_in_paragraph(paragraph, repl):
-            # แทนค่าในแต่ละ run เพื่อไม่ทำลายสไตล์
-            for placeholder, value in repl.items():
-                if placeholder in paragraph.text:
-                    for run in paragraph.runs:
-                        if placeholder in run.text:
-                            run.text = run.text.replace(placeholder, str(value))
+        # ---------- แทนค่าทั้งสองโหมด ----------
+        replace_in_doc(doc, replacements)
+        replace_everywhere(doc, replacements)
 
-        def replace_in_document(d, repl):
-            # paragraphs
-            for p in d.paragraphs:
-                replace_in_paragraph(p, repl)
-            # tables
-            for t in d.tables:
-                for row in t.rows:
-                    for cell in row.cells:
-                        for p in cell.paragraphs:
-                            replace_in_paragraph(p, repl)
-            # headers/footers
-            for s in d.sections:
-                if s.header:
-                    for p in s.header.paragraphs:
-                        replace_in_paragraph(p, repl)
-                    for t in s.header.tables:
-                        for row in t.rows:
-                            for cell in row.cells:
-                                for p in cell.paragraphs:
-                                    replace_in_paragraph(p, repl)
-                if s.footer:
-                    for p in s.footer.paragraphs:
-                        replace_in_paragraph(p, repl)
-                    for t in s.footer.tables:
-                        for row in t.rows:
-                            for cell in row.cells:
-                                for p in cell.paragraphs:
-                                    replace_in_paragraph(p, repl)
-
-        # ===== 5) เติมแถวในตารางอุปกรณ์ถ้ามี {{EQUIPMENT_TABLE}} =====
+        # ---------- เติมตารางเครื่องมือถ้าใช้ {{EQUIPMENT_TABLE}} ----------
         def find_table_cell_with_placeholder(d, placeholder="{{EQUIPMENT_TABLE}}"):
             for t in d.tables:
                 for row in t.rows:
                     for cell in row.cells:
                         for p in cell.paragraphs:
                             if placeholder in p.text:
-                                return t, cell, p
-            return None, None, None
+                                return t, p
+            return None, None
 
-        # แทนค่า field ทั่วไป + ตาราง DC/AC/RES (ผ่าน replacements)
-        replace_in_document(doc, replacements)
-
-        # เติมตารางอุปกรณ์
-        table, cell, p = find_table_cell_with_placeholder(doc, "{{EQUIPMENT_TABLE}}")
+        table, p = find_table_cell_with_placeholder(doc, "{{EQUIPMENT_TABLE}}")
         if table and eq_rows:
-            # ลบ placeholder ออกจาก cell
             for run in p.runs:
                 if "{{EQUIPMENT_TABLE}}" in run.text:
                     run.text = run.text.replace("{{EQUIPMENT_TABLE}}", "")
-
-            # สมมติหัวตารางทำไว้แล้วและมี 6 คอลัมน์ (No, Description, Model, Asset, Cert, Due)
             for r in eq_rows:
-                new_row = table.add_row()
-                cells = new_row.cells
+                cells = table.add_row().cells
                 cells[0].text = r["no"]
                 cells[1].text = r["name"]
                 cells[2].text = r["model"]
@@ -3117,7 +3055,7 @@ def export_low_frequency_certificate_docx(request, cal_id):
                 cells[4].text = r["cert"]
                 cells[5].text = r["due"]
 
-        # ===== 6) ส่งไฟล์ออก =====
+        # ---------- ส่งไฟล์ ----------
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
