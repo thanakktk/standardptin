@@ -142,17 +142,7 @@
                             <td>{{ cal.machine_model|default:"-" }}</td>
                             <td>{{ cal.serial_number|default:"-" }}</td>
                             <td>
-                                {% if cal.type == 'force' %}
-                                    Force Gauge
-                                {% elif cal.type == 'pressure' %}
-                                    Pressure Gauge
-                                {% elif cal.type == 'torque' %}
-                                    Torque Wrench
-                                {% elif cal.type == 'balance' %}
-                                    Balance
-                                {% else %}
-                                    {{ cal.type_name }}
-                                {% endif %}
+                                {{ cal.machine_name|default:"-" }}
                             </td>
                             <td>{{ cal.user_unit|default:"-" }}</td>
                             <td>๑</td>
