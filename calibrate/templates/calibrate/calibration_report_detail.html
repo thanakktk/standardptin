@@ -191,12 +191,33 @@
                                         <a href="{% url 'calibrate-balance-edit' cal.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข Balance">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                    {% elif cal.type == 'high-frequency' %}
+                                        <a href="{% url 'calibrate-high-frequency-edit' cal.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข High Frequency">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% elif cal.type == 'low-frequency' %}
+                                        <a href="{% url 'calibrate-low-frequency-edit' cal.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข Low Frequency">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% elif cal.type == 'microwave' %}
+                                        <a href="{% url 'microwave-calibration-edit' cal.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข Microwave">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% elif cal.type == 'dial_gauge' %}
+                                        <a href="{% url 'dial-gauge-calibration-edit' cal.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข Dial Gauge">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
                                     {% endif %}
                                     
                                     {% if cal.status == 'cert_issued' or cal.status == 'passed' or cal.status == 'active' %}
                                         {% if cal.type == 'balance' %}
                                             <a href="{% url 'export-balance-certificate-docx' cal.id %}" 
                                                class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Balance แบบ DOCX">
+                                                <i class="fas fa-file-word"></i>
+                                            </a>
+                                        {% elif cal.type == 'low-frequency' %}
+                                            <a href="{% url 'export-low-frequency-certificate-docx' cal.id %}" 
+                                               class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Low Frequency แบบ DOCX">
                                                 <i class="fas fa-file-word"></i>
                                             </a>
                                         {% else %}
