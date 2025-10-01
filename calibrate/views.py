@@ -3037,11 +3037,16 @@ from calibrate.models import LowFrequencyCalibration, CalibrationEquipmentUsed
 @login_required
 def export_low_frequency_certificate_docx(request, cal_id):
     try:
+        print(f"DEBUG: Attempting to export Low Frequency certificate for ID: {cal_id}")
+        
         cal = get_object_or_404(
             LowFrequencyCalibration.objects.select_related('machine','std_id','calibrator','certificate_issuer'),
             pk=cal_id
         )
+        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {cal.machine}")
+        
         if cal.status not in ["passed", "cert_issued"]:
+            print(f"DEBUG: Status '{cal.status}' not allowed for export")
             messages.error(request, "ไม่สามารถออกใบรับรองได้ เนื่องจากยังไม่ผ่านการสอบเทียบ")
             return redirect("calibrate-report-detail")
 
@@ -3110,7 +3115,10 @@ def export_low_frequency_certificate_docx(request, cal_id):
         def add_block(prefix, model_prefix):
             def field_value(base, idx):
                 suffix = "" if idx == 1 else f"_{idx}"
-                return fmt(getattr(cal, f"{model_prefix}{base}{suffix}", None))
+                field_name = f"{model_prefix}{base}{suffix}"
+                value = getattr(cal, field_name, None)
+                print(f"DEBUG: {field_name} = {value}")
+                return fmt(value)
             for i in range(1, 6):
                 replacements[f"{{{{{prefix}_UUC_RANGE_{i}}}}}"]      = field_value("uuc_range", i)
                 replacements[f"{{{{{prefix}_UUC_SETTING_{i}}}}}"]    = field_value("uuc_setting", i)
@@ -3118,9 +3126,19 @@ def export_low_frequency_certificate_docx(request, cal_id):
                 replacements[f"{{{{{prefix}_UNCERTAINTY_{i}}}}}"]    = field_value("uncertainty", i)
                 replacements[f"{{{{{prefix}_TOLERANCE_LIMIT_{i}}}}}"]= field_value("tolerance_limit", i)
 
+        print("DEBUG: Adding DC block")
         add_block("DC",  "dc_")
+        print("DEBUG: Adding AC block")
         add_block("AC",  "ac_")
+        print("DEBUG: Adding RES block")
         add_block("RES", "res_")
+        
+        # Debug: Show some replacements
+        print(f"DEBUG: Total replacements: {len(replacements)}")
+        print(f"DEBUG: DC_UUC_RANGE_2 = {replacements.get('{{DC_UUC_RANGE_2}}', 'NOT FOUND')}")
+        print(f"DEBUG: DC_UUC_SETTING_2 = {replacements.get('{{DC_UUC_SETTING_2}}', 'NOT FOUND')}")
+        print(f"DEBUG: AC_UUC_RANGE_2 = {replacements.get('{{AC_UUC_RANGE_2}}', 'NOT FOUND')}")
+        print(f"DEBUG: RES_UUC_RANGE_2 = {replacements.get('{{RES_UUC_RANGE_2}}', 'NOT FOUND')}")
 
         # ---------- รายการเครื่องมือที่ใช้สอบเทียบ ----------
         equip_qs = (CalibrationEquipmentUsed.objects
@@ -3143,14 +3161,166 @@ def export_low_frequency_certificate_docx(request, cal_id):
                 "due": fmt_date(getattr(e, "due_date", None)),
             })
 
+        print(f"DEBUG: Equipment rows: {eq_rows}")
+        
         replacements["{{EQUIPMENT_LIST}}"] = "\n".join(
             f"{r['no']}. {r['name']} / {r['model']} / Asset:{r['asset']} / Cert:{r['cert']} / Due:{r['due']}"
             for r in eq_rows
         ) or "-"
+        
+        # เพิ่ม replacements สำหรับ Standard Used section
+        if eq_rows:
+            # สร้างรายการเครื่องมือทั้งหมด
+            equipment_list = []
+            for i, eq in enumerate(eq_rows):
+                equipment_list.append(f"{i+1}. {eq['name']} / {eq['model']} / Asset: {eq['asset']} / Cert: {eq['cert']} / Due: {eq['due']}")
+            
+            # ใช้เครื่องมือตัวแรกสำหรับ placeholder หลัก
+            first_eq = eq_rows[0]
+            replacements["{{STANDARD_ASSET_NO}}"] = first_eq["asset"]
+            replacements["{{STANDARD_DESCRIPTION}}"] = first_eq["name"]
+            replacements["{{STANDARD_MAKER_MODEL}}"] = first_eq["model"]
+            replacements["{{STANDARD_SERIAL}}"] = first_eq["asset"]
+            replacements["{{STANDARD_CERTIFICATE}}"] = first_eq["cert"]
+            replacements["{{STANDARD_DUE_DATE}}"] = first_eq["due"]
+            
+            # เพิ่ม placeholder สำหรับเครื่องมือตัวที่สอง (หากมี)
+            if len(eq_rows) > 1:
+                second_eq = eq_rows[1]
+                replacements["{{STANDARD_ASSET_NO_2}}"] = second_eq["asset"]
+                replacements["{{STANDARD_DESCRIPTION_2}}"] = second_eq["name"]
+                replacements["{{STANDARD_MAKER_MODEL_2}}"] = second_eq["model"]
+                replacements["{{STANDARD_SERIAL_2}}"] = second_eq["asset"]
+                replacements["{{STANDARD_CERTIFICATE_2}}"] = second_eq["cert"]
+                replacements["{{STANDARD_DUE_DATE_2}}"] = second_eq["due"]
+            else:
+                # หากไม่มีเครื่องมือตัวที่ 2 ให้ใช้เครื่องมือตัวแรกซ้ำ
+                replacements["{{STANDARD_ASSET_NO_2}}"] = first_eq["asset"]
+                replacements["{{STANDARD_DESCRIPTION_2}}"] = first_eq["name"]
+                replacements["{{STANDARD_MAKER_MODEL_2}}"] = first_eq["model"]
+                replacements["{{STANDARD_SERIAL_2}}"] = first_eq["asset"]
+                replacements["{{STANDARD_CERTIFICATE_2}}"] = first_eq["cert"]
+                replacements["{{STANDARD_DUE_DATE_2}}"] = first_eq["due"]
+            
+            # เพิ่ม placeholder สำหรับเครื่องมือตัวที่สาม (หากมี)
+            if len(eq_rows) > 2:
+                third_eq = eq_rows[2]
+                replacements["{{STANDARD_ASSET_NO_3}}"] = third_eq["asset"]
+                replacements["{{STANDARD_DESCRIPTION_3}}"] = third_eq["name"]
+                replacements["{{STANDARD_MAKER_MODEL_3}}"] = third_eq["model"]
+                replacements["{{STANDARD_SERIAL_3}}"] = third_eq["asset"]
+                replacements["{{STANDARD_CERTIFICATE_3}}"] = third_eq["cert"]
+                replacements["{{STANDARD_DUE_DATE_3}}"] = third_eq["due"]
+            
+            # เพิ่ม placeholder สำหรับเครื่องมือตัวที่สี่ (หากมี)
+            if len(eq_rows) > 3:
+                fourth_eq = eq_rows[3]
+                replacements["{{STANDARD_ASSET_NO_4}}"] = fourth_eq["asset"]
+                replacements["{{STANDARD_DESCRIPTION_4}}"] = fourth_eq["name"]
+                replacements["{{STANDARD_MAKER_MODEL_4}}"] = fourth_eq["model"]
+                replacements["{{STANDARD_SERIAL_4}}"] = fourth_eq["asset"]
+                replacements["{{STANDARD_CERTIFICATE_4}}"] = fourth_eq["cert"]
+                replacements["{{STANDARD_DUE_DATE_4}}"] = fourth_eq["due"]
+            
+            # เพิ่ม placeholder สำหรับเครื่องมือตัวที่ห้า (หากมี)
+            if len(eq_rows) > 4:
+                fifth_eq = eq_rows[4]
+                replacements["{{STANDARD_ASSET_NO_5}}"] = fifth_eq["asset"]
+                replacements["{{STANDARD_DESCRIPTION_5}}"] = fifth_eq["name"]
+                replacements["{{STANDARD_MAKER_MODEL_5}}"] = fifth_eq["model"]
+                replacements["{{STANDARD_SERIAL_5}}"] = fifth_eq["asset"]
+                replacements["{{STANDARD_CERTIFICATE_5}}"] = fifth_eq["cert"]
+                replacements["{{STANDARD_DUE_DATE_5}}"] = fifth_eq["due"]
+            
+            print(f"DEBUG: Equipment count: {len(eq_rows)}")
+            print(f"DEBUG: Equipment list: {equipment_list}")
+            
+            # Debug placeholders
+            print(f"DEBUG: STANDARD_ASSET_NO = {replacements.get('{{STANDARD_ASSET_NO}}', 'NOT FOUND')}")
+            print(f"DEBUG: STANDARD_DESCRIPTION = {replacements.get('{{STANDARD_DESCRIPTION}}', 'NOT FOUND')}")
+            print(f"DEBUG: STANDARD_MAKER_MODEL = {replacements.get('{{STANDARD_MAKER_MODEL}}', 'NOT FOUND')}")
+            print(f"DEBUG: STANDARD_SERIAL = {replacements.get('{{STANDARD_SERIAL}}', 'NOT FOUND')}")
+            
+            # Debug placeholders สำหรับเครื่องมือตัวที่ 2
+            print(f"DEBUG: STANDARD_ASSET_NO_2 = {replacements.get('{{STANDARD_ASSET_NO_2}}', 'NOT FOUND')}")
+            print(f"DEBUG: STANDARD_DESCRIPTION_2 = {replacements.get('{{STANDARD_DESCRIPTION_2}}', 'NOT FOUND')}")
+            print(f"DEBUG: STANDARD_MAKER_MODEL_2 = {replacements.get('{{STANDARD_MAKER_MODEL_2}}', 'NOT FOUND')}")
+            print(f"DEBUG: STANDARD_SERIAL_2 = {replacements.get('{{STANDARD_SERIAL_2}}', 'NOT FOUND')}")
+        else:
+            # ใช้ข้อมูลจาก std_id
+            replacements["{{STANDARD_ASSET_NO}}"] = fmt(getattr(std, "asset_number", None))
+            replacements["{{STANDARD_DESCRIPTION}}"] = fmt(getattr(std, "name", None))
+            replacements["{{STANDARD_MAKER_MODEL}}"] = fmt(getattr(std, "description", None))
+            replacements["{{STANDARD_SERIAL}}"] = fmt(getattr(std, "asset_number", None))
+            replacements["{{STANDARD_CERTIFICATE}}"] = fmt(getattr(std, "certificate_number", None))
+            replacements["{{STANDARD_DUE_DATE}}"] = fmt_date(getattr(std, "due_date", None))
 
         # ---------- แทนค่าทั้งสองโหมด ----------
-        replace_in_doc(doc, replacements)
-        replace_everywhere(doc, replacements)
+        # ฟังก์ชันสำหรับแทนค่าใน paragraph
+        def replace_in_paragraph(paragraph, replacements):
+            # แทนค่าใน paragraph text ก่อน
+            for old_text, new_text in replacements.items():
+                if old_text in paragraph.text:
+                    print(f"DEBUG: Replacing {old_text} with {new_text} in paragraph")
+                    paragraph.text = paragraph.text.replace(old_text, new_text)
+            
+            # แทนค่าใน runs
+            for run in paragraph.runs:
+                for old_text, new_text in replacements.items():
+                    if old_text in run.text:
+                        print(f"DEBUG: Replacing {old_text} with {new_text} in run")
+                        run.text = run.text.replace(old_text, new_text)
+            
+            # Debug: ตรวจสอบว่า placeholders ยังเหลืออยู่หรือไม่
+            if "{{STANDARD" in paragraph.text:
+                print(f"DEBUG: Found unreplaced STANDARD placeholders in paragraph: {paragraph.text[:100]}...")
+        
+        # ฟังก์ชันสำหรับแทนค่าใน shapes
+        def replace_in_shapes(shapes, replacements):
+            for shape in shapes:
+                if hasattr(shape, 'text_frame') and shape.text_frame:
+                    for paragraph in shape.text_frame.paragraphs:
+                        replace_in_paragraph(paragraph, replacements)
+                if hasattr(shape, 'shapes'):
+                    replace_in_shapes(shape.shapes, replacements)
+        
+        # ฟังก์ชันสำหรับแทนค่าใน document ทั้งหมด
+        def replace_in_document(doc, replacements):
+            # แทนค่าใน paragraphs
+            for paragraph in doc.paragraphs:
+                replace_in_paragraph(paragraph, replacements)
+            
+            # แทนค่าใน tables
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.paragraphs:
+                            replace_in_paragraph(paragraph, replacements)
+            
+            # แทนค่าใน headers และ footers
+            for section in doc.sections:
+                if section.header:
+                    for paragraph in section.header.paragraphs:
+                        replace_in_paragraph(paragraph, replacements)
+                if section.footer:
+                    for paragraph in section.footer.paragraphs:
+                        replace_in_paragraph(paragraph, replacements)
+                
+                # Text boxes และ shapes
+                if hasattr(section, 'shapes'):
+                    replace_in_shapes(section.shapes, replacements)
+        
+        # เรียกใช้ฟังก์ชันแทนค่า
+        print("DEBUG: Starting document replacement")
+        print(f"DEBUG: Total replacements: {len(replacements)}")
+        
+        # Debug specific placeholders
+        for key, value in replacements.items():
+            if "STANDARD" in key:
+                print(f"DEBUG: {key} = {value}")
+        
+        replace_in_document(doc, replacements)
+        print("DEBUG: Document replacement completed")
 
         # ---------- เติมตารางเครื่องมือถ้าใช้ {{EQUIPMENT_TABLE}} ----------
         def find_table_cell_with_placeholder(d, placeholder="{{EQUIPMENT_TABLE}}"):
@@ -3177,14 +3347,17 @@ def export_low_frequency_certificate_docx(request, cal_id):
                 cells[5].text = r["due"]
 
         # ---------- ส่งไฟล์ ----------
+        print(f"DEBUG: Creating response for Low Frequency certificate")
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
         response["Content-Disposition"] = f'attachment; filename="low_frequency_certificate_{cal.pk}.docx"'
         doc.save(response)
+        print(f"DEBUG: Response created successfully")
         return response
 
     except Exception as e:
+        print(f"DEBUG: Error in export_low_frequency_certificate_docx: {str(e)}")
         messages.error(request, f"เกิดข้อผิดพลาดในการสร้างใบรับรอง: {str(e)}")
         return redirect("calibrate-report-detail")
 
