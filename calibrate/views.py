@@ -114,7 +114,7 @@ class CalibrationPressureCreateView(LoginRequiredMixin, PermissionRequiredMixin,
             # บันทึกข้อมูลการสอบเทียบ
             calibration = form.save()
             print(f"✅ บันทึก calibration ID: {calibration.cal_pressure_id}")
-            messages.success(self.request, 'บันทึกการสอบเทียบ Pressure เรียบร้อยแล้ว')
+            # ลบ success message ออกตามที่ผู้ใช้ต้องการ
             return redirect(self.success_url)
         except Exception as e:
             print(f"❌ Error saving calibration: {e}")
@@ -285,7 +285,7 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         
         # เพิ่ม success message
         from django.contrib import messages
-        messages.success(self.request, 'บันทึกการสอบเทียบ Pressure เรียบร้อยแล้ว')
+        # ลบ success message ออกตามที่ผู้ใช้ต้องการ
         
         # Redirect ไปยัง success_url โดยตรง
         return redirect(self.success_url)
@@ -423,7 +423,7 @@ class CalibrationTorqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, C
             # บันทึกข้อมูลการสอบเทียบ
             calibration = form.save()
             print(f"✅ บันทึก calibration ID: {calibration.cal_torque_id}")
-            messages.success(self.request, 'บันทึกการสอบเทียบ Torque เรียบร้อยแล้ว')
+            # ลบ success message ออกตามที่ผู้ใช้ต้องการ
             return redirect(self.success_url)
         except Exception as e:
             print(f"❌ Error saving calibration: {e}")
@@ -553,7 +553,7 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
         
         # เพิ่ม success message
         from django.contrib import messages
-        messages.success(self.request, 'บันทึกการสอบเทียบ Torque เรียบร้อยแล้ว')
+        # ลบ success message ออกตามที่ผู้ใช้ต้องการ
         
         # Redirect ไปยัง success_url โดยตรง
         return redirect(self.success_url)
@@ -755,7 +755,7 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         
         # เพิ่ม success message
         from django.contrib import messages
-        messages.success(self.request, 'บันทึกการสอบเทียบ Balance เรียบร้อยแล้ว')
+        # ลบ success message ออกตามที่ผู้ใช้ต้องการ
         
         # Redirect ไปยัง success_url โดยตรง
         return redirect(self.success_url)
@@ -1207,7 +1207,7 @@ def create_calibration_for_machine(request, machine_id):
             else:
                 calibration.uuc_id = machine.id
             calibration.save()
-            messages.success(request, 'บันทึกการสอบเทียบเรียบร้อยแล้ว')
+            # ลบ success message ออกตามที่ผู้ใช้ต้องการ
             return redirect(success_url)
     else:
         if 'pressure' in machine_type_name:
@@ -1372,7 +1372,7 @@ def create_calibration_with_machine(request, machine_id):
                     calibration.next_due = datetime(year, month, 28).date()
             
             calibration.save()
-            messages.success(request, f'บันทึกการสอบเทียบสำหรับ {machine.name} เรียบร้อยแล้ว')
+            # ลบ success message ออกตามที่ผู้ใช้ต้องการ
             return redirect(success_url)
     else:
         # เติมข้อมูลเริ่มต้นจากเครื่องมือ
@@ -1655,7 +1655,7 @@ def process_torque_calibration(request, machine):
             calibration.save()
             print(f"บันทึกสำเร็จ! ID: {calibration.cal_torque_id}")
             
-            messages.success(request, f'บันทึกการสอบเทียบ Torque สำหรับ {machine.name} เรียบร้อยแล้ว')
+            # ลบ success message ออกตามที่ผู้ใช้ต้องการ
             return redirect('calibrate-dashboard')
             
         except Exception as e:
@@ -1812,7 +1812,7 @@ def process_pressure_calibration(request, machine):
             calibration.save()
             print(f"บันทึกสำเร็จ! ID: {calibration.cal_pressure_id}")
             
-            messages.success(request, f'บันทึกการสอบเทียบ Pressure สำหรับ {machine.name} เรียบร้อยแล้ว')
+            # ลบ success message ออกตามที่ผู้ใช้ต้องการ
             return redirect('calibrate-dashboard')
             
         except Exception as e:
@@ -3401,9 +3401,7 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         # ตรวจสอบสถานะอัตโนมัติ
         self.auto_check_status(calibration)
         
-        # เพิ่ม success message
-        from django.contrib import messages
-        messages.success(self.request, 'บันทึกการสอบเทียบ High Frequency เรียบร้อยแล้ว')
+        # ลบ success message ออกตามที่ผู้ใช้ต้องการ
         
         # Redirect ไปยัง success_url โดยตรง
         return redirect(self.success_url)
@@ -3530,7 +3528,7 @@ class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         
         # เพิ่ม success message
         from django.contrib import messages
-        messages.success(self.request, 'บันทึกการสอบเทียบ Low Frequency เรียบร้อยแล้ว')
+        # ลบ success message ออกตามที่ผู้ใช้ต้องการ
         # ให้ Django จัดการ redirect ตาม success_url
         return super().form_valid(form)
     
@@ -3694,7 +3692,7 @@ class MicrowaveCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         
         # เพิ่ม success message
         from django.contrib import messages
-        messages.success(self.request, 'บันทึกการสอบเทียบ Microwave เรียบร้อยแล้ว')
+        # ลบ success message ออกตามที่ผู้ใช้ต้องการ
         
         # Redirect ไปยัง success_url โดยตรง
         return redirect(self.success_url)
@@ -3833,7 +3831,7 @@ class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         
         # เพิ่ม success message
         from django.contrib import messages
-        messages.success(self.request, 'บันทึกการสอบเทียบ Dial Gauge เรียบร้อยแล้ว')
+        # ลบ success message ออกตามที่ผู้ใช้ต้องการ
         
         # Redirect ไปยัง success_url โดยตรง
         return redirect(self.success_url)
