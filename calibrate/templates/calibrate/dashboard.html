@@ -170,8 +170,8 @@
                                         <td>{{ cal.machine_model }}</td>
                                         <td><code>{{ cal.serial_number }}</code></td>
                                         <td>
-                                            {% if cal.update_date %}
-                                                {{ cal.update_date|date:"d/m/Y" }}
+                                            {% if cal.calibration_date %}
+                                                {{ cal.calibration_date|date:"d/m/Y" }}
                                             {% else %}
                                                 -
                                             {% endif %}
