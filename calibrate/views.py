@@ -792,17 +792,17 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         """
         # ตรวจสอบทุกแถวที่มีข้อมูล
         rows_to_check = [
-            (calibration.linear_conventional_mass, calibration.linear_displayed_value, calibration.linear_error, calibration.linear_uncertainty),
-            (calibration.linear_conventional_mass_2, calibration.linear_displayed_value_2, calibration.linear_error_2, calibration.linear_uncertainty_2),
-            (calibration.linear_conventional_mass_3, calibration.linear_displayed_value_3, calibration.linear_error_3, calibration.linear_uncertainty_3),
-            (calibration.linear_conventional_mass_4, calibration.linear_displayed_value_4, calibration.linear_error_4, calibration.linear_uncertainty_4),
-            (calibration.linear_conventional_mass_5, calibration.linear_displayed_value_5, calibration.linear_error_5, calibration.linear_uncertainty_5)
+            (calibration.linear_conventional_mass, calibration.linear_displayed_value, calibration.linear_error),
+            (calibration.linear_conventional_mass_2, calibration.linear_displayed_value_2, calibration.linear_error_2),
+            (calibration.linear_conventional_mass_3, calibration.linear_displayed_value_3, calibration.linear_error_3),
+            (calibration.linear_conventional_mass_4, calibration.linear_displayed_value_4, calibration.linear_error_4),
+            (calibration.linear_conventional_mass_5, calibration.linear_displayed_value_5, calibration.linear_error_5)
         ]
         
         tolerance = 0.10  # ค่าความคลาดเคลื่อนที่อนุญาต ± 0.10
         
-        for conventional, displayed, error, uncertainty in rows_to_check:
-            if conventional and displayed and error is not None and uncertainty is not None:
+        for conventional, displayed, error in rows_to_check:
+            if conventional and displayed and error is not None:
                 try:
                     conventional_float = float(conventional)
                     displayed_float = float(displayed)
