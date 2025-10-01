@@ -277,13 +277,18 @@
                     <!-- ปุ่มบันทึก -->
                     <div class="row mt-4">
                         <div class="col-12">
-                            <div class="d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary me-2">
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save me-2"></i>บันทึก
                                 </button>
                                 <a href="{% url 'calibrate-dashboard' %}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left me-2"></i>ย้อนกลับ
                                 </a>
+                                {% if object.pk %}
+                                <a href="{% url 'calibrate-balance-delete' object.pk %}" class="btn btn-danger" onclick="return confirm('คุณแน่ใจหรือไม่ที่จะลบการสอบเทียบนี้?')">
+                                    <i class="fas fa-trash me-2"></i>ลบ
+                                </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
