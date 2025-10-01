@@ -1024,6 +1024,8 @@ class HighFrequencyCalibration(models.Model):
                     tolerance_str = str(tolerance_field).strip()
                     if ' - ' in tolerance_str:
                         min_tolerance, max_tolerance = tolerance_str.split(' - ')
+                    elif ' – ' in tolerance_str:  # รองรับ en dash
+                        min_tolerance, max_tolerance = tolerance_str.split(' – ')
                     elif ' to ' in tolerance_str:
                         min_tolerance, max_tolerance = tolerance_str.split(' to ')
                     else:
@@ -1076,6 +1078,8 @@ class HighFrequencyCalibration(models.Model):
                     tolerance_str = str(tolerance_field).strip()
                     if ' - ' in tolerance_str:
                         min_tolerance, max_tolerance = tolerance_str.split(' - ')
+                    elif ' – ' in tolerance_str:  # รองรับ en dash
+                        min_tolerance, max_tolerance = tolerance_str.split(' – ')
                     elif ' to ' in tolerance_str:
                         min_tolerance, max_tolerance = tolerance_str.split(' to ')
                     else:

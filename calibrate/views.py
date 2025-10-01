@@ -3432,34 +3432,26 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         calibration.save()
     
     def check_high_frequency_pass_fail(self, calibration):
-        """ตรวจสอบผลการสอบเทียบ High Frequency"""
-        # ตรวจสอบทุกแถวที่มีข้อมูล
-        rows_to_check = [
-            (calibration.freq_uuc_setting, calibration.freq_measured_value, calibration.freq_uncertainty, calibration.freq_tolerance_limit),
-            (calibration.freq_uuc_setting_2, calibration.freq_measured_value_2, calibration.freq_uncertainty_2, calibration.freq_tolerance_limit_2),
-            (calibration.freq_uuc_setting_3, calibration.freq_measured_value_3, calibration.freq_uncertainty_3, calibration.freq_tolerance_limit_3),
-            (calibration.freq_uuc_setting_4, calibration.freq_measured_value_4, calibration.freq_uncertainty_4, calibration.freq_tolerance_limit_4),
-            (calibration.freq_uuc_setting_5, calibration.freq_measured_value_5, calibration.freq_uncertainty_5, calibration.freq_tolerance_limit_5)
-        ]
+        """ตรวจสอบผลการสอบเทียบ High Frequency
         
-        for setting, measured, uncertainty, tolerance in rows_to_check:
-            if setting and measured and uncertainty and tolerance:
-                try:
-                    # ตรวจสอบว่าค่า measured อยู่ในช่วง tolerance หรือไม่
-                    setting_val = float(setting)
-                    measured_val = float(measured)
-                    uncertainty_val = float(uncertainty)
-                    
-                    # คำนวณช่วง tolerance
-                    tolerance_start = setting_val - uncertainty_val
-                    tolerance_end = setting_val + uncertainty_val
-                    
-                    if not (tolerance_start <= measured_val <= tolerance_end):
-                        return False
-                except (ValueError, TypeError):
-                    return False
+        เงื่อนไข:
+        1. UUC Setting ต้องอยู่ในช่วง Tolerance Limit
+        2. Measured Value ต้องอยู่ในช่วง Tolerance Limit
+        """
+        # ใช้ฟังก์ชัน check_tolerance_limits จาก models.py
+        results = calibration.check_tolerance_limits()
         
-        return True
+        if not results:
+            return False  # ไม่มีข้อมูล
+        
+        # ตรวจสอบว่ามี error หรือไม่
+        if any('error' in result for result in results):
+            return False
+        
+        # ตรวจสอบว่าทุกแถวผ่านหรือไม่
+        all_passed = all(result.get('passed', False) for result in results)
+        
+        return all_passed
 
 class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
     model = LowFrequencyCalibration
