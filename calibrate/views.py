@@ -1041,7 +1041,7 @@ def calibration_dashboard(request):
     for cal in high_frequency_calibrations:
         all_calibrations.append({
             'id': cal.id,
-            'type': 'high_frequency',
+            'type': 'high-frequency',
             'type_name': 'การสอบเทียบ High Frequency',
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
@@ -1061,7 +1061,7 @@ def calibration_dashboard(request):
     for cal in low_frequency_calibrations:
         all_calibrations.append({
             'id': cal.id,
-            'type': 'low_frequency',
+            'type': 'low-frequency',
             'type_name': 'การสอบเทียบ Low Frequency',
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
@@ -2063,7 +2063,7 @@ def calibration_report_detail(request):
     for cal in high_frequency_calibrations:
         all_calibrations.append({
             'id': cal.id,
-            'type': 'high_frequency',
+            'type': 'high-frequency',
             'type_name': 'การสอบเทียบ High Frequency',
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
@@ -2083,7 +2083,7 @@ def calibration_report_detail(request):
     for cal in low_frequency_calibrations:
         all_calibrations.append({
             'id': cal.id,
-            'type': 'low_frequency',
+            'type': 'low-frequency',
             'type_name': 'การสอบเทียบ Low Frequency',
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
@@ -2745,9 +2745,9 @@ def increase_priority(request, cal_type, cal_id):
             calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
         elif cal_type == 'balance':
             calibration = get_object_or_404(BalanceCalibration, pk=cal_id)
-        elif cal_type == 'high_frequency':
+        elif cal_type == 'high-frequency':
             calibration = get_object_or_404(HighFrequencyCalibration, pk=cal_id)
-        elif cal_type == 'low_frequency':
+        elif cal_type == 'low-frequency':
             calibration = get_object_or_404(LowFrequencyCalibration, pk=cal_id)
         elif cal_type == 'microwave':
             calibration = get_object_or_404(MicrowaveCalibration, pk=cal_id)
@@ -2809,9 +2809,9 @@ def close_work(request, cal_type, cal_id):
             calibration = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
         elif cal_type == 'balance':
             calibration = get_object_or_404(BalanceCalibration, pk=cal_id)
-        elif cal_type == 'high_frequency':
+        elif cal_type == 'high-frequency':
             calibration = get_object_or_404(HighFrequencyCalibration, pk=cal_id)
-        elif cal_type == 'low_frequency':
+        elif cal_type == 'low-frequency':
             calibration = get_object_or_404(LowFrequencyCalibration, pk=cal_id)
         elif cal_type == 'microwave':
             calibration = get_object_or_404(MicrowaveCalibration, pk=cal_id)
@@ -3041,7 +3041,7 @@ def export_low_frequency_certificate_docx(request, cal_id):
 
         # ---------- รายการเครื่องมือที่ใช้สอบเทียบ ----------
         equip_qs = (CalibrationEquipmentUsed.objects
-                    .filter(calibration_type="low_frequency", calibration_id=cal.pk)
+                    .filter(calibration_type="low-frequency", calibration_id=cal.pk)
                     .select_related("equipment"))
         eqs = []
         if std: eqs.append(std)
@@ -3357,7 +3357,7 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         if self.object:
             from calibrate.models import CalibrationEquipmentUsed
             used_equipment = CalibrationEquipmentUsed.objects.filter(
-                calibration_type='high_frequency',
+                calibration_type='high-frequency',
                 calibration_id=self.object.pk
             ).select_related('equipment')
             context['used_equipment'] = used_equipment
@@ -3374,7 +3374,7 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
             # ลบข้อมูลเครื่องมือเก่าที่เกี่ยวข้องกับการสอบเทียบนี้
             from calibrate.models import CalibrationEquipmentUsed
             CalibrationEquipmentUsed.objects.filter(
-                calibration_type='high_frequency',
+                calibration_type='high-frequency',
                 calibration_id=calibration.pk
             ).delete()
             
@@ -3390,7 +3390,7 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
                     from machine.models import CalibrationEquipment
                     equipment = CalibrationEquipment.objects.get(id=equipment_id)
                     CalibrationEquipmentUsed.objects.get_or_create(
-                        calibration_type='high_frequency',
+                        calibration_type='high-frequency',
                         calibration_id=calibration.pk,
                         equipment=equipment
                     )
@@ -3506,7 +3506,7 @@ class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         # ลบเครื่องมือเก่าทั้งหมด
         from calibrate.models import CalibrationEquipmentUsed
         CalibrationEquipmentUsed.objects.filter(
-            calibration_type='low_frequency',
+            calibration_type='low-frequency',
             calibration_id=calibration.pk
         ).delete()
         
@@ -3516,7 +3516,7 @@ class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
                 from machine.models import CalibrationEquipment
                 equipment = CalibrationEquipment.objects.get(id=equipment_id)
                 CalibrationEquipmentUsed.objects.get_or_create(
-                    calibration_type='low_frequency',
+                    calibration_type='low-frequency',
                     calibration_id=calibration.pk,
                     equipment=equipment
                 )

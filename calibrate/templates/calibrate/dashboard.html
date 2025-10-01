@@ -58,8 +58,8 @@
                                         <option value="dial_gauge" {% if request.GET.calibration_type == 'dial_gauge' %}selected{% endif %}>Dial Gauge</option>
                                         <option value="balance" {% if request.GET.calibration_type == 'balance' %}selected{% endif %}>Balance</option>
                                         <option value="microwave" {% if request.GET.calibration_type == 'microwave' %}selected{% endif %}>Microwave</option>
-                                        <option value="high_frequency" {% if request.GET.calibration_type == 'high_frequency' %}selected{% endif %}>High Frequency</option>
-                                        <option value="low_frequency" {% if request.GET.calibration_type == 'low_frequency' %}selected{% endif %}>Low Frequency</option>
+                                        <option value="high-frequency" {% if request.GET.calibration_type == 'high-frequency' %}selected{% endif %}>High Frequency</option>
+                                        <option value="low-frequency" {% if request.GET.calibration_type == 'low-frequency' %}selected{% endif %}>Low Frequency</option>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
@@ -160,9 +160,9 @@
                                                 <span class="badge bg-dark">{{ cal.type_name }}</span>
                                             {% elif cal.type == 'microwave' %}
                                                 <span class="badge bg-danger">{{ cal.type_name }}</span>
-                                            {% elif cal.type == 'high_frequency' %}
+                                            {% elif cal.type == 'high-frequency' %}
                                                 <span class="badge bg-info">{{ cal.type_name }}</span>
-                                            {% elif cal.type == 'low_frequency' %}
+                                            {% elif cal.type == 'low-frequency' %}
                                                 <span class="badge bg-primary">{{ cal.type_name }}</span>
                                             {% endif %}
                                         </td>
@@ -338,7 +338,7 @@
                                                             data-name="{{ cal.machine_name }}">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
-                                                {% elif cal.type == 'high_frequency' %}
+                                                {% elif cal.type == 'high-frequency' %}
                                                     <a href="{% url 'calibrate-high-frequency-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
@@ -363,7 +363,7 @@
                                                             data-name="{{ cal.machine_name }}">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
-                                                {% elif cal.type == 'low_frequency' %}
+                                                {% elif cal.type == 'low-frequency' %}
                                                     <a href="{% url 'calibrate-low-frequency-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
@@ -682,6 +682,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
             case 'balance':
                 deleteUrl = `/calibrate/balance/${id}/delete/`;
+                break;
+            case 'high-frequency':
+                deleteUrl = `/calibrate/high-frequency/${id}/delete/`;
+                break;
+            case 'low-frequency':
+                deleteUrl = `/calibrate/low-frequency/${id}/delete/`;
+                break;
+            case 'microwave':
+                deleteUrl = `/calibrate/microwave/${id}/delete/`;
+                break;
+            case 'dial-gauge':
+                deleteUrl = `/calibrate/dial-gauge/${id}/delete/`;
                 break;
         }
 
