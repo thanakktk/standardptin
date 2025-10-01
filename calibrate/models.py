@@ -154,7 +154,13 @@ class CalibrationPressure(models.Model):
         )
     
     def check_tolerance_limits(self):
-        """ตรวจสอบเงื่อนไขการคำนวณตาม Tolerance Limit"""
+        """ตรวจสอบเงื่อนไขการคำนวณตาม Tolerance Limit
+        
+        เงื่อนไข: ค่าของช่อง UUC Set และ ค่าของช่อง Actual 
+        ต้องอยู่ในระหว่าง ค่าของช่อง Tolerance Limit ทั้งคู่ ถึงจะผ่านการสอบเทียบ
+        หากค่าของ UUC Set และ ค่าของช่อง Actual ต่ำกว่า หรือ มากกว่า 
+        ค่าของช่อง Tolerance Limit ให้ ไม่ผ่านการสอบเทียบ
+        """
         results = []
         
         # ตรวจสอบแถวที่ 1
@@ -165,10 +171,13 @@ class CalibrationPressure(models.Model):
                 tolerance_start = float(self.tolerance_start)
                 tolerance_end = float(self.tolerance_end)
                 
-                # ตรวจสอบ UUC Set
+                # ตรวจสอบ UUC Set อยู่ในช่วง Tolerance Limit
                 set_in_range = tolerance_start <= set_val <= tolerance_end
-                # ตรวจสอบ Actual
+                # ตรวจสอบ Actual อยู่ในช่วง Tolerance Limit  
                 actual_in_range = tolerance_start <= actual_val <= tolerance_end
+                
+                # ผ่านการสอบเทียบเมื่อทั้ง UUC Set และ Actual อยู่ในช่วง Tolerance Limit
+                passed = set_in_range and actual_in_range
                 
                 results.append({
                     'row': 1,
@@ -178,7 +187,7 @@ class CalibrationPressure(models.Model):
                     'tolerance_end': tolerance_end,
                     'set_in_range': set_in_range,
                     'actual_in_range': actual_in_range,
-                    'passed': set_in_range and actual_in_range
+                    'passed': passed
                 })
             except (ValueError, TypeError):
                 results.append({
@@ -200,10 +209,13 @@ class CalibrationPressure(models.Model):
                     tolerance_start = float(tolerance_start_field)
                     tolerance_end = float(tolerance_end_field)
                     
-                    # ตรวจสอบ UUC Set
+                    # ตรวจสอบ UUC Set อยู่ในช่วง Tolerance Limit
                     set_in_range = tolerance_start <= set_val <= tolerance_end
-                    # ตรวจสอบ Actual
+                    # ตรวจสอบ Actual อยู่ในช่วง Tolerance Limit
                     actual_in_range = tolerance_start <= actual_val <= tolerance_end
+                    
+                    # ผ่านการสอบเทียบเมื่อทั้ง UUC Set และ Actual อยู่ในช่วง Tolerance Limit
+                    passed = set_in_range and actual_in_range
                     
                     results.append({
                         'row': i,
@@ -213,7 +225,7 @@ class CalibrationPressure(models.Model):
                         'tolerance_end': tolerance_end,
                         'set_in_range': set_in_range,
                         'actual_in_range': actual_in_range,
-                        'passed': set_in_range and actual_in_range
+                        'passed': passed
                     })
                 except (ValueError, TypeError):
                     results.append({
@@ -728,38 +740,47 @@ class BalanceCalibration(models.Model):
         )
     
     def check_tolerance_limits(self):
-        """ตรวจสอบเงื่อนไขการคำนวณตาม Tolerance Limit (Nominal Value ± 0.003)"""
+        """ตรวจสอบเงื่อนไขการคำนวณตาม Tolerance Limit
+        
+        เงื่อนไข:
+        1. ค่าของช่อง Displayed Value ต้องไม่เกินค่าของช่อง Conventional Mass ± 0.10
+        2. ค่า Error ต้องอยู่ในช่วง ± 0.10
+        """
         results = []
-        tolerance = 0.003  # ค่าความคลาดเคลื่อนที่อนุญาต
+        tolerance = 0.10  # ค่าความคลาดเคลื่อนที่อนุญาต ± 0.10
         
         # ตรวจสอบแถวที่ 1
         if (self.linear_nominal_value and self.linear_conventional_mass and 
-            self.linear_displayed_value):
+            self.linear_displayed_value and self.linear_error):
             try:
                 nominal_val = float(self.linear_nominal_value)
                 conventional_mass = float(self.linear_conventional_mass)
                 displayed_value = float(self.linear_displayed_value)
+                error = float(self.linear_error)
                 
-                # คำนวณช่วงที่อนุญาต
-                min_allowed = nominal_val - tolerance
-                max_allowed = nominal_val + tolerance
+                # ตรวจสอบ Displayed Value กับ Conventional Mass ± 0.10
+                conventional_min = conventional_mass - tolerance
+                conventional_max = conventional_mass + tolerance
+                displayed_in_range = conventional_min <= displayed_value <= conventional_max
                 
-                # ตรวจสอบ Conventional Mass
-                conventional_in_range = min_allowed <= conventional_mass <= max_allowed
-                # ตรวจสอบ Displayed Value
-                displayed_in_range = min_allowed <= displayed_value <= max_allowed
+                # ตรวจสอบ Error อยู่ในช่วง ± 0.10
+                error_in_range = -tolerance <= error <= tolerance
+                
+                # ผ่านการสอบเทียบเมื่อทั้งสองเงื่อนไขเป็นจริง
+                passed = displayed_in_range and error_in_range
                 
                 results.append({
                     'row': 1,
                     'nominal_value': nominal_val,
                     'conventional_mass': conventional_mass,
                     'displayed_value': displayed_value,
+                    'error': error,
                     'tolerance': tolerance,
-                    'min_allowed': min_allowed,
-                    'max_allowed': max_allowed,
-                    'conventional_in_range': conventional_in_range,
+                    'conventional_min': conventional_min,
+                    'conventional_max': conventional_max,
                     'displayed_in_range': displayed_in_range,
-                    'passed': conventional_in_range and displayed_in_range
+                    'error_in_range': error_in_range,
+                    'passed': passed
                 })
             except (ValueError, TypeError):
                 results.append({
@@ -772,33 +793,38 @@ class BalanceCalibration(models.Model):
             nominal_field = getattr(self, f'linear_nominal_value_{i}', None)
             conventional_field = getattr(self, f'linear_conventional_mass_{i}', None)
             displayed_field = getattr(self, f'linear_displayed_value_{i}', None)
+            error_field = getattr(self, f'linear_error_{i}', None)
             
-            if nominal_field and conventional_field and displayed_field:
+            if (nominal_field and conventional_field and displayed_field and error_field):
                 try:
                     nominal_val = float(nominal_field)
                     conventional_mass = float(conventional_field)
                     displayed_value = float(displayed_field)
+                    error = float(error_field)
                     
-                    # คำนวณช่วงที่อนุญาต
-                    min_allowed = nominal_val - tolerance
-                    max_allowed = nominal_val + tolerance
+                    # ตรวจสอบ Displayed Value กับ Conventional Mass ± 0.10
+                    conventional_min = conventional_mass - tolerance
+                    conventional_max = conventional_mass + tolerance
+                    displayed_in_range = conventional_min <= displayed_value <= conventional_max
                     
-                    # ตรวจสอบ Conventional Mass
-                    conventional_in_range = min_allowed <= conventional_mass <= max_allowed
-                    # ตรวจสอบ Displayed Value
-                    displayed_in_range = min_allowed <= displayed_value <= max_allowed
+                    # ตรวจสอบ Error อยู่ในช่วง ± 0.10
+                    error_in_range = -tolerance <= error <= tolerance
+                    
+                    # ผ่านการสอบเทียบเมื่อทั้งสองเงื่อนไขเป็นจริง
+                    passed = displayed_in_range and error_in_range
                     
                     results.append({
                         'row': i,
                         'nominal_value': nominal_val,
                         'conventional_mass': conventional_mass,
                         'displayed_value': displayed_value,
+                        'error': error,
                         'tolerance': tolerance,
-                        'min_allowed': min_allowed,
-                        'max_allowed': max_allowed,
-                        'conventional_in_range': conventional_in_range,
+                        'conventional_min': conventional_min,
+                        'conventional_max': conventional_max,
                         'displayed_in_range': displayed_in_range,
-                        'passed': conventional_in_range and displayed_in_range
+                        'error_in_range': error_in_range,
+                        'passed': passed
                     })
                 except (ValueError, TypeError):
                     results.append({

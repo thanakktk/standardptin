@@ -315,7 +315,11 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         calibration.save()
     
     def check_pressure_pass_fail(self, calibration):
-        """ตรวจสอบผลการสอบเทียบ Pressure"""
+        """ตรวจสอบผลการสอบเทียบ Pressure
+        
+        เงื่อนไข: ค่าของช่อง UUC Set และ ค่าของช่อง Actual 
+        ต้องอยู่ในระหว่าง ค่าของช่อง Tolerance Limit ทั้งคู่ ถึงจะผ่านการสอบเทียบ
+        """
         # ตรวจสอบทุกแถวที่มีข้อมูล
         rows_to_check = [
             (calibration.set, calibration.m1, calibration.m2, calibration.m3, calibration.m4, calibration.actual, calibration.error, calibration.tolerance_start, calibration.tolerance_end),
@@ -329,9 +333,24 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         for row in rows_to_check:
             set_val, m1, m2, m3, m4, actual, error, tolerance_start, tolerance_end = row
             if set_val and m1 and m2 and m3 and m4 and actual is not None and tolerance_start is not None and tolerance_end is not None:
-                # ตรวจสอบว่าค่าอยู่ในช่วง tolerance หรือไม่
-                if not (tolerance_start <= actual <= tolerance_end):
-                    return False  # ไม่ผ่าน
+                try:
+                    set_float = float(set_val)
+                    actual_float = float(actual)
+                    tolerance_start_float = float(tolerance_start)
+                    tolerance_end_float = float(tolerance_end)
+                    
+                    # ตรวจสอบ UUC Set อยู่ในช่วง Tolerance Limit
+                    set_in_range = tolerance_start_float <= set_float <= tolerance_end_float
+                    # ตรวจสอบ Actual อยู่ในช่วง Tolerance Limit
+                    actual_in_range = tolerance_start_float <= actual_float <= tolerance_end_float
+                    
+                    # ผ่านการสอบเทียบเมื่อทั้ง UUC Set และ Actual อยู่ในช่วง Tolerance Limit
+                    if not (set_in_range and actual_in_range):
+                        return False  # ไม่ผ่าน
+                        
+                except (ValueError, TypeError):
+                    return False  # ข้อมูลไม่ถูกต้อง
+                    
         return True  # ผ่าน
 
 class CalibrationPressureDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
@@ -765,7 +784,12 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         calibration.save()
     
     def check_balance_pass_fail(self, calibration):
-        """ตรวจสอบผลการสอบเทียบ Balance"""
+        """ตรวจสอบผลการสอบเทียบ Balance
+        
+        เงื่อนไข:
+        1. ค่าของช่อง Displayed Value ต้องไม่เกินค่าของช่อง Conventional Mass ± 0.10
+        2. ค่า Error ต้องอยู่ในช่วง ± 0.10
+        """
         # ตรวจสอบทุกแถวที่มีข้อมูล
         rows_to_check = [
             (calibration.linear_nominal_value, calibration.linear_conventional_mass, calibration.linear_displayed_value, calibration.linear_error, calibration.linear_uncertainty),
@@ -775,17 +799,31 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
             (calibration.linear_nominal_value_5, calibration.linear_conventional_mass_5, calibration.linear_displayed_value_5, calibration.linear_error_5, calibration.linear_uncertainty_5)
         ]
         
+        tolerance = 0.10  # ค่าความคลาดเคลื่อนที่อนุญาต ± 0.10
+        
         for nominal, conventional, displayed, error, uncertainty in rows_to_check:
             if nominal and conventional and displayed and error is not None and uncertainty is not None:
-                # ตรวจสอบว่าค่า error อยู่ในช่วงที่ยอมรับได้หรือไม่ (เช่น ±0.1%)
                 try:
-                    error_percent = abs(float(error)) / float(nominal) * 100 if float(nominal) != 0 else 0
-                    if error_percent > 0.1:  # เกิน 0.1% = ไม่ผ่าน
-                        return False
-                except (ValueError, ZeroDivisionError):
-                    return False
+                    conventional_float = float(conventional)
+                    displayed_float = float(displayed)
+                    error_float = float(error)
+                    
+                    # ตรวจสอบ Displayed Value กับ Conventional Mass ± 0.10
+                    conventional_min = conventional_float - tolerance
+                    conventional_max = conventional_float + tolerance
+                    displayed_in_range = conventional_min <= displayed_float <= conventional_max
+                    
+                    # ตรวจสอบ Error อยู่ในช่วง ± 0.10
+                    error_in_range = -tolerance <= error_float <= tolerance
+                    
+                    # ผ่านการสอบเทียบเมื่อทั้งสองเงื่อนไขเป็นจริง
+                    if not (displayed_in_range and error_in_range):
+                        return False  # ไม่ผ่าน
+                        
+                except (ValueError, TypeError):
+                    return False  # ข้อมูลไม่ถูกต้อง
         
-        return True
+        return True  # ผ่าน
 
 class BalanceCalibrationDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = BalanceCalibration
