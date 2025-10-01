@@ -320,19 +320,18 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         เงื่อนไข: ค่าของช่อง UUC Set และ ค่าของช่อง Actual 
         ต้องอยู่ในระหว่าง ค่าของช่อง Tolerance Limit ทั้งคู่ ถึงจะผ่านการสอบเทียบ
         """
-        # ตรวจสอบทุกแถวที่มีข้อมูล
+        # ตรวจสอบทุกแถวที่มีข้อมูล - ใช้เฉพาะ set, actual, tolerance_start, tolerance_end
         rows_to_check = [
-            (calibration.set, calibration.m1, calibration.m2, calibration.m3, calibration.m4, calibration.actual, calibration.error, calibration.tolerance_start, calibration.tolerance_end),
-            (calibration.set_2, calibration.m1_2, calibration.m2_2, calibration.m3_2, calibration.m4_2, calibration.actual_2, calibration.error_2, calibration.tolerance_start_2, calibration.tolerance_end_2),
-            (calibration.set_3, calibration.m1_3, calibration.m2_3, calibration.m3_3, calibration.m4_3, calibration.actual_3, calibration.error_3, calibration.tolerance_start_3, calibration.tolerance_end_3),
-            (calibration.set_4, calibration.m1_4, calibration.m2_4, calibration.m3_4, calibration.m4_4, calibration.actual_4, calibration.error_4, calibration.tolerance_start_4, calibration.tolerance_end_4),
-            (calibration.set_5, calibration.m1_5, calibration.m2_5, calibration.m3_5, calibration.m4_5, calibration.actual_5, calibration.error_5, calibration.tolerance_start_5, calibration.tolerance_end_5),
-            (calibration.set_6, calibration.m1_6, calibration.m2_6, calibration.m3_6, calibration.m4_6, calibration.actual_6, calibration.error_6, calibration.tolerance_start_6, calibration.tolerance_end_6)
+            (calibration.set, calibration.actual, calibration.tolerance_start, calibration.tolerance_end),
+            (calibration.set_2, calibration.actual_2, calibration.tolerance_start_2, calibration.tolerance_end_2),
+            (calibration.set_3, calibration.actual_3, calibration.tolerance_start_3, calibration.tolerance_end_3),
+            (calibration.set_4, calibration.actual_4, calibration.tolerance_start_4, calibration.tolerance_end_4),
+            (calibration.set_5, calibration.actual_5, calibration.tolerance_start_5, calibration.tolerance_end_5),
+            (calibration.set_6, calibration.actual_6, calibration.tolerance_start_6, calibration.tolerance_end_6)
         ]
         
-        for row in rows_to_check:
-            set_val, m1, m2, m3, m4, actual, error, tolerance_start, tolerance_end = row
-            if set_val and m1 and m2 and m3 and m4 and actual is not None and tolerance_start is not None and tolerance_end is not None:
+        for set_val, actual, tolerance_start, tolerance_end in rows_to_check:
+            if set_val and actual is not None and tolerance_start is not None and tolerance_end is not None:
                 try:
                     set_float = float(set_val)
                     actual_float = float(actual)
