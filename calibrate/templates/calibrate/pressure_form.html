@@ -217,7 +217,6 @@
                         <table class="table table-sm table-bordered">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>UUC Range</th>
                                     <th>UUC Set</th>
                                     <th>Actual</th>
                                     <th>Error</th>
@@ -226,9 +225,6 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>
-                                        <input type="text" value="{{ form.instance.measurement_range|default:form.measurement_range.value|default:'' }}" class="form-control" readonly>
-                                    </td>
                                     <td>
                                         {{ form.set }}
                                         {% if form.set.errors %}
@@ -266,9 +262,6 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <input type="text" name="measurement_range_2" id="id_measurement_range_2" class="form-control" value="{{ form.measurement_range_2.value|default:form.measurement_range.value|default:'' }}" aria-label="Measurement Range 2">
-                                    </td>
-                                    <td>
                                         <input type="text" name="set_2" id="id_set_2" class="form-control" value="{{ form.set_2.value|default:'' }}" aria-label="Set 2">
                                         {% if form.set_2.errors %}
                                             <div class="text-danger small">{{ form.set_2.errors.0 }}</div>
@@ -298,9 +291,6 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>
-                                        <input type="text" name="measurement_range_3" id="id_measurement_range_3" class="form-control" value="{{ form.measurement_range_3.value|default:form.measurement_range.value|default:'' }}" aria-label="Measurement Range 3">
-                                    </td>
                                     <td>
                                         <input type="text" name="set_3" id="id_set_3" class="form-control" value="{{ form.set_3.value|default:'' }}" aria-label="Set 3">
                                         {% if form.set_3.errors %}
@@ -332,9 +322,6 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <input type="text" name="measurement_range_4" id="id_measurement_range_4" class="form-control" value="{{ form.measurement_range_4.value|default:form.measurement_range.value|default:'' }}" aria-label="Measurement Range 4">
-                                    </td>
-                                    <td>
                                         <input type="text" name="set_4" class="form-control" value="{{ form.set_4.value|default:'' }}">
                                         {% if form.set_4.errors %}
                                             <div class="text-danger small">{{ form.set_4.errors.0 }}</div>
@@ -365,9 +352,6 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <input type="text" name="measurement_range_5" id="id_measurement_range_5" class="form-control" value="{{ form.measurement_range_5.value|default:form.measurement_range.value|default:'' }}" aria-label="Measurement Range 5">
-                                    </td>
-                                    <td>
                                         <input type="text" name="set_5" class="form-control" value="{{ form.set_5.value|default:'' }}">
                                         {% if form.set_5.errors %}
                                             <div class="text-danger small">{{ form.set_5.errors.0 }}</div>
@@ -397,9 +381,6 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>
-                                        <input type="text" name="measurement_range_6" id="id_measurement_range_6" class="form-control" value="{{ form.measurement_range_6.value|default:form.measurement_range.value|default:'' }}" aria-label="Measurement Range 6">
-                                    </td>
                                     <td>
                                         <input type="text" name="set_6" class="form-control" value="{{ form.set_6.value|default:'' }}">
                                         {% if form.set_6.errors %}

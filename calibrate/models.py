@@ -750,10 +750,9 @@ class BalanceCalibration(models.Model):
         tolerance = 0.10  # ค่าความคลาดเคลื่อนที่อนุญาต ± 0.10
         
         # ตรวจสอบแถวที่ 1
-        if (self.linear_nominal_value and self.linear_conventional_mass and 
+        if (self.linear_conventional_mass and 
             self.linear_displayed_value and self.linear_error):
             try:
-                nominal_val = float(self.linear_nominal_value)
                 conventional_mass = float(self.linear_conventional_mass)
                 displayed_value = float(self.linear_displayed_value)
                 error = float(self.linear_error)
@@ -771,7 +770,6 @@ class BalanceCalibration(models.Model):
                 
                 results.append({
                     'row': 1,
-                    'nominal_value': nominal_val,
                     'conventional_mass': conventional_mass,
                     'displayed_value': displayed_value,
                     'error': error,
@@ -790,14 +788,12 @@ class BalanceCalibration(models.Model):
         
         # ตรวจสอบแถวที่ 2-5
         for i in range(2, 6):
-            nominal_field = getattr(self, f'linear_nominal_value_{i}', None)
             conventional_field = getattr(self, f'linear_conventional_mass_{i}', None)
             displayed_field = getattr(self, f'linear_displayed_value_{i}', None)
             error_field = getattr(self, f'linear_error_{i}', None)
             
-            if (nominal_field and conventional_field and displayed_field and error_field):
+            if (conventional_field and displayed_field and error_field):
                 try:
-                    nominal_val = float(nominal_field)
                     conventional_mass = float(conventional_field)
                     displayed_value = float(displayed_field)
                     error = float(error_field)
@@ -815,7 +811,6 @@ class BalanceCalibration(models.Model):
                     
                     results.append({
                         'row': i,
-                        'nominal_value': nominal_val,
                         'conventional_mass': conventional_mass,
                         'displayed_value': displayed_value,
                         'error': error,
