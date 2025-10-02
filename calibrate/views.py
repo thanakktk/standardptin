@@ -6074,7 +6074,7 @@ def export_microwave_certificate_docx(request, cal_id):
             '{{DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
             '{{SERIAL_NUMBER}}': machine.serial_number or '-',
             '{{MANUFACTURER}}': '-',
-            '{{RANGE}}': cal.readings or '-',
+            '{{RANGE}}': cal.measurement_range or '-',
             
             # เพิ่ม placeholder ที่ขาดหายไป
             '{{CUSTOMER_ADDRESS}}': machine.organize.name if machine.organize else '-',
