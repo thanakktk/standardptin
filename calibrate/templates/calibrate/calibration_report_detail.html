@@ -210,6 +210,26 @@
                                                class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Low Frequency แบบ DOCX">
                                                 <i class="fas fa-file-word"></i>
                                             </a>
+                                        {% elif cal.type == 'dial-gauge' %}
+                                            <a href="{% url 'export-dial-gauge-certificate-docx' cal.id %}" 
+                                               class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Dial Gauge แบบ DOCX">
+                                                <i class="fas fa-file-word"></i>
+                                            </a>
+                                        {% elif cal.type == 'high-frequency' %}
+                                            <a href="{% url 'export-high-frequency-certificate-docx' cal.id %}" 
+                                               class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง High Frequency แบบ DOCX">
+                                                <i class="fas fa-file-word"></i>
+                                            </a>
+                                        {% elif cal.type == 'pressure' %}
+                                            <a href="{% url 'export-pressure-certificate-docx' cal.id %}" 
+                                               class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Pressure แบบ DOCX">
+                                                <i class="fas fa-file-word"></i>
+                                            </a>
+                                        {% elif cal.type == 'torque' %}
+                                            <a href="{% url 'export-torque-certificate-docx' cal.id %}" 
+                                               class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Torque แบบ DOCX">
+                                                <i class="fas fa-file-word"></i>
+                                            </a>
                                         {% else %}
                                             <a href="{% url 'export-certificate-excel' cal.id cal.type %}" 
                                                class="btn btn-outline-success btn-sm" title="Export ใบรับรองแบบ Excel">

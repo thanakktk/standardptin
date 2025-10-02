@@ -103,13 +103,14 @@ def send_machine_email(request, pk):
                    f"ประเภท: {machine.machine_type}\nหน่วยนับ: {machine.unit}\nผู้ผลิต: {machine.manufacture}\n" \
                    f"{message}"
             
-            # ส่งอีเมลไปที่หน่วยงานของเครื่องมือ
+            # ส่งอีเมลไปที่หน่วยงานของเครื่องมือเท่านั้น
             recipient_emails = []
             if machine.organize and machine.organize.email:
                 recipient_emails.append(machine.organize.email)
             else:
-                # ถ้าไม่มีอีเมลหน่วยงาน ให้ส่งไปที่ผู้ใช้
-                recipient_emails.append(request.user.email)
+                # ถ้าไม่มีอีเมลหน่วยงาน ให้แสดงข้อความแจ้งเตือน
+                messages.warning(request, 'ไม่พบอีเมลของหน่วยงาน กรุณาเพิ่มอีเมลหน่วยงานก่อน')
+                return render(request, 'machine/send_email.html', {'form': form, 'machine': machine})
             
             try:
                 send_mail(
@@ -210,8 +211,9 @@ def send_filtered_email(request):
                         recipient_emails.append(org.email)
             
             if not recipient_emails:
-                # ถ้าไม่มีอีเมลหน่วยงาน ให้ส่งไปที่ผู้ใช้
-                recipient_emails.append(request.user.email)
+                # ถ้าไม่มีอีเมลหน่วยงาน ให้แสดงข้อความแจ้งเตือน
+                messages.warning(request, 'ไม่พบอีเมลของหน่วยงาน กรุณาเพิ่มอีเมลหน่วยงานก่อน')
+                return redirect('machine-list')
             
             send_mail(
                 subject,
@@ -713,8 +715,9 @@ def bulk_send_email(request):
                         recipient_emails.append(org.email)
             
             if not recipient_emails:
-                # ถ้าไม่มีอีเมลหน่วยงาน ให้ส่งไปที่ผู้ใช้
-                recipient_emails.append(request.user.email)
+                # ถ้าไม่มีอีเมลหน่วยงาน ให้แสดงข้อความแจ้งเตือน
+                messages.warning(request, 'ไม่พบอีเมลของหน่วยงาน กรุณาเพิ่มอีเมลหน่วยงานก่อน')
+                return redirect('machine-list')
             
             send_mail(
                 subject,

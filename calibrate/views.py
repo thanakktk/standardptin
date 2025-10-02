@@ -3365,188 +3365,796 @@ def export_low_frequency_certificate_docx(request, cal_id):
 def export_balance_certificate_docx(request, cal_id):
     """Export ใบรับรอง Balance แบบ DOCX โดยใช้ template"""
     try:
-        # ดึงข้อมูลการสอบเทียบ Balance
-        calibration = get_object_or_404(BalanceCalibration, pk=cal_id)
+        print(f"DEBUG: Attempting to export Balance certificate for ID: {cal_id}")
         
-        # ตรวจสอบสถานะว่าผ่านการสอบเทียบหรือไม่
-        if calibration.status not in ['cert_issued', 'passed', 'active']:
-            messages.error(request, 'ไม่สามารถออกใบรับรองได้ เนื่องจากยังไม่ผ่านการสอบเทียบ')
-            return redirect('calibrate-report-detail')
+        cal = get_object_or_404(
+            BalanceCalibration.objects.select_related('machine','std_id','calibrator','certificate_issuer'),
+            pk=cal_id
+        )
+        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {cal.machine}")
         
-        # เปิด template
-        template_path = 'Balance_template.docx'
+        if cal.status not in ["passed", "cert_issued"]:
+            print(f"DEBUG: Status '{cal.status}' not allowed for export")
+            messages.error(request, "ไม่สามารถออกใบรับรองได้ เนื่องจากยังไม่ผ่านการสอบเทียบ")
+            return redirect("calibrate-report-detail")
+
+        template_path = os.path.join(settings.BASE_DIR, 'cert_templates', 'Balance_template.docx')
         doc = Document(template_path)
         
-        # ข้อมูลเครื่องมือ
-        machine = calibration.machine
-        standard = calibration.std_id
-        
-        # ดึงข้อมูลหน่วยงาน (Organize) สำหรับที่อยู่
-        from organize.models import Organize
+        m = cal.machine
+        std = cal.std_id
+
+        # องค์กร (ออปชัน)
         try:
-            # หาหน่วยงานหลัก (main unit) หรือหน่วยงานแรก
-            organization = Organize.objects.filter(is_main_unit=True).first()
-            if not organization:
-                organization = Organize.objects.first()
-        except:
-            organization = None
-        
-        # สร้าง dictionary สำหรับแทนค่า
+            from organize.models import Organize
+            org = Organize.objects.filter(is_main_unit=True).first() or Organize.objects.first()
+        except Exception:
+            org = None
+
+        def fmt(v, dash="-"):
+            return v if v not in (None, "") else dash
+
+        def fmt_date(d):
+            if not d: return "-"
+            return d.strftime("%d-%b-%Y")
+
+        # ดึงข้อมูลเครื่องมือที่ใช้ในการสอบเทียบ
+        eq_rows = []
+        from calibrate.models import CalibrationEquipmentUsed
+        try:
+            used_equipment = CalibrationEquipmentUsed.objects.filter(
+                calibration_type='balance',
+                calibration_id=cal.pk
+            ).select_related('equipment')
+            
+            for i, eq in enumerate(used_equipment, 1):
+                try:
+                    eq_rows.append({
+                        "no": str(i),
+                        "name": fmt(eq.equipment.name),
+                        "model": fmt(eq.equipment.model),
+                        "asset": fmt(getattr(eq.equipment, 'asset_number', None) or getattr(eq.equipment, 'serial_number', '-')),
+                        "cert": fmt(getattr(eq.equipment, 'certificate_number', None) or getattr(eq.equipment, 'certificate', '-')),
+                        "due": fmt_date(getattr(eq.equipment, 'due_date', None)),
+                    })
+                except Exception as e:
+                    print(f"DEBUG: Error processing equipment {i}: {e}")
+                    # ถ้า error ให้ใส่ข้อมูลพื้นฐานแทน
+                    eq_rows.append({
+                        "no": str(i),
+                        "name": fmt(getattr(eq.equipment, 'name', '-')),
+                        "model": "-",
+                        "asset": "-",
+                        "cert": "-",
+                        "due": "-",
+                    })
+        except Exception as e:
+            print(f"DEBUG: Error getting equipment list: {e}")
+
+        # สร้าง replacements dictionary
         replacements = {
             # ข้อมูลเครื่องมือ
-            '{{MODEL}}': machine.model if machine.model else '-',
-            '{{MANUFACTURER}}': str(machine.manufacture) if machine.manufacture else '-',
-            '{{DESCRIPTION}}': machine.name if machine.name else '-',
-            '{{SERIAL_NUMBER}}': machine.serial_number if machine.serial_number else '-',
-            '{{RANGE}}': machine.range if machine.range else '-',
-            '{{GRADUATION}}': machine.res_uuc if machine.res_uuc else '-',
-            '{{OPTION}}': machine.option if machine.option else 'N/A',
-            '{{CUSTOMER_ASSET_ID}}': machine.customer_asset_id if machine.customer_asset_id else '-',
-            
+            "{{MODEL}}": fmt(m.model),
+            "{{MANUFACTURER}}": fmt(str(m.manufacture) if m.manufacture else None),
+            "{{DESCRIPTION}}": fmt(m.name),
+            "{{SERIAL_NUMBER}}": fmt(m.serial_number),
+            "{{RANGE}}": fmt(m.range),
+            "{{GRADUATION}}": fmt(m.res_uuc),
+            "{{OPTION}}": fmt(m.option),
+            "{{CUSTOMER_ASSET_ID}}": fmt(m.customer_asset_id),
+
             # ข้อมูลการสอบเทียบ
-            '{{RECEIVED_DATE}}': calibration.received_date.strftime('%d-%b-%Y') if calibration.received_date else '-',
-            '{{DATE_OF_CALIBRATION}}': calibration.date_calibration.strftime('%d-%b-%Y') if calibration.date_calibration else '-',
-            '{{DUE_DATE}}': calibration.next_due.strftime('%d-%b-%Y') if calibration.next_due else '-',
-            '{{ISSUE_DATE}}': calibration.issue_date.strftime('%d-%b-%Y') if calibration.issue_date else '-',
-            '{{CERTIFICATE_NUMBER}}': calibration.certificate_number if calibration.certificate_number else '-',
-            '{{PROCEDURE}}': calibration.procedure_number if calibration.procedure_number else '-',
-            
+            "{{RECEIVED_DATE}}": fmt_date(getattr(cal, "received_date", None)),
+            "{{DATE_OF_CALIBRATION}}": fmt_date(cal.date_calibration),
+            "{{DUE_DATE}}": fmt_date(cal.next_due),
+            "{{ISSUE_DATE}}": fmt_date(getattr(cal, "issue_date", None)),
+            "{{CERTIFICATE_NUMBER}}": fmt(getattr(cal, "certificate_number", None)),
+            "{{PROCEDURE}}": fmt(getattr(cal, "procedure_number", None)),
+
             # ข้อมูลมาตรฐาน
-            '{{STANDARD_ASSET_NO}}': standard.asset_number if standard and standard.asset_number else '-',
-            '{{STANDARD_DESCRIPTION}}': standard.name if standard else '-',
-            '{{STANDARD_MAKER_MODEL}}': standard.description if standard and standard.description else '-',
-            '{{STANDARD_SERIAL}}': standard.name if standard else '-',  # ใช้ name เป็น serial ถ้าไม่มี field แยก
-            '{{STANDARD_CERTIFICATE}}': standard.certificate_number if standard and standard.certificate_number else '-',
-            '{{STANDARD_DUE_DATE}}': standard.due_date.strftime('%d-%b-%Y') if standard and standard.due_date else '-',
-            
-            # ข้อมูลผู้รับผิดชอบ
-            '{{CALIBRATOR}}': str(calibration.calibrator) if calibration.calibrator else '-',
-            '{{APPROVER}}': str(calibration.certificate_issuer) if calibration.certificate_issuer else '-',
-            
-            # ข้อมูลหน่วยงานและที่อยู่
-            '{{CUSTOMER}}': organization.name if organization else 'Physical Lab, Metrology Division, DC&E (Royal Thai Air Force)',
-            '{{CUSTOMER_ADDRESS}}': organization.address if organization and organization.address else '171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210',
-            '{{LOCATION_OF_CALIBRATION}}': organization.name if organization else 'Metrology Division, DC&E (Royal Thai Air Force)',
-            '{{LOCATION_ADDRESS}}': organization.address if organization and organization.address else '171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210',
+            "{{STANDARD_ASSET_NO}}": fmt(getattr(std, 'asset_number', None) if std else None),
+            "{{STANDARD_DESCRIPTION}}": fmt(std.name if std else None),
+            "{{STANDARD_MAKER_MODEL}}": fmt(getattr(std, 'description', None) if std else None),
+            "{{STANDARD_SERIAL}}": fmt(std.serial_number if std else None),
+            "{{STANDARD_CERTIFICATE}}": fmt(getattr(std, 'certificate_number', None) or std.certificate if std else None),
+            "{{STANDARD_DUE_DATE}}": fmt_date(getattr(std, "due_date", None) if std else None),
+
+            # ข้อมูลมาตรฐานชุดที่ 2 (ถ้ามี)
+            "{{STANDARD_ASSET_NO_2}}": fmt(getattr(std, 'asset_number', None) if std else None),
+            "{{STANDARD_DESCRIPTION_2}}": fmt(std.name if std else None),
+            "{{STANDARD_MAKER_MODEL_2}}": fmt(getattr(std, 'description', None) if std else None),
+            "{{STANDARD_SERIAL_2}}": fmt(std.serial_number if std else None),
+            "{{STANDARD_CERTIFICATE_2}}": fmt(getattr(std, 'certificate_number', None) or std.certificate if std else None),
+            "{{STANDARD_DUE_DATE_2}}": fmt_date(getattr(std, "due_date", None) if std else None),
+
+            "{{CALIBRATOR}}": fmt(str(cal.calibrator) if cal.calibrator else None),
+            "{{APPROVER}}": fmt(str(cal.certificate_issuer) if cal.certificate_issuer else None),
+
+            "{{CUSTOMER}}": fmt(org.name if org else "Physical Lab, Metrology Division, DC&E (Royal Thai Air Force)"),
+            "{{CUSTOMER_ADDRESS}}": fmt(org.address if (org and org.address) else "171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210"),
+            "{{LOCATION_OF_CALIBRATION}}": fmt(org.name if org else "Metrology Division, DC&E (Royal Thai Air Force)"),
+            "{{LOCATION_ADDRESS}}": fmt(org.address if (org and org.address) else "171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210"),
+
+            # ข้อมูลตารางผลการสอบเทียบ
+            "{{CONVENTIONAL_MASS}}": fmt(getattr(cal, 'linear_conventional_mass', None)),
+            "{{DISPLAYED_VALUE}}": fmt(getattr(cal, 'linear_displayed_value', None)),
+            "{{ERROR}}": fmt(getattr(cal, 'linear_error', None)),
+            "{{UNCERTAINTY}}": fmt(getattr(cal, 'linear_uncertainty', None)),
+            "{{NOMINAL_VALUE}}": fmt(getattr(cal, 'linear_nominal_value', None)),
+
+            "{{CONVENTIONAL_MASS_2}}": fmt(getattr(cal, 'linear_conventional_mass_2', None)),
+            "{{DISPLAYED_VALUE_2}}": fmt(getattr(cal, 'linear_displayed_value_2', None)),
+            "{{ERROR_2}}": fmt(getattr(cal, 'linear_error_2', None)),
+            "{{UNCERTAINTY_2}}": fmt(getattr(cal, 'linear_uncertainty_2', None)),
+            "{{NOMINAL_VALUE_2}}": fmt(getattr(cal, 'linear_nominal_value_2', None)),
+
+            "{{CONVENTIONAL_MASS_3}}": fmt(getattr(cal, 'linear_conventional_mass_3', None)),
+            "{{DISPLAYED_VALUE_3}}": fmt(getattr(cal, 'linear_displayed_value_3', None)),
+            "{{ERROR_3}}": fmt(getattr(cal, 'linear_error_3', None)),
+            "{{UNCERTAINTY_3}}": fmt(getattr(cal, 'linear_uncertainty_3', None)),
+            "{{NOMINAL_VALUE_3}}": fmt(getattr(cal, 'linear_nominal_value_3', None)),
+
+            "{{CONVENTIONAL_MASS_4}}": fmt(getattr(cal, 'linear_conventional_mass_4', None)),
+            "{{DISPLAYED_VALUE_4}}": fmt(getattr(cal, 'linear_displayed_value_4', None)),
+            "{{ERROR_4}}": fmt(getattr(cal, 'linear_error_4', None)),
+            "{{UNCERTAINTY_4}}": fmt(getattr(cal, 'linear_uncertainty_4', None)),
+            "{{NOMINAL_VALUE_4}}": fmt(getattr(cal, 'linear_nominal_value_4', None)),
+
+            "{{CONVENTIONAL_MASS_5}}": fmt(getattr(cal, 'linear_conventional_mass_5', None)),
+            "{{DISPLAYED_VALUE_5}}": fmt(getattr(cal, 'linear_displayed_value_5', None)),
+            "{{ERROR_5}}": fmt(getattr(cal, 'linear_error_5', None)),
+            "{{UNCERTAINTY_5}}": fmt(getattr(cal, 'linear_uncertainty_5', None)),
+            "{{NOMINAL_VALUE_5}}": fmt(getattr(cal, 'linear_nominal_value_5', None)),
         }
         
-        # ฟังก์ชันสำหรับแทนค่าใน paragraph
-        def replace_in_paragraph(paragraph, replacements):
+        # ---------- แทนค่าในเอกสาร ----------
+        def replace_text_in_paragraph(paragraph, replacements):
             for placeholder, value in replacements.items():
                 if placeholder in paragraph.text:
-                    # แทนที่ข้อความใน paragraph
                     for run in paragraph.runs:
                         if placeholder in run.text:
-                            run.text = run.text.replace(placeholder, value)
-        
-        # ฟังก์ชันสำหรับแทนค่าใน text box และ shape
-        def replace_in_shapes(shapes, replacements):
-            for shape in shapes:
-                if hasattr(shape, 'text_frame'):
-                    for paragraph in shape.text_frame.paragraphs:
-                        replace_in_paragraph(paragraph, replacements)
-                if hasattr(shape, 'shapes'):
-                    replace_in_shapes(shape.shapes, replacements)
-        
-        # ฟังก์ชันสำหรับแทนค่าใน document ทั้งหมด
-        def replace_in_document(doc, replacements):
+                            run.text = run.text.replace(placeholder, str(value))
+                
+                # จัดการ placeholder ที่อาจจะมีปัญหา (เช่น {ERROR}} แทน {{ERROR}})
+                problematic_placeholders = {
+                    '{ERROR}}': '{{ERROR}}',
+                    '{CONVENTIONAL_MASS}}': '{{CONVENTIONAL_MASS}}',
+                    '{DISPLAYED_VALUE}}': '{{DISPLAYED_VALUE}}',
+                    '{UNCERTAINTY}}': '{{UNCERTAINTY}}',
+                    '{NOMINAL_VALUE}}': '{{NOMINAL_VALUE}}',
+                    '{ERROR_2}}': '{{ERROR_2}}',
+                    '{CONVENTIONAL_MASS_2}}': '{{CONVENTIONAL_MASS_2}}',
+                    '{DISPLAYED_VALUE_2}}': '{{DISPLAYED_VALUE_2}}',
+                    '{UNCERTAINTY_2}}': '{{UNCERTAINTY_2}}',
+                    '{NOMINAL_VALUE_2}}': '{{NOMINAL_VALUE_2}}',
+                    '{ERROR_3}}': '{{ERROR_3}}',
+                    '{CONVENTIONAL_MASS_3}}': '{{CONVENTIONAL_MASS_3}}',
+                    '{DISPLAYED_VALUE_3}}': '{{DISPLAYED_VALUE_3}}',
+                    '{UNCERTAINTY_3}}': '{{UNCERTAINTY_3}}',
+                    '{NOMINAL_VALUE_3}}': '{{NOMINAL_VALUE_3}}',
+                    '{ERROR_4}}': '{{ERROR_4}}',
+                    '{CONVENTIONAL_MASS_4}}': '{{CONVENTIONAL_MASS_4}}',
+                    '{DISPLAYED_VALUE_4}}': '{{DISPLAYED_VALUE_4}}',
+                    '{UNCERTAINTY_4}}': '{{UNCERTAINTY_4}}',
+                    '{NOMINAL_VALUE_4}}': '{{NOMINAL_VALUE_4}}',
+                    '{ERROR_5}}': '{{ERROR_5}}',
+                    '{CONVENTIONAL_MASS_5}}': '{{CONVENTIONAL_MASS_5}}',
+                    '{DISPLAYED_VALUE_5}}': '{{DISPLAYED_VALUE_5}}',
+                    '{UNCERTAINTY_5}}': '{{UNCERTAINTY_5}}',
+                    '{NOMINAL_VALUE_5}}': '{{NOMINAL_VALUE_5}}',
+                }
+                
+                for wrong_placeholder, correct_placeholder in problematic_placeholders.items():
+                    if wrong_placeholder in paragraph.text and correct_placeholder in replacements:
+                        for run in paragraph.runs:
+                            if wrong_placeholder in run.text:
+                                run.text = run.text.replace(wrong_placeholder, str(replacements[correct_placeholder]))
+
+        def replace_text_in_document(doc, replacements):
             # แทนค่าใน paragraphs
             for paragraph in doc.paragraphs:
-                replace_in_paragraph(paragraph, replacements)
+                replace_text_in_paragraph(paragraph, replacements)
             
             # แทนค่าใน tables
             for table in doc.tables:
                 for row in table.rows:
                     for cell in row.cells:
                         for paragraph in cell.paragraphs:
-                            replace_in_paragraph(paragraph, replacements)
+                            replace_text_in_paragraph(paragraph, replacements)
             
             # แทนค่าใน headers และ footers
             for section in doc.sections:
-                # Header
                 if section.header:
                     for paragraph in section.header.paragraphs:
-                        replace_in_paragraph(paragraph, replacements)
-                
-                # Footer
+                        replace_text_in_paragraph(paragraph, replacements)
                 if section.footer:
                     for paragraph in section.footer.paragraphs:
-                        replace_in_paragraph(paragraph, replacements)
-                
-                # Text boxes และ shapes
-                if hasattr(section, 'shapes'):
-                    replace_in_shapes(section.shapes, replacements)
-        
-        # เรียกใช้ฟังก์ชันแทนค่าใน document ทั้งหมด
-        replace_in_document(doc, replacements)
-        
-        # เพิ่มข้อมูลผลการสอบเทียบในตาราง (ถ้ามี)
-        readings = calibration.readings.all().order_by('uuc_set')
-        if readings:
-            # หาตารางผลการสอบเทียบใน template (ตารางที่ 7 - Calibration Results)
-            table_count = 0
+                        replace_text_in_paragraph(paragraph, replacements)
+            
+            # จัดการ placeholder ที่มีปัญหาในตาราง
             for table in doc.tables:
-                table_count += 1
-                # ตรวจสอบว่าตารางนี้เป็นตารางผลการสอบเทียบหรือไม่ (ตารางที่ 7)
-                if table_count == 7 and len(table.rows) > 1 and len(table.columns) >= 5:
-                    second_row_text = ' '.join([cell.text.strip() for cell in table.rows[1].cells])
-                    if 'Nominal Value' in second_row_text or 'Conventional Mass' in second_row_text:
-                        # ลบแถวเก่า (ยกเว้น header 2 แถวแรก)
-                        for i in range(len(table.rows) - 1, 1, -1):
-                            table._tbl.remove(table.rows[i]._tr)
-                        
-                        # เพิ่มข้อมูลการอ่านค่าใหม่
-                        for reading in readings:
-                            row_cells = table.add_row().cells
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.paragraphs:
+                            # แทนที่ placeholder ที่มีปัญหา
+                            problematic_placeholders = {
+                                '{ERROR}}': '{{ERROR}}',
+                                '{CONVENTIONAL_MASS}}': '{{CONVENTIONAL_MASS}}',
+                                '{DISPLAYED_VALUE}}': '{{DISPLAYED_VALUE}}',
+                                '{UNCERTAINTY}}': '{{UNCERTAINTY}}',
+                                '{NOMINAL_VALUE}}': '{{NOMINAL_VALUE}}',
+                                '{ERROR_2}}': '{{ERROR_2}}',
+                                '{CONVENTIONAL_MASS_2}}': '{{CONVENTIONAL_MASS_2}}',
+                                '{DISPLAYED_VALUE_2}}': '{{DISPLAYED_VALUE_2}}',
+                                '{UNCERTAINTY_2}}': '{{UNCERTAINTY_2}}',
+                                '{NOMINAL_VALUE_2}}': '{{NOMINAL_VALUE_2}}',
+                                '{ERROR_3}}': '{{ERROR_3}}',
+                                '{CONVENTIONAL_MASS_3}}': '{{CONVENTIONAL_MASS_3}}',
+                                '{DISPLAYED_VALUE_3}}': '{{DISPLAYED_VALUE_3}}',
+                                '{UNCERTAINTY_3}}': '{{UNCERTAINTY_3}}',
+                                '{NOMINAL_VALUE_3}}': '{{NOMINAL_VALUE_3}}',
+                                '{ERROR_4}}': '{{ERROR_4}}',
+                                '{CONVENTIONAL_MASS_4}}': '{{CONVENTIONAL_MASS_4}}',
+                                '{DISPLAYED_VALUE_4}}': '{{DISPLAYED_VALUE_4}}',
+                                '{UNCERTAINTY_4}}': '{{UNCERTAINTY_4}}',
+                                '{NOMINAL_VALUE_4}}': '{{NOMINAL_VALUE_4}}',
+                                '{ERROR_5}}': '{{ERROR_5}}',
+                                '{CONVENTIONAL_MASS_5}}': '{{CONVENTIONAL_MASS_5}}',
+                                '{DISPLAYED_VALUE_5}}': '{{DISPLAYED_VALUE_5}}',
+                                '{UNCERTAINTY_5}}': '{{UNCERTAINTY_5}}',
+                                '{NOMINAL_VALUE_5}}': '{{NOMINAL_VALUE_5}}',
+                            }
                             
-                            # คำนวณ Error = Displayed Value - Conventional Mass
-                            error_value = None
-                            if reading.displayed_value and reading.conventional_mass:
-                                error_value = float(reading.displayed_value) - float(reading.conventional_mass)
+                            # แทนที่ placeholder ที่ถูกต้อง
+                            correct_placeholders = {
+                                '{{CONVENTIONAL_MASS}}': replacements.get('{{CONVENTIONAL_MASS}}', '-'),
+                                '{{DISPLAYED_VALUE}}': replacements.get('{{DISPLAYED_VALUE}}', '-'),
+                                '{{ERROR}}': replacements.get('{{ERROR}}', '-'),
+                                '{{UNCERTAINTY}}': replacements.get('{{UNCERTAINTY}}', '-'),
+                                '{{NOMINAL_VALUE}}': replacements.get('{{NOMINAL_VALUE}}', '-'),
+                                '{{CONVENTIONAL_MASS_2}}': replacements.get('{{CONVENTIONAL_MASS_2}}', '-'),
+                                '{{DISPLAYED_VALUE_2}}': replacements.get('{{DISPLAYED_VALUE_2}}', '-'),
+                                '{{ERROR_2}}': replacements.get('{{ERROR_2}}', '-'),
+                                '{{UNCERTAINTY_2}}': replacements.get('{{UNCERTAINTY_2}}', '-'),
+                                '{{NOMINAL_VALUE_2}}': replacements.get('{{NOMINAL_VALUE_2}}', '-'),
+                                '{{CONVENTIONAL_MASS_3}}': replacements.get('{{CONVENTIONAL_MASS_3}}', '-'),
+                                '{{DISPLAYED_VALUE_3}}': replacements.get('{{DISPLAYED_VALUE_3}}', '-'),
+                                '{{ERROR_3}}': replacements.get('{{ERROR_3}}', '-'),
+                                '{{UNCERTAINTY_3}}': replacements.get('{{UNCERTAINTY_3}}', '-'),
+                                '{{NOMINAL_VALUE_3}}': replacements.get('{{NOMINAL_VALUE_3}}', '-'),
+                                '{{CONVENTIONAL_MASS_4}}': replacements.get('{{CONVENTIONAL_MASS_4}}', '-'),
+                                '{{DISPLAYED_VALUE_4}}': replacements.get('{{DISPLAYED_VALUE_4}}', '-'),
+                                '{{ERROR_4}}': replacements.get('{{ERROR_4}}', '-'),
+                                '{{UNCERTAINTY_4}}': replacements.get('{{UNCERTAINTY_4}}', '-'),
+                                '{{NOMINAL_VALUE_4}}': replacements.get('{{NOMINAL_VALUE_4}}', '-'),
+                                '{{CONVENTIONAL_MASS_5}}': replacements.get('{{CONVENTIONAL_MASS_5}}', '-'),
+                                '{{DISPLAYED_VALUE_5}}': replacements.get('{{DISPLAYED_VALUE_5}}', '-'),
+                                '{{ERROR_5}}': replacements.get('{{ERROR_5}}', '-'),
+                                '{{UNCERTAINTY_5}}': replacements.get('{{UNCERTAINTY_5}}', '-'),
+                                '{{NOMINAL_VALUE_5}}': replacements.get('{{NOMINAL_VALUE_5}}', '-'),
+                            }
                             
-                            # เติมข้อมูลในแต่ละคอลัมน์
-                            if len(row_cells) >= 1:
-                                row_cells[0].text = str(reading.uuc_set) if reading.uuc_set else '-'
-                            if len(row_cells) >= 2:
-                                row_cells[1].text = str(reading.conventional_mass) if reading.conventional_mass else '-'
-                            if len(row_cells) >= 3:
-                                row_cells[2].text = str(reading.displayed_value) if reading.displayed_value else '-'
-                            if len(row_cells) >= 4:
-                                row_cells[3].text = f"{error_value:.5f}" if error_value is not None else '-'
-                            if len(row_cells) >= 5:
-                                row_cells[4].text = str(reading.uncertainty) if reading.uncertainty else '-'
+                            # Debug: แสดงข้อมูลในตาราง
+                            if paragraph.text.strip():
+                                print(f"DEBUG: Table cell text: '{paragraph.text}'")
+                                for placeholder in ['{{CONVENTIONAL_MASS}}', '{{DISPLAYED_VALUE}}', '{{ERROR}}']:
+                                    if placeholder in paragraph.text:
+                                        print(f"DEBUG: Found placeholder {placeholder} in table cell")
                             
-                            # จัดรูปแบบแถวข้อมูล
-                            for cell in row_cells:
-                                for paragraph in cell.paragraphs:
-                                    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                            # แทนที่ placeholder ที่มีปัญหา
+                            for wrong_placeholder, correct_placeholder in problematic_placeholders.items():
+                                if wrong_placeholder in paragraph.text and correct_placeholder in replacements:
                                     for run in paragraph.runs:
-                                        run.font.name = 'TH Sarabun New'
-                                        run.font.size = Pt(10)
-                        break
+                                        if wrong_placeholder in run.text:
+                                            run.text = run.text.replace(wrong_placeholder, str(replacements[correct_placeholder]))
+                                            print(f"DEBUG: Replaced {wrong_placeholder} with {replacements[correct_placeholder]}")
+                            
+                            # แทนที่ placeholder ที่ถูกต้อง
+                            for placeholder, value in correct_placeholders.items():
+                                if placeholder in paragraph.text:
+                                    for run in paragraph.runs:
+                                        if placeholder in run.text:
+                                            run.text = run.text.replace(placeholder, str(value))
+                                            print(f"DEBUG: Replaced {placeholder} with {value}")
+
+        # แทนค่าในเอกสาร
+        replace_text_in_document(doc, replacements)
+        print("DEBUG: Document replacement completed")
         
-        # สร้าง response
+        # Debug: แสดงข้อมูลตารางที่ส่งไป
+        print(f"DEBUG: Conventional Mass 1: {getattr(cal, 'linear_conventional_mass', None)}")
+        print(f"DEBUG: Displayed Value 1: {getattr(cal, 'linear_displayed_value', None)}")
+        print(f"DEBUG: Error 1: {getattr(cal, 'linear_error', None)}")
+        print(f"DEBUG: Conventional Mass 2: {getattr(cal, 'linear_conventional_mass_2', None)}")
+        print(f"DEBUG: Displayed Value 2: {getattr(cal, 'linear_displayed_value_2', None)}")
+        print(f"DEBUG: Error 2: {getattr(cal, 'linear_error_2', None)}")
+        
+        # Debug: แสดงข้อมูลมาตรฐาน
+        print(f"DEBUG: Standard 1 - Asset: {getattr(std, 'asset_number', None) if std else None}")
+        print(f"DEBUG: Standard 1 - Name: {std.name if std else None}")
+        print(f"DEBUG: Standard 1 - Serial: {std.serial_number if std else None}")
+        print(f"DEBUG: Standard 2 - Asset: {getattr(std, 'asset_number', None) if std else None}")
+        print(f"DEBUG: Standard 2 - Name: {std.name if std else None}")
+        print(f"DEBUG: Standard 2 - Serial: {std.serial_number if std else None}")
+        
+        # Debug: แสดง replacements ที่ส่งไป
+        print(f"DEBUG: Total replacements: {len(replacements)}")
+        print(f"DEBUG: CONVENTIONAL_MASS: {replacements.get('{{CONVENTIONAL_MASS}}', 'NOT_FOUND')}")
+        print(f"DEBUG: DISPLAYED_VALUE: {replacements.get('{{DISPLAYED_VALUE}}', 'NOT_FOUND')}")
+        print(f"DEBUG: ERROR: {replacements.get('{{ERROR}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CONVENTIONAL_MASS_2: {replacements.get('{{CONVENTIONAL_MASS_2}}', 'NOT_FOUND')}")
+        print(f"DEBUG: DISPLAYED_VALUE_2: {replacements.get('{{DISPLAYED_VALUE_2}}', 'NOT_FOUND')}")
+        print(f"DEBUG: ERROR_2: {replacements.get('{{ERROR_2}}', 'NOT_FOUND')}")
+        
+        # Debug: แสดงข้อมูลดิบจากฐานข้อมูล
+        print(f"DEBUG: Raw data - linear_conventional_mass: {cal.linear_conventional_mass}")
+        print(f"DEBUG: Raw data - linear_displayed_value: {cal.linear_displayed_value}")
+        print(f"DEBUG: Raw data - linear_error: {cal.linear_error}")
+        print(f"DEBUG: Raw data - linear_conventional_mass_2: {cal.linear_conventional_mass_2}")
+        print(f"DEBUG: Raw data - linear_displayed_value_2: {cal.linear_displayed_value_2}")
+        print(f"DEBUG: Raw data - linear_error_2: {cal.linear_error_2}")
+        
+        # ---------- เติมตารางเครื่องมือถ้าใช้ {{EQUIPMENT_TABLE}} ----------
+        def find_table_cell_with_placeholder(d, placeholder="{{EQUIPMENT_TABLE}}"):
+            for t in d.tables:
+                for row in t.rows:
+                    for cell in row.cells:
+                        for p in cell.paragraphs:
+                            if placeholder in p.text:
+                                return t, p
+            return None, None
+
+        table, p = find_table_cell_with_placeholder(doc, "{{EQUIPMENT_TABLE}}")
+        if table and eq_rows:
+            for run in p.runs:
+                if "{{EQUIPMENT_TABLE}}" in run.text:
+                    run.text = run.text.replace("{{EQUIPMENT_TABLE}}", "")
+            for r in eq_rows:
+                cells = table.add_row().cells
+                cells[0].text = r["no"]
+                cells[1].text = r["name"]
+                cells[2].text = r["model"]
+                cells[3].text = r["asset"]
+                cells[4].text = r["cert"]
+                cells[5].text = r["due"]
+
+        # ---------- ส่งไฟล์ ----------
+        print(f"DEBUG: Creating response for Balance certificate")
         response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
-        
-        # สร้างชื่อไฟล์ที่ปลอดภัย
-        machine_name = machine.name if machine else "Balance"
-        safe_filename = f"Balance_Certificate_{machine_name}_{datetime.now().strftime('%Y%m%d')}.docx"
-        
-        response['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
-        
-        # บันทึกเอกสาร
-        buffer = io.BytesIO()
-        doc.save(buffer)
-        buffer.seek(0)
-        response.write(buffer.getvalue())
-        
+        response["Content-Disposition"] = f'attachment; filename="balance_certificate_{cal.pk}.docx"'
+        doc.save(response)
+        print(f"DEBUG: Response created successfully")
         return response
         
     except Exception as e:
-        messages.error(request, f'เกิดข้อผิดพลาดในการสร้างใบรับรอง: {str(e)}')
-        return redirect('calibrate-report-detail')
+        print(f"DEBUG: Error in export_balance_certificate_docx: {str(e)}")
+        messages.error(request, f"เกิดข้อผิดพลาดในการสร้างใบรับรอง: {str(e)}")
+        return redirect("calibrate-report-detail")
+
+@login_required
+def export_dial_gauge_certificate_docx(request, cal_id):
+    """Export ใบรับรอง Dial Gauge แบบ DOCX โดยใช้ template"""
+    try:
+        print(f"DEBUG: Attempting to export Dial Gauge certificate for ID: {cal_id}")
+        
+        cal = get_object_or_404(
+            DialGaugeCalibration.objects.select_related('machine','std_id','calibrator','certificate_issuer'),
+            pk=cal_id
+        )
+        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {cal.machine}")
+        
+        if cal.status not in ["passed", "cert_issued"]:
+            print(f"DEBUG: Status '{cal.status}' not allowed for export")
+            messages.error(request, "ไม่สามารถออกใบรับรองได้ เนื่องจากยังไม่ผ่านการสอบเทียบ")
+            return redirect("calibrate-report-detail")
+
+        template_path = os.path.join(settings.BASE_DIR, 'cert_templates', 'Dial Gauge_template.docx')
+        doc = Document(template_path)
+        
+        m = cal.machine
+        std = cal.std_id
+
+        # องค์กร (ออปชัน)
+        try:
+            from organize.models import Organize
+            org = Organize.objects.filter(is_main_unit=True).first() or Organize.objects.first()
+        except Exception:
+            org = None
+
+        def fmt(v, dash="-"):
+            return v if v not in (None, "") else dash
+
+        def fmt_date(d):
+            if not d: return "-"
+            return d.strftime("%d-%b-%Y")
+
+        # ดึงข้อมูลเครื่องมือที่ใช้ในการสอบเทียบ
+        eq_rows = []
+        from calibrate.models import CalibrationEquipmentUsed
+        try:
+            used_equipment = CalibrationEquipmentUsed.objects.filter(
+                calibration_type='dial_gauge',
+                calibration_id=cal.pk
+            ).select_related('equipment')
+            
+            for i, eq in enumerate(used_equipment, 1):
+                try:
+                    eq_rows.append({
+                        "no": str(i),
+                        "name": fmt(eq.equipment.name),
+                        "model": fmt(eq.equipment.model),
+                        "asset": fmt(getattr(eq.equipment, 'asset_number', None) or getattr(eq.equipment, 'serial_number', '-')),
+                        "cert": fmt(getattr(eq.equipment, 'certificate_number', None) or getattr(eq.equipment, 'certificate', '-')),
+                        "due": fmt_date(getattr(eq.equipment, 'due_date', None)),
+                    })
+                except Exception as e:
+                    print(f"DEBUG: Error processing equipment {i}: {e}")
+                    # ถ้า error ให้ใส่ข้อมูลพื้นฐานแทน
+                    eq_rows.append({
+                        "no": str(i),
+                        "name": fmt(getattr(eq.equipment, 'name', '-')),
+                        "model": "-",
+                        "asset": "-",
+                        "cert": "-",
+                        "due": "-",
+                    })
+        except Exception as e:
+            print(f"DEBUG: Error getting equipment list: {e}")
+
+        # สร้าง replacements dictionary
+        replacements = {
+            # ข้อมูลเครื่องมือ
+            "{{MODEL}}": fmt(m.model),
+            "{{MANUFACTURER}}": fmt(str(m.manufacture) if m.manufacture else None),
+            "{{DESCRIPTION}}": fmt(m.name),
+            "{{SERIAL_NUMBER}}": fmt(m.serial_number),
+            "{{RANGE}}": fmt(m.range),
+            "{{GRADUATION}}": fmt(m.res_uuc),
+            "{{OPTION}}": fmt(m.option),
+            "{{CUSTOMER_ASSET_ID}}": fmt(m.customer_asset_id),
+
+            # ข้อมูลการสอบเทียบ
+            "{{RECEIVED_DATE}}": fmt_date(getattr(cal, "received_date", None)),
+            "{{DATE_OF_CALIBRATION}}": fmt_date(cal.date_calibration),
+            "{{DUE_DATE}}": fmt_date(cal.next_due),
+            "{{ISSUE_DATE}}": fmt_date(getattr(cal, "issue_date", None)),
+            "{{CERTIFICATE_NUMBER}}": fmt(getattr(cal, "certificate_number", None)),
+            "{{PROCEDURE}}": fmt(getattr(cal, "procedure_number", None)),
+
+            # ข้อมูลมาตรฐาน
+            "{{STANDARD_ASSET_NO}}": fmt(getattr(std, 'asset_number', None) if std else None),
+            "{{STANDARD_DESCRIPTION}}": fmt(std.name if std else None),
+            "{{STANDARD_MAKER_MODEL}}": fmt(getattr(std, 'description', None) if std else None),
+            "{{STANDARD_SERIAL}}": fmt(std.serial_number if std else None),
+            "{{STANDARD_CERTIFICATE}}": fmt(getattr(std, 'certificate_number', None) or std.certificate if std else None),
+            "{{STANDARD_DUE_DATE}}": fmt_date(getattr(std, "due_date", None) if std else None),
+
+            # ข้อมูลมาตรฐานชุดที่ 2 (ถ้ามี)
+            "{{STANDARD_ASSET_NO_2}}": fmt(getattr(std, 'asset_number', None) if std else None),
+            "{{STANDARD_DESCRIPTION_2}}": fmt(std.name if std else None),
+            "{{STANDARD_MAKER_MODEL_2}}": fmt(getattr(std, 'description', None) if std else None),
+            "{{STANDARD_SERIAL_2}}": fmt(std.serial_number if std else None),
+            "{{STANDARD_CERTIFICATE_2}}": fmt(getattr(std, 'certificate_number', None) or std.certificate if std else None),
+            "{{STANDARD_DUE_DATE_2}}": fmt_date(getattr(std, "due_date", None) if std else None),
+
+            "{{CALIBRATOR}}": fmt(str(cal.calibrator) if cal.calibrator else None),
+            "{{APPROVER}}": fmt(str(cal.certificate_issuer) if cal.certificate_issuer else None),
+
+            "{{CUSTOMER}}": fmt(org.name if org else "Physical Lab, Metrology Division, DC&E (Royal Thai Air Force)"),
+            "{{CUSTOMER_ADDRESS}}": fmt(org.address if (org and org.address) else "171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210"),
+            "{{LOCATION_OF_CALIBRATION}}": fmt(org.name if org else "Metrology Division, DC&E (Royal Thai Air Force)"),
+            "{{LOCATION_ADDRESS}}": fmt(org.address if (org and org.address) else "171 Building. No2025 Sanambin, Donmueang\nBangkok, 10210"),
+
+            # ข้อมูลตารางผลการสอบเทียบ Dial Gauge
+            "{{UUC_SET}}": fmt(getattr(cal, 'uuc_set', None)),
+            "{{ACTUAL}}": fmt(getattr(cal, 'actual', None)),
+            "{{ERROR}}": fmt(getattr(cal, 'error', None)),
+            "{{UNCERTAINTY}}": fmt(getattr(cal, 'uncertainty', None)),
+            "{{TOLERANCE_LIMIT}}": fmt(getattr(cal, 'tolerance_limit', None)),
+
+            "{{UUC_SET_2}}": fmt(getattr(cal, 'set_2', None)),
+            "{{ACTUAL_2}}": fmt(getattr(cal, 'actual_2', None)),
+            "{{ERROR_2}}": fmt(getattr(cal, 'error_2', None)),
+            "{{UNCERTAINTY_2}}": fmt(getattr(cal, 'uncertainty', None)),
+            "{{TOLERANCE_LIMIT_2}}": fmt(getattr(cal, 'tolerance_limit_2', None)),
+
+            "{{UUC_SET_3}}": fmt(getattr(cal, 'set_3', None)),
+            "{{ACTUAL_3}}": fmt(getattr(cal, 'actual_3', None)),
+            "{{ERROR_3}}": fmt(getattr(cal, 'error_3', None)),
+            "{{UNCERTAINTY_3}}": fmt(getattr(cal, 'uncertainty', None)),
+            "{{TOLERANCE_LIMIT_3}}": fmt(getattr(cal, 'tolerance_limit_3', None)),
+
+            "{{UUC_SET_4}}": fmt(getattr(cal, 'set_4', None)),
+            "{{ACTUAL_4}}": fmt(getattr(cal, 'actual_4', None)),
+            "{{ERROR_4}}": fmt(getattr(cal, 'error_4', None)),
+            "{{UNCERTAINTY_4}}": fmt(getattr(cal, 'uncertainty', None)),
+            "{{TOLERANCE_LIMIT_4}}": fmt(getattr(cal, 'tolerance_limit_4', None)),
+
+            "{{UUC_SET_5}}": fmt(getattr(cal, 'set_5', None)),
+            "{{ACTUAL_5}}": fmt(getattr(cal, 'actual_5', None)),
+            "{{ERROR_5}}": fmt(getattr(cal, 'error_5', None)),
+            "{{UNCERTAINTY_5}}": fmt(getattr(cal, 'uncertainty', None)),
+            "{{TOLERANCE_LIMIT_5}}": fmt(getattr(cal, 'tolerance_limit_5', None)),
+        }
+        
+        # ---------- แทนค่าในเอกสาร ----------
+        def replace_text_in_paragraph(paragraph, replacements):
+            for placeholder, value in replacements.items():
+                if placeholder in paragraph.text:
+                    for run in paragraph.runs:
+                        if placeholder in run.text:
+                            run.text = run.text.replace(placeholder, str(value))
+                
+                # จัดการ placeholder ที่อาจจะมีปัญหา (เช่น {ERROR}} แทน {{ERROR}})
+                problematic_placeholders = {
+                    '{ERROR}}': '{{ERROR}}',
+                    '{UUC_SET}}': '{{UUC_SET}}',
+                    '{ACTUAL}}': '{{ACTUAL}}',
+                    '{UNCERTAINTY}}': '{{UNCERTAINTY}}',
+                    '{TOLERANCE_LIMIT}}': '{{TOLERANCE_LIMIT}}',
+                    '{ERROR_2}}': '{{ERROR_2}}',
+                    '{UUC_SET_2}}': '{{UUC_SET_2}}',
+                    '{ACTUAL_2}}': '{{ACTUAL_2}}',
+                    '{UNCERTAINTY_2}}': '{{UNCERTAINTY_2}}',
+                    '{TOLERANCE_LIMIT_2}}': '{{TOLERANCE_LIMIT_2}}',
+                    '{ERROR_3}}': '{{ERROR_3}}',
+                    '{UUC_SET_3}}': '{{UUC_SET_3}}',
+                    '{ACTUAL_3}}': '{{ACTUAL_3}}',
+                    '{UNCERTAINTY_3}}': '{{UNCERTAINTY_3}}',
+                    '{TOLERANCE_LIMIT_3}}': '{{TOLERANCE_LIMIT_3}}',
+                    '{ERROR_4}}': '{{ERROR_4}}',
+                    '{UUC_SET_4}}': '{{UUC_SET_4}}',
+                    '{ACTUAL_4}}': '{{ACTUAL_4}}',
+                    '{UNCERTAINTY_4}}': '{{UNCERTAINTY_4}}',
+                    '{TOLERANCE_LIMIT_4}}': '{{TOLERANCE_LIMIT_4}}',
+                    '{ERROR_5}}': '{{ERROR_5}}',
+                    '{UUC_SET_5}}': '{{UUC_SET_5}}',
+                    '{ACTUAL_5}}': '{{ACTUAL_5}}',
+                    '{UNCERTAINTY_5}}': '{{UNCERTAINTY_5}}',
+                    '{TOLERANCE_LIMIT_5}}': '{{TOLERANCE_LIMIT_5}}',
+                }
+                
+                # Debug: แสดงข้อมูลใน paragraph
+                if paragraph.text.strip():
+                    print(f"DEBUG: Paragraph text: '{paragraph.text}'")
+                    for placeholder in ['{{UUC_SET}}', '{{ACTUAL}}', '{{ERROR}}']:
+                        if placeholder in paragraph.text:
+                            print(f"DEBUG: Found placeholder {placeholder} in paragraph")
+                
+                for wrong_placeholder, correct_placeholder in problematic_placeholders.items():
+                    if wrong_placeholder in paragraph.text and correct_placeholder in replacements:
+                        for run in paragraph.runs:
+                            if wrong_placeholder in run.text:
+                                run.text = run.text.replace(wrong_placeholder, str(replacements[correct_placeholder]))
+                                print(f"DEBUG: Replaced {wrong_placeholder} with {replacements[correct_placeholder]}")
+                
+                # แทนที่ placeholder ที่ถูกต้อง
+                correct_placeholders = {
+                    '{{UUC_SET}}': replacements.get('{{UUC_SET}}', '-'),
+                    '{{ACTUAL}}': replacements.get('{{ACTUAL}}', '-'),
+                    '{{ERROR}}': replacements.get('{{ERROR}}', '-'),
+                    '{{UNCERTAINTY}}': replacements.get('{{UNCERTAINTY}}', '-'),
+                    '{{TOLERANCE_LIMIT}}': replacements.get('{{TOLERANCE_LIMIT}}', '-'),
+                    '{{UUC_SET_2}}': replacements.get('{{UUC_SET_2}}', '-'),
+                    '{{ACTUAL_2}}': replacements.get('{{ACTUAL_2}}', '-'),
+                    '{{ERROR_2}}': replacements.get('{{ERROR_2}}', '-'),
+                    '{{UNCERTAINTY_2}}': replacements.get('{{UNCERTAINTY_2}}', '-'),
+                    '{{TOLERANCE_LIMIT_2}}': replacements.get('{{TOLERANCE_LIMIT_2}}', '-'),
+                    '{{UUC_SET_3}}': replacements.get('{{UUC_SET_3}}', '-'),
+                    '{{ACTUAL_3}}': replacements.get('{{ACTUAL_3}}', '-'),
+                    '{{ERROR_3}}': replacements.get('{{ERROR_3}}', '-'),
+                    '{{UNCERTAINTY_3}}': replacements.get('{{UNCERTAINTY_3}}', '-'),
+                    '{{TOLERANCE_LIMIT_3}}': replacements.get('{{TOLERANCE_LIMIT_3}}', '-'),
+                    '{{UUC_SET_4}}': replacements.get('{{UUC_SET_4}}', '-'),
+                    '{{ACTUAL_4}}': replacements.get('{{ACTUAL_4}}', '-'),
+                    '{{ERROR_4}}': replacements.get('{{ERROR_4}}', '-'),
+                    '{{UNCERTAINTY_4}}': replacements.get('{{UNCERTAINTY_4}}', '-'),
+                    '{{TOLERANCE_LIMIT_4}}': replacements.get('{{TOLERANCE_LIMIT_4}}', '-'),
+                    '{{UUC_SET_5}}': replacements.get('{{UUC_SET_5}}', '-'),
+                    '{{ACTUAL_5}}': replacements.get('{{ACTUAL_5}}', '-'),
+                    '{{ERROR_5}}': replacements.get('{{ERROR_5}}', '-'),
+                    '{{UNCERTAINTY_5}}': replacements.get('{{UNCERTAINTY_5}}', '-'),
+                    '{{TOLERANCE_LIMIT_5}}': replacements.get('{{TOLERANCE_LIMIT_5}}', '-'),
+                }
+                
+                for placeholder, value in correct_placeholders.items():
+                    if placeholder in paragraph.text:
+                        for run in paragraph.runs:
+                            if placeholder in run.text:
+                                run.text = run.text.replace(placeholder, str(value))
+                                print(f"DEBUG: Replaced {placeholder} with {value}")
+
+        def replace_text_in_document(doc, replacements):
+            # แทนค่าใน paragraphs
+            for paragraph in doc.paragraphs:
+                replace_text_in_paragraph(paragraph, replacements)
+            
+            # แทนค่าใน tables
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.paragraphs:
+                            replace_text_in_paragraph(paragraph, replacements)
+            
+            # แทนค่าใน headers และ footers
+            for section in doc.sections:
+                if section.header:
+                    for paragraph in section.header.paragraphs:
+                        replace_text_in_paragraph(paragraph, replacements)
+                if section.footer:
+                    for paragraph in section.footer.paragraphs:
+                        replace_text_in_paragraph(paragraph, replacements)
+            
+            # จัดการ placeholder ที่มีปัญหาในตาราง
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.paragraphs:
+                            # แทนที่ placeholder ที่มีปัญหา
+                            problematic_placeholders = {
+                                '{ERROR}}': '{{ERROR}}',
+                                '{UUC_SET}}': '{{UUC_SET}}',
+                                '{ACTUAL}}': '{{ACTUAL}}',
+                                '{UNCERTAINTY}}': '{{UNCERTAINTY}}',
+                                '{TOLERANCE_LIMIT}}': '{{TOLERANCE_LIMIT}}',
+                                '{ERROR_2}}': '{{ERROR_2}}',
+                                '{UUC_SET_2}}': '{{UUC_SET_2}}',
+                                '{ACTUAL_2}}': '{{ACTUAL_2}}',
+                                '{UNCERTAINTY_2}}': '{{UNCERTAINTY_2}}',
+                                '{TOLERANCE_LIMIT_2}}': '{{TOLERANCE_LIMIT_2}}',
+                                '{ERROR_3}}': '{{ERROR_3}}',
+                                '{UUC_SET_3}}': '{{UUC_SET_3}}',
+                                '{ACTUAL_3}}': '{{ACTUAL_3}}',
+                                '{UNCERTAINTY_3}}': '{{UNCERTAINTY_3}}',
+                                '{TOLERANCE_LIMIT_3}}': '{{TOLERANCE_LIMIT_3}}',
+                                '{ERROR_4}}': '{{ERROR_4}}',
+                                '{UUC_SET_4}}': '{{UUC_SET_4}}',
+                                '{ACTUAL_4}}': '{{ACTUAL_4}}',
+                                '{UNCERTAINTY_4}}': '{{UNCERTAINTY_4}}',
+                                '{TOLERANCE_LIMIT_4}}': '{{TOLERANCE_LIMIT_4}}',
+                                '{ERROR_5}}': '{{ERROR_5}}',
+                                '{UUC_SET_5}}': '{{UUC_SET_5}}',
+                                '{ACTUAL_5}}': '{{ACTUAL_5}}',
+                                '{UNCERTAINTY_5}}': '{{UNCERTAINTY_5}}',
+                                '{TOLERANCE_LIMIT_5}}': '{{TOLERANCE_LIMIT_5}}',
+                            }
+                            
+                            # Debug: แสดงข้อมูลในตาราง
+                            if paragraph.text.strip():
+                                print(f"DEBUG: Table cell text: '{paragraph.text}'")
+                                for placeholder in ['{{UUC_SET}}', '{{ACTUAL}}', '{{ERROR}}']:
+                                    if placeholder in paragraph.text:
+                                        print(f"DEBUG: Found placeholder {placeholder} in table cell")
+                            
+                            # แทนที่ placeholder ที่ถูกต้อง
+                            correct_placeholders = {
+                                '{{UUC_SET}}': replacements.get('{{UUC_SET}}', '-'),
+                                '{{ACTUAL}}': replacements.get('{{ACTUAL}}', '-'),
+                                '{{ERROR}}': replacements.get('{{ERROR}}', '-'),
+                                '{{UNCERTAINTY}}': replacements.get('{{UNCERTAINTY}}', '-'),
+                                '{{TOLERANCE_LIMIT}}': replacements.get('{{TOLERANCE_LIMIT}}', '-'),
+                                '{{UUC_SET_2}}': replacements.get('{{UUC_SET_2}}', '-'),
+                                '{{ACTUAL_2}}': replacements.get('{{ACTUAL_2}}', '-'),
+                                '{{ERROR_2}}': replacements.get('{{ERROR_2}}', '-'),
+                                '{{UNCERTAINTY_2}}': replacements.get('{{UNCERTAINTY_2}}', '-'),
+                                '{{TOLERANCE_LIMIT_2}}': replacements.get('{{TOLERANCE_LIMIT_2}}', '-'),
+                                '{{UUC_SET_3}}': replacements.get('{{UUC_SET_3}}', '-'),
+                                '{{ACTUAL_3}}': replacements.get('{{ACTUAL_3}}', '-'),
+                                '{{ERROR_3}}': replacements.get('{{ERROR_3}}', '-'),
+                                '{{UNCERTAINTY_3}}': replacements.get('{{UNCERTAINTY_3}}', '-'),
+                                '{{TOLERANCE_LIMIT_3}}': replacements.get('{{TOLERANCE_LIMIT_3}}', '-'),
+                                '{{UUC_SET_4}}': replacements.get('{{UUC_SET_4}}', '-'),
+                                '{{ACTUAL_4}}': replacements.get('{{ACTUAL_4}}', '-'),
+                                '{{ERROR_4}}': replacements.get('{{ERROR_4}}', '-'),
+                                '{{UNCERTAINTY_4}}': replacements.get('{{UNCERTAINTY_4}}', '-'),
+                                '{{TOLERANCE_LIMIT_4}}': replacements.get('{{TOLERANCE_LIMIT_4}}', '-'),
+                                '{{UUC_SET_5}}': replacements.get('{{UUC_SET_5}}', '-'),
+                                '{{ACTUAL_5}}': replacements.get('{{ACTUAL_5}}', '-'),
+                                '{{ERROR_5}}': replacements.get('{{ERROR_5}}', '-'),
+                                '{{UNCERTAINTY_5}}': replacements.get('{{UNCERTAINTY_5}}', '-'),
+                                '{{TOLERANCE_LIMIT_5}}': replacements.get('{{TOLERANCE_LIMIT_5}}', '-'),
+                            }
+                            
+                            # Debug: แสดงข้อมูลในตาราง
+                            if paragraph.text.strip():
+                                print(f"DEBUG: Table cell text: '{paragraph.text}'")
+                                for placeholder in ['{{UUC_SET}}', '{{ACTUAL}}', '{{ERROR}}']:
+                                    if placeholder in paragraph.text:
+                                        print(f"DEBUG: Found placeholder {placeholder} in table cell")
+                            
+                            # แทนที่ placeholder ที่มีปัญหา
+                            for wrong_placeholder, correct_placeholder in problematic_placeholders.items():
+                                if wrong_placeholder in paragraph.text and correct_placeholder in replacements:
+                                    for run in paragraph.runs:
+                                        if wrong_placeholder in run.text:
+                                            run.text = run.text.replace(wrong_placeholder, str(replacements[correct_placeholder]))
+                                            print(f"DEBUG: Replaced {wrong_placeholder} with {replacements[correct_placeholder]}")
+                            
+                            # แทนที่ placeholder ที่ถูกต้อง
+                            for placeholder, value in correct_placeholders.items():
+                                if placeholder in paragraph.text:
+                                    for run in paragraph.runs:
+                                        if placeholder in run.text:
+                                            run.text = run.text.replace(placeholder, str(value))
+                                            print(f"DEBUG: Replaced {placeholder} with {value}")
+
+        # แทนค่าในเอกสาร
+        replace_text_in_document(doc, replacements)
+        print("DEBUG: Document replacement completed")
+        
+        # Debug: แสดงข้อมูลตารางที่ส่งไป
+        print(f"DEBUG: UUC_SET: {getattr(cal, 'uuc_set', None)}")
+        print(f"DEBUG: ACTUAL: {getattr(cal, 'actual', None)}")
+        print(f"DEBUG: ERROR: {getattr(cal, 'error', None)}")
+        print(f"DEBUG: UUC_SET_2: {getattr(cal, 'set_2', None)}")
+        print(f"DEBUG: ACTUAL_2: {getattr(cal, 'actual_2', None)}")
+        print(f"DEBUG: ERROR_2: {getattr(cal, 'error_2', None)}")
+        
+        # Debug: แสดงข้อมูลมาตรฐาน
+        print(f"DEBUG: Standard 1 - Asset: {getattr(std, 'asset_number', None) if std else None}")
+        print(f"DEBUG: Standard 1 - Name: {std.name if std else None}")
+        print(f"DEBUG: Standard 1 - Serial: {std.serial_number if std else None}")
+        print(f"DEBUG: Standard 2 - Asset: {getattr(std, 'asset_number', None) if std else None}")
+        print(f"DEBUG: Standard 2 - Name: {std.name if std else None}")
+        print(f"DEBUG: Standard 2 - Serial: {std.serial_number if std else None}")
+        
+        # Debug: แสดง replacements ที่ส่งไป
+        print(f"DEBUG: Total replacements: {len(replacements)}")
+        print(f"DEBUG: UUC_SET: {replacements.get('{{UUC_SET}}', 'NOT_FOUND')}")
+        print(f"DEBUG: ACTUAL: {replacements.get('{{ACTUAL}}', 'NOT_FOUND')}")
+        print(f"DEBUG: ERROR: {replacements.get('{{ERROR}}', 'NOT_FOUND')}")
+        print(f"DEBUG: UUC_SET_2: {replacements.get('{{UUC_SET_2}}', 'NOT_FOUND')}")
+        print(f"DEBUG: ACTUAL_2: {replacements.get('{{ACTUAL_2}}', 'NOT_FOUND')}")
+        print(f"DEBUG: ERROR_2: {replacements.get('{{ERROR_2}}', 'NOT_FOUND')}")
+        
+        # Debug: แสดงข้อมูลดิบจากฐานข้อมูล
+        print(f"DEBUG: Raw data - uuc_set: {cal.uuc_set}")
+        print(f"DEBUG: Raw data - actual: {cal.actual}")
+        print(f"DEBUG: Raw data - error: {cal.error}")
+        print(f"DEBUG: Raw data - set_2: {cal.set_2}")
+        print(f"DEBUG: Raw data - actual_2: {cal.actual_2}")
+        print(f"DEBUG: Raw data - error_2: {cal.error_2}")
+        
+        # ---------- เติมตารางเครื่องมือถ้าใช้ {{EQUIPMENT_TABLE}} ----------
+        def find_table_cell_with_placeholder(d, placeholder="{{EQUIPMENT_TABLE}}"):
+            for t in d.tables:
+                for row in t.rows:
+                    for cell in row.cells:
+                        for p in cell.paragraphs:
+                            if placeholder in p.text:
+                                return t, p
+            return None, None
+
+        table, p = find_table_cell_with_placeholder(doc, "{{EQUIPMENT_TABLE}}")
+        if table and eq_rows:
+            for run in p.runs:
+                if "{{EQUIPMENT_TABLE}}" in run.text:
+                    run.text = run.text.replace("{{EQUIPMENT_TABLE}}", "")
+            for r in eq_rows:
+                cells = table.add_row().cells
+                cells[0].text = r["no"]
+                cells[1].text = r["name"]
+                cells[2].text = r["model"]
+                cells[3].text = r["asset"]
+                cells[4].text = r["cert"]
+                cells[5].text = r["due"]
+
+        # ---------- ส่งไฟล์ ----------
+        print(f"DEBUG: Creating response for Dial Gauge certificate")
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        response["Content-Disposition"] = f'attachment; filename="dial_gauge_certificate_{cal.pk}.docx"'
+        doc.save(response)
+        print(f"DEBUG: Response created successfully")
+        return response
+        
+    except Exception as e:
+        print(f"DEBUG: Error in export_dial_gauge_certificate_docx: {str(e)}")
+        messages.error(request, f"เกิดข้อผิดพลาดในการสร้างใบรับรอง: {str(e)}")
+        return redirect("calibrate-report-detail")
 
 from docxtpl import DocxTemplate
 def export_certificate(request, pk):
@@ -4180,3 +4788,1231 @@ class DialGaugeCalibrationDeleteView(LoginRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'ลบการสอบเทียบ Dial Gauge - {self.object.machine.name}'
         return context
+
+def replace_text_in_paragraph(paragraph, replacements):
+    """แทนที่ placeholder ใน paragraph"""
+    for placeholder, value in replacements.items():
+        if placeholder in paragraph.text:
+            for run in paragraph.runs:
+                if placeholder in run.text:
+                    run.text = run.text.replace(placeholder, str(value))
+    
+    # จัดการ placeholder ที่อาจจะมีปัญหา (เช่น {ERROR}} แทน {{ERROR}})
+    problematic_placeholders = {
+        '{ERROR}}': '{{ERROR}}',
+        '{FREQ_UUC_RANGE}}': '{{FREQ_UUC_RANGE}}',
+        '{FREQ_UUC_SETTING}}': '{{FREQ_UUC_SETTING}}',
+        '{FREQ_MEASURED_VALUE}}': '{{FREQ_MEASURED_VALUE}}',
+        '{FREQ_UNCERTAINTY}}': '{{FREQ_UNCERTAINTY}}',
+        '{FREQ_TOLERANCE_LIMIT}}': '{{FREQ_TOLERANCE_LIMIT}}',
+        '{VOLT_UUC_RANGE}}': '{{VOLT_UUC_RANGE}}',
+        '{VOLT_UUC_SETTING}}': '{{VOLT_UUC_SETTING}}',
+        '{VOLT_MEASURED_VALUE}}': '{{VOLT_MEASURED_VALUE}}',
+        '{VOLT_UNCERTAINTY}}': '{{VOLT_UNCERTAINTY}}',
+        '{VOLT_TOLERANCE_LIMIT}}': '{{VOLT_TOLERANCE_LIMIT}}',
+        '{DATE_OF_CALIBRATION}}': '{{DATE_OF_CALIBRATION}}',
+        '{CUSTOMER_ADDRESS}}': '{{CUSTOMER_ADDRESS}}',
+        '{RANGE}}': '{{RANGE}}',
+        '{APPROVER}}': '{{APPROVER}}',
+        '{CALIBRATOR}}': '{{CALIBRATOR}}',
+        '{UUC_SET}}': '{{UUC_SET}}',
+        '{ACTUAL}}': '{{ACTUAL}}',
+        '{ERROR}}': '{{ERROR}}',
+        '{TOLERANCE_LIMIT}}': '{{TOLERANCE_LIMIT}}',
+        '{UUC_SET_2}}': '{{UUC_SET_2}}',
+        '{ACTUAL_2}}': '{{ACTUAL_2}}',
+        '{ERROR_2}}': '{{ERROR_2}}',
+        '{TOLERANCE_LIMIT_2}}': '{{TOLERANCE_LIMIT_2}}',
+        '{UUC_SET_3}}': '{{UUC_SET_3}}',
+        '{ACTUAL_3}}': '{{ACTUAL_3}}',
+        '{ERROR_3}}': '{{ERROR_3}}',
+        '{TOLERANCE_LIMIT_3}}': '{{TOLERANCE_LIMIT_3}}',
+        '{UUC_SET_4}}': '{{UUC_SET_4}}',
+        '{ACTUAL_4}}': '{{ACTUAL_4}}',
+        '{ERROR_4}}': '{{ERROR_4}}',
+        '{TOLERANCE_LIMIT_4}}': '{{TOLERANCE_LIMIT_4}}',
+        '{UUC_SET_5}}': '{{UUC_SET_5}}',
+        '{ACTUAL_5}}': '{{ACTUAL_5}}',
+        '{ERROR_5}}': '{{ERROR_5}}',
+        '{TOLERANCE_LIMIT_5}}': '{{TOLERANCE_LIMIT_5}}',
+        '{UUC_SET_6}}': '{{UUC_SET_6}}',
+        '{ACTUAL_6}}': '{{ACTUAL_6}}',
+        '{ERROR_6}}': '{{ERROR_6}}',
+        '{TOLERANCE_LIMIT_6}}': '{{TOLERANCE_LIMIT_6}}',
+        '{CW_SET}}': '{{CW_SET}}',
+        '{CW_0}}': '{{CW_0}}',
+        '{CW_90}}': '{{CW_90}}',
+        '{CW_180}}': '{{CW_180}}',
+        '{CW_270}}': '{{CW_270}}',
+        '{CW_AVG}}': '{{CW_AVG}}',
+        '{CW_ACTUAL}}': '{{CW_ACTUAL}}',
+        '{CW_ERROR}}': '{{CW_ERROR}}',
+        '{CW_UNCERTAINTY}}': '{{CW_UNCERTAINTY}}',
+        '{CW_TOLERANCE_LIMIT}}': '{{CW_TOLERANCE_LIMIT}}',
+        '{CCW_SET}}': '{{CCW_SET}}',
+        '{CCW_0}}': '{{CCW_0}}',
+        '{CCW_90}}': '{{CCW_90}}',
+        '{CCW_180}}': '{{CCW_180}}',
+        '{CCW_270}}': '{{CCW_270}}',
+        '{CCW_AVG}}': '{{CCW_AVG}}',
+        '{CCW_ACTUAL}}': '{{CCW_ACTUAL}}',
+        '{CCW_ERROR}}': '{{CCW_ERROR}}',
+        '{CCW_UNCERTAINTY}}': '{{CCW_UNCERTAINTY}}',
+        '{CCW_TOLERANCE_LIMIT}}': '{{CCW_TOLERANCE_LIMIT}}',
+        '{CCW_ACTUAL_2}}': '{{CCW_ACTUAL_2}}',
+        '{CCW_ERROR_2}}': '{{CCW_ERROR_2}}',
+        '{CCW_TOLERANCE_LIMIT_2}}': '{{CCW_TOLERANCE_LIMIT_2}}',
+        '{CCW_ACTUAL_3}}': '{{CCW_ACTUAL_3}}',
+        '{CCW_ERROR_3}}': '{{CCW_ERROR_3}}',
+        '{CCW_TOLERANCE_LIMIT_3}}': '{{CCW_TOLERANCE_LIMIT_3}}',
+        '{ERROR_2}}': '{{ERROR_2}}',
+        '{FREQ_UUC_RANGE_2}}': '{{FREQ_UUC_RANGE_2}}',
+        '{FREQ_UUC_SETTING_2}}': '{{FREQ_UUC_SETTING_2}}',
+        '{FREQ_MEASURED_VALUE_2}}': '{{FREQ_MEASURED_VALUE_2}}',
+        '{FREQ_UNCERTAINTY_2}}': '{{FREQ_UNCERTAINTY_2}}',
+        '{FREQ_TOLERANCE_LIMIT_2}}': '{{FREQ_TOLERANCE_LIMIT_2}}',
+        '{VOLT_UUC_RANGE_2}}': '{{VOLT_UUC_RANGE_2}}',
+        '{VOLT_UUC_SETTING_2}}': '{{VOLT_UUC_SETTING_2}}',
+        '{VOLT_MEASURED_VALUE_2}}': '{{VOLT_MEASURED_VALUE_2}}',
+        '{VOLT_UNCERTAINTY_2}}': '{{VOLT_UNCERTAINTY_2}}',
+        '{VOLT_TOLERANCE_LIMIT_2}}': '{{VOLT_TOLERANCE_LIMIT_2}}',
+        '{ERROR_3}}': '{{ERROR_3}}',
+        '{FREQ_UUC_RANGE_3}}': '{{FREQ_UUC_RANGE_3}}',
+        '{FREQ_UUC_SETTING_3}}': '{{FREQ_UUC_SETTING_3}}',
+        '{FREQ_MEASURED_VALUE_3}}': '{{FREQ_MEASURED_VALUE_3}}',
+        '{FREQ_UNCERTAINTY_3}}': '{{FREQ_UNCERTAINTY_3}}',
+        '{FREQ_TOLERANCE_LIMIT_3}}': '{{FREQ_TOLERANCE_LIMIT_3}}',
+        '{VOLT_UUC_RANGE_3}}': '{{VOLT_UUC_RANGE_3}}',
+        '{VOLT_UUC_SETTING_3}}': '{{VOLT_UUC_SETTING_3}}',
+        '{VOLT_MEASURED_VALUE_3}}': '{{VOLT_MEASURED_VALUE_3}}',
+        '{VOLT_UNCERTAINTY_3}}': '{{VOLT_UNCERTAINTY_3}}',
+        '{VOLT_TOLERANCE_LIMIT_3}}': '{{VOLT_TOLERANCE_LIMIT_3}}',
+        '{ERROR_4}}': '{{ERROR_4}}',
+        '{FREQ_UUC_RANGE_4}}': '{{FREQ_UUC_RANGE_4}}',
+        '{FREQ_UUC_SETTING_4}}': '{{FREQ_UUC_SETTING_4}}',
+        '{FREQ_MEASURED_VALUE_4}}': '{{FREQ_MEASURED_VALUE_4}}',
+        '{FREQ_UNCERTAINTY_4}}': '{{FREQ_UNCERTAINTY_4}}',
+        '{FREQ_TOLERANCE_LIMIT_4}}': '{{FREQ_TOLERANCE_LIMIT_4}}',
+        '{VOLT_UUC_RANGE_4}}': '{{VOLT_UUC_RANGE_4}}',
+        '{VOLT_UUC_SETTING_4}}': '{{VOLT_UUC_SETTING_4}}',
+        '{VOLT_MEASURED_VALUE_4}}': '{{VOLT_MEASURED_VALUE_4}}',
+        '{VOLT_UNCERTAINTY_4}}': '{{VOLT_UNCERTAINTY_4}}',
+        '{VOLT_TOLERANCE_LIMIT_4}}': '{{VOLT_TOLERANCE_LIMIT_4}}',
+        '{ERROR_5}}': '{{ERROR_5}}',
+        '{FREQ_UUC_RANGE_5}}': '{{FREQ_UUC_RANGE_5}}',
+        '{FREQ_UUC_SETTING_5}}': '{{FREQ_UUC_SETTING_5}}',
+        '{FREQ_MEASURED_VALUE_5}}': '{{FREQ_MEASURED_VALUE_5}}',
+        '{FREQ_UNCERTAINTY_5}}': '{{FREQ_UNCERTAINTY_5}}',
+        '{FREQ_TOLERANCE_LIMIT_5}}': '{{FREQ_TOLERANCE_LIMIT_5}}',
+        '{VOLT_UUC_RANGE_5}}': '{{VOLT_UUC_RANGE_5}}',
+        '{VOLT_UUC_SETTING_5}}': '{{VOLT_UUC_SETTING_5}}',
+        '{VOLT_MEASURED_VALUE_5}}': '{{VOLT_MEASURED_VALUE_5}}',
+        '{VOLT_UNCERTAINTY_5}}': '{{VOLT_UNCERTAINTY_5}}',
+        '{VOLT_TOLERANCE_LIMIT_5}}': '{{VOLT_TOLERANCE_LIMIT_5}}',
+    }
+    
+    # Debug: แสดงข้อมูลใน paragraph
+    if paragraph.text.strip():
+        print(f"DEBUG: Paragraph text: '{paragraph.text}'")
+        for placeholder in ['{{FREQ_UUC_RANGE}}', '{{FREQ_UUC_SETTING}}', '{{FREQ_MEASURED_VALUE}}']:
+            if placeholder in paragraph.text:
+                print(f"DEBUG: Found placeholder {placeholder} in paragraph")
+    
+    for wrong_placeholder, correct_placeholder in problematic_placeholders.items():
+        if wrong_placeholder in paragraph.text and correct_placeholder in replacements:
+            for run in paragraph.runs:
+                if wrong_placeholder in run.text:
+                    run.text = run.text.replace(wrong_placeholder, str(replacements[correct_placeholder]))
+                    print(f"DEBUG: Replaced {wrong_placeholder} with {replacements[correct_placeholder]}")
+    
+    # แทนที่ placeholder ที่ถูกต้อง
+    correct_placeholders = {
+        '{{FREQ_UUC_RANGE}}': replacements.get('{{FREQ_UUC_RANGE}}', '-'),
+        '{{FREQ_UUC_SETTING}}': replacements.get('{{FREQ_UUC_SETTING}}', '-'),
+        '{{FREQ_MEASURED_VALUE}}': replacements.get('{{FREQ_MEASURED_VALUE}}', '-'),
+        '{{FREQ_UNCERTAINTY}}': replacements.get('{{FREQ_UNCERTAINTY}}', '-'),
+        '{{FREQ_TOLERANCE_LIMIT}}': replacements.get('{{FREQ_TOLERANCE_LIMIT}}', '-'),
+        '{{VOLT_UUC_RANGE}}': replacements.get('{{VOLT_UUC_RANGE}}', '-'),
+        '{{VOLT_UUC_SETTING}}': replacements.get('{{VOLT_UUC_SETTING}}', '-'),
+        '{{VOLT_MEASURED_VALUE}}': replacements.get('{{VOLT_MEASURED_VALUE}}', '-'),
+        '{{VOLT_UNCERTAINTY}}': replacements.get('{{VOLT_UNCERTAINTY}}', '-'),
+        '{{VOLT_TOLERANCE_LIMIT}}': replacements.get('{{VOLT_TOLERANCE_LIMIT}}', '-'),
+        '{{DATE_OF_CALIBRATION}}': replacements.get('{{DATE_OF_CALIBRATION}}', '-'),
+        '{{CUSTOMER_ADDRESS}}': replacements.get('{{CUSTOMER_ADDRESS}}', '-'),
+        '{{RANGE}}': replacements.get('{{RANGE}}', '-'),
+        '{{APPROVER}}': replacements.get('{{APPROVER}}', '-'),
+        '{{CALIBRATOR}}': replacements.get('{{CALIBRATOR}}', '-'),
+        '{{UUC_SET}}': replacements.get('{{UUC_SET}}', '-'),
+        '{{ACTUAL}}': replacements.get('{{ACTUAL}}', '-'),
+        '{{ERROR}}': replacements.get('{{ERROR}}', '-'),
+        '{{TOLERANCE_LIMIT}}': replacements.get('{{TOLERANCE_LIMIT}}', '-'),
+        '{{UUC_SET_2}}': replacements.get('{{UUC_SET_2}}', '-'),
+        '{{ACTUAL_2}}': replacements.get('{{ACTUAL_2}}', '-'),
+        '{{ERROR_2}}': replacements.get('{{ERROR_2}}', '-'),
+        '{{TOLERANCE_LIMIT_2}}': replacements.get('{{TOLERANCE_LIMIT_2}}', '-'),
+        '{{UUC_SET_3}}': replacements.get('{{UUC_SET_3}}', '-'),
+        '{{ACTUAL_3}}': replacements.get('{{ACTUAL_3}}', '-'),
+        '{{ERROR_3}}': replacements.get('{{ERROR_3}}', '-'),
+        '{{TOLERANCE_LIMIT_3}}': replacements.get('{{TOLERANCE_LIMIT_3}}', '-'),
+        '{{UUC_SET_4}}': replacements.get('{{UUC_SET_4}}', '-'),
+        '{{ACTUAL_4}}': replacements.get('{{ACTUAL_4}}', '-'),
+        '{{ERROR_4}}': replacements.get('{{ERROR_4}}', '-'),
+        '{{TOLERANCE_LIMIT_4}}': replacements.get('{{TOLERANCE_LIMIT_4}}', '-'),
+        '{{UUC_SET_5}}': replacements.get('{{UUC_SET_5}}', '-'),
+        '{{ACTUAL_5}}': replacements.get('{{ACTUAL_5}}', '-'),
+        '{{ERROR_5}}': replacements.get('{{ERROR_5}}', '-'),
+        '{{TOLERANCE_LIMIT_5}}': replacements.get('{{TOLERANCE_LIMIT_5}}', '-'),
+        '{{UUC_SET_6}}': replacements.get('{{UUC_SET_6}}', '-'),
+        '{{ACTUAL_6}}': replacements.get('{{ACTUAL_6}}', '-'),
+        '{{ERROR_6}}': replacements.get('{{ERROR_6}}', '-'),
+        '{{TOLERANCE_LIMIT_6}}': replacements.get('{{TOLERANCE_LIMIT_6}}', '-'),
+        '{{CW_SET}}': replacements.get('{{CW_SET}}', '-'),
+        '{{CW_0}}': replacements.get('{{CW_0}}', '-'),
+        '{{CW_90}}': replacements.get('{{CW_90}}', '-'),
+        '{{CW_180}}': replacements.get('{{CW_180}}', '-'),
+        '{{CW_270}}': replacements.get('{{CW_270}}', '-'),
+        '{{CW_AVG}}': replacements.get('{{CW_AVG}}', '-'),
+        '{{CW_ACTUAL}}': replacements.get('{{CW_ACTUAL}}', '-'),
+        '{{CW_ERROR}}': replacements.get('{{CW_ERROR}}', '-'),
+        '{{CW_UNCERTAINTY}}': replacements.get('{{CW_UNCERTAINTY}}', '-'),
+        '{{CW_TOLERANCE_LIMIT}}': replacements.get('{{CW_TOLERANCE_LIMIT}}', '-'),
+        '{{CCW_SET}}': replacements.get('{{CCW_SET}}', '-'),
+        '{{CCW_0}}': replacements.get('{{CCW_0}}', '-'),
+        '{{CCW_90}}': replacements.get('{{CCW_90}}', '-'),
+        '{{CCW_180}}': replacements.get('{{CCW_180}}', '-'),
+        '{{CCW_270}}': replacements.get('{{CCW_270}}', '-'),
+        '{{CCW_AVG}}': replacements.get('{{CCW_AVG}}', '-'),
+        '{{CCW_ACTUAL}}': replacements.get('{{CCW_ACTUAL}}', '-'),
+        '{{CCW_ERROR}}': replacements.get('{{CCW_ERROR}}', '-'),
+        '{{CCW_UNCERTAINTY}}': replacements.get('{{CCW_UNCERTAINTY}}', '-'),
+        '{{CCW_TOLERANCE_LIMIT}}': replacements.get('{{CCW_TOLERANCE_LIMIT}}', '-'),
+        '{{CCW_ACTUAL_2}}': replacements.get('{{CCW_ACTUAL_2}}', '-'),
+        '{{CCW_ERROR_2}}': replacements.get('{{CCW_ERROR_2}}', '-'),
+        '{{CCW_TOLERANCE_LIMIT_2}}': replacements.get('{{CCW_TOLERANCE_LIMIT_2}}', '-'),
+        '{{CCW_ACTUAL_3}}': replacements.get('{{CCW_ACTUAL_3}}', '-'),
+        '{{CCW_ERROR_3}}': replacements.get('{{CCW_ERROR_3}}', '-'),
+        '{{CCW_TOLERANCE_LIMIT_3}}': replacements.get('{{CCW_TOLERANCE_LIMIT_3}}', '-'),
+        '{{FREQ_UUC_RANGE_2}}': replacements.get('{{FREQ_UUC_RANGE_2}}', '-'),
+        '{{FREQ_UUC_SETTING_2}}': replacements.get('{{FREQ_UUC_SETTING_2}}', '-'),
+        '{{FREQ_MEASURED_VALUE_2}}': replacements.get('{{FREQ_MEASURED_VALUE_2}}', '-'),
+        '{{FREQ_UNCERTAINTY_2}}': replacements.get('{{FREQ_UNCERTAINTY_2}}', '-'),
+        '{{FREQ_TOLERANCE_LIMIT_2}}': replacements.get('{{FREQ_TOLERANCE_LIMIT_2}}', '-'),
+        '{{VOLT_UUC_RANGE_2}}': replacements.get('{{VOLT_UUC_RANGE_2}}', '-'),
+        '{{VOLT_UUC_SETTING_2}}': replacements.get('{{VOLT_UUC_SETTING_2}}', '-'),
+        '{{VOLT_MEASURED_VALUE_2}}': replacements.get('{{VOLT_MEASURED_VALUE_2}}', '-'),
+        '{{VOLT_UNCERTAINTY_2}}': replacements.get('{{VOLT_UNCERTAINTY_2}}', '-'),
+        '{{VOLT_TOLERANCE_LIMIT_2}}': replacements.get('{{VOLT_TOLERANCE_LIMIT_2}}', '-'),
+        '{{FREQ_UUC_RANGE_3}}': replacements.get('{{FREQ_UUC_RANGE_3}}', '-'),
+        '{{FREQ_UUC_SETTING_3}}': replacements.get('{{FREQ_UUC_SETTING_3}}', '-'),
+        '{{FREQ_MEASURED_VALUE_3}}': replacements.get('{{FREQ_MEASURED_VALUE_3}}', '-'),
+        '{{FREQ_UNCERTAINTY_3}}': replacements.get('{{FREQ_UNCERTAINTY_3}}', '-'),
+        '{{FREQ_TOLERANCE_LIMIT_3}}': replacements.get('{{FREQ_TOLERANCE_LIMIT_3}}', '-'),
+        '{{VOLT_UUC_RANGE_3}}': replacements.get('{{VOLT_UUC_RANGE_3}}', '-'),
+        '{{VOLT_UUC_SETTING_3}}': replacements.get('{{VOLT_UUC_SETTING_3}}', '-'),
+        '{{VOLT_MEASURED_VALUE_3}}': replacements.get('{{VOLT_MEASURED_VALUE_3}}', '-'),
+        '{{VOLT_UNCERTAINTY_3}}': replacements.get('{{VOLT_UNCERTAINTY_3}}', '-'),
+        '{{VOLT_TOLERANCE_LIMIT_3}}': replacements.get('{{VOLT_TOLERANCE_LIMIT_3}}', '-'),
+        '{{FREQ_UUC_RANGE_4}}': replacements.get('{{FREQ_UUC_RANGE_4}}', '-'),
+        '{{FREQ_UUC_SETTING_4}}': replacements.get('{{FREQ_UUC_SETTING_4}}', '-'),
+        '{{FREQ_MEASURED_VALUE_4}}': replacements.get('{{FREQ_MEASURED_VALUE_4}}', '-'),
+        '{{FREQ_UNCERTAINTY_4}}': replacements.get('{{FREQ_UNCERTAINTY_4}}', '-'),
+        '{{FREQ_TOLERANCE_LIMIT_4}}': replacements.get('{{FREQ_TOLERANCE_LIMIT_4}}', '-'),
+        '{{VOLT_UUC_RANGE_4}}': replacements.get('{{VOLT_UUC_RANGE_4}}', '-'),
+        '{{VOLT_UUC_SETTING_4}}': replacements.get('{{VOLT_UUC_SETTING_4}}', '-'),
+        '{{VOLT_MEASURED_VALUE_4}}': replacements.get('{{VOLT_MEASURED_VALUE_4}}', '-'),
+        '{{VOLT_UNCERTAINTY_4}}': replacements.get('{{VOLT_UNCERTAINTY_4}}', '-'),
+        '{{VOLT_TOLERANCE_LIMIT_4}}': replacements.get('{{VOLT_TOLERANCE_LIMIT_4}}', '-'),
+        '{{FREQ_UUC_RANGE_5}}': replacements.get('{{FREQ_UUC_RANGE_5}}', '-'),
+        '{{FREQ_UUC_SETTING_5}}': replacements.get('{{FREQ_UUC_SETTING_5}}', '-'),
+        '{{FREQ_MEASURED_VALUE_5}}': replacements.get('{{FREQ_MEASURED_VALUE_5}}', '-'),
+        '{{FREQ_UNCERTAINTY_5}}': replacements.get('{{FREQ_UNCERTAINTY_5}}', '-'),
+        '{{FREQ_TOLERANCE_LIMIT_5}}': replacements.get('{{FREQ_TOLERANCE_LIMIT_5}}', '-'),
+        '{{VOLT_UUC_RANGE_5}}': replacements.get('{{VOLT_UUC_RANGE_5}}', '-'),
+        '{{VOLT_UUC_SETTING_5}}': replacements.get('{{VOLT_UUC_SETTING_5}}', '-'),
+        '{{VOLT_MEASURED_VALUE_5}}': replacements.get('{{VOLT_MEASURED_VALUE_5}}', '-'),
+        '{{VOLT_UNCERTAINTY_5}}': replacements.get('{{VOLT_UNCERTAINTY_5}}', '-'),
+        '{{VOLT_TOLERANCE_LIMIT_5}}': replacements.get('{{VOLT_TOLERANCE_LIMIT_5}}', '-'),
+    }
+    
+    for placeholder, value in correct_placeholders.items():
+        if placeholder in paragraph.text:
+            for run in paragraph.runs:
+                if placeholder in run.text:
+                    run.text = run.text.replace(placeholder, str(value))
+                    print(f"DEBUG: Replaced {placeholder} with {value}")
+
+def replace_text_in_document(doc, replacements):
+    """แทนค่าในเอกสาร"""
+    # แทนค่าใน paragraphs
+    for paragraph in doc.paragraphs:
+        replace_text_in_paragraph(paragraph, replacements)
+    
+    # แทนค่าใน tables
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    replace_text_in_paragraph(paragraph, replacements)
+    
+    # แทนค่าใน headers และ footers
+    for section in doc.sections:
+        if section.header:
+            for paragraph in section.header.paragraphs:
+                replace_text_in_paragraph(paragraph, replacements)
+        if section.footer:
+            for paragraph in section.footer.paragraphs:
+                replace_text_in_paragraph(paragraph, replacements)
+    
+    # จัดการ placeholder ที่มีปัญหาในตาราง
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    # แทนที่ placeholder ที่มีปัญหา
+                    problematic_placeholders = {
+                        '{ERROR}}': '{{ERROR}}',
+                        '{FREQ_UUC_RANGE}}': '{{FREQ_UUC_RANGE}}',
+                        '{FREQ_UUC_SETTING}}': '{{FREQ_UUC_SETTING}}',
+                        '{FREQ_MEASURED_VALUE}}': '{{FREQ_MEASURED_VALUE}}',
+                        '{FREQ_UNCERTAINTY}}': '{{FREQ_UNCERTAINTY}}',
+                        '{FREQ_TOLERANCE_LIMIT}}': '{{FREQ_TOLERANCE_LIMIT}}',
+                        '{VOLT_UUC_RANGE}}': '{{VOLT_UUC_RANGE}}',
+                        '{VOLT_UUC_SETTING}}': '{{VOLT_UUC_SETTING}}',
+                        '{VOLT_MEASURED_VALUE}}': '{{VOLT_MEASURED_VALUE}}',
+                        '{VOLT_UNCERTAINTY}}': '{{VOLT_UNCERTAINTY}}',
+                        '{VOLT_TOLERANCE_LIMIT}}': '{{VOLT_TOLERANCE_LIMIT}}',
+                        '{DATE_OF_CALIBRATION}}': '{{DATE_OF_CALIBRATION}}',
+                        '{CUSTOMER_ADDRESS}}': '{{CUSTOMER_ADDRESS}}',
+                        '{RANGE}}': '{{RANGE}}',
+                        '{APPROVER}}': '{{APPROVER}}',
+                        '{CALIBRATOR}}': '{{CALIBRATOR}}',
+                        '{UUC_SET}}': '{{UUC_SET}}',
+                        '{ACTUAL}}': '{{ACTUAL}}',
+                        '{ERROR}}': '{{ERROR}}',
+                        '{TOLERANCE_LIMIT}}': '{{TOLERANCE_LIMIT}}',
+                        '{UUC_SET_2}}': '{{UUC_SET_2}}',
+                        '{ACTUAL_2}}': '{{ACTUAL_2}}',
+                        '{ERROR_2}}': '{{ERROR_2}}',
+                        '{TOLERANCE_LIMIT_2}}': '{{TOLERANCE_LIMIT_2}}',
+                        '{UUC_SET_3}}': '{{UUC_SET_3}}',
+                        '{ACTUAL_3}}': '{{ACTUAL_3}}',
+                        '{ERROR_3}}': '{{ERROR_3}}',
+                        '{TOLERANCE_LIMIT_3}}': '{{TOLERANCE_LIMIT_3}}',
+                        '{UUC_SET_4}}': '{{UUC_SET_4}}',
+                        '{ACTUAL_4}}': '{{ACTUAL_4}}',
+                        '{ERROR_4}}': '{{ERROR_4}}',
+                        '{TOLERANCE_LIMIT_4}}': '{{TOLERANCE_LIMIT_4}}',
+                        '{UUC_SET_5}}': '{{UUC_SET_5}}',
+                        '{ACTUAL_5}}': '{{ACTUAL_5}}',
+                        '{ERROR_5}}': '{{ERROR_5}}',
+                        '{TOLERANCE_LIMIT_5}}': '{{TOLERANCE_LIMIT_5}}',
+                        '{UUC_SET_6}}': '{{UUC_SET_6}}',
+                        '{ACTUAL_6}}': '{{ACTUAL_6}}',
+                        '{ERROR_6}}': '{{ERROR_6}}',
+                        '{TOLERANCE_LIMIT_6}}': '{{TOLERANCE_LIMIT_6}}',
+                        '{CW_SET}}': '{{CW_SET}}',
+                        '{CW_0}}': '{{CW_0}}',
+                        '{CW_90}}': '{{CW_90}}',
+                        '{CW_180}}': '{{CW_180}}',
+                        '{CW_270}}': '{{CW_270}}',
+                        '{CW_AVG}}': '{{CW_AVG}}',
+                        '{CW_ACTUAL}}': '{{CW_ACTUAL}}',
+                        '{CW_ERROR}}': '{{CW_ERROR}}',
+                        '{CW_UNCERTAINTY}}': '{{CW_UNCERTAINTY}}',
+                        '{CW_TOLERANCE_LIMIT}}': '{{CW_TOLERANCE_LIMIT}}',
+                        '{CCW_SET}}': '{{CCW_SET}}',
+                        '{CCW_0}}': '{{CCW_0}}',
+                        '{CCW_90}}': '{{CCW_90}}',
+                        '{CCW_180}}': '{{CCW_180}}',
+                        '{CCW_270}}': '{{CCW_270}}',
+                        '{CCW_AVG}}': '{{CCW_AVG}}',
+                        '{CCW_ACTUAL}}': '{{CCW_ACTUAL}}',
+                        '{CCW_ERROR}}': '{{CCW_ERROR}}',
+                        '{CCW_UNCERTAINTY}}': '{{CCW_UNCERTAINTY}}',
+                        '{CCW_TOLERANCE_LIMIT}}': '{{CCW_TOLERANCE_LIMIT}}',
+                        '{CCW_ACTUAL_2}}': '{{CCW_ACTUAL_2}}',
+                        '{CCW_ERROR_2}}': '{{CCW_ERROR_2}}',
+                        '{CCW_TOLERANCE_LIMIT_2}}': '{{CCW_TOLERANCE_LIMIT_2}}',
+                        '{CCW_ACTUAL_3}}': '{{CCW_ACTUAL_3}}',
+                        '{CCW_ERROR_3}}': '{{CCW_ERROR_3}}',
+                        '{CCW_TOLERANCE_LIMIT_3}}': '{{CCW_TOLERANCE_LIMIT_3}}',
+                        '{ERROR_2}}': '{{ERROR_2}}',
+                        '{FREQ_UUC_RANGE_2}}': '{{FREQ_UUC_RANGE_2}}',
+                        '{FREQ_UUC_SETTING_2}}': '{{FREQ_UUC_SETTING_2}}',
+                        '{FREQ_MEASURED_VALUE_2}}': '{{FREQ_MEASURED_VALUE_2}}',
+                        '{FREQ_UNCERTAINTY_2}}': '{{FREQ_UNCERTAINTY_2}}',
+                        '{FREQ_TOLERANCE_LIMIT_2}}': '{{FREQ_TOLERANCE_LIMIT_2}}',
+                        '{VOLT_UUC_RANGE_2}}': '{{VOLT_UUC_RANGE_2}}',
+                        '{VOLT_UUC_SETTING_2}}': '{{VOLT_UUC_SETTING_2}}',
+                        '{VOLT_MEASURED_VALUE_2}}': '{{VOLT_MEASURED_VALUE_2}}',
+                        '{VOLT_UNCERTAINTY_2}}': '{{VOLT_UNCERTAINTY_2}}',
+                        '{VOLT_TOLERANCE_LIMIT_2}}': '{{VOLT_TOLERANCE_LIMIT_2}}',
+                        '{ERROR_3}}': '{{ERROR_3}}',
+                        '{FREQ_UUC_RANGE_3}}': '{{FREQ_UUC_RANGE_3}}',
+                        '{FREQ_UUC_SETTING_3}}': '{{FREQ_UUC_SETTING_3}}',
+                        '{FREQ_MEASURED_VALUE_3}}': '{{FREQ_MEASURED_VALUE_3}}',
+                        '{FREQ_UNCERTAINTY_3}}': '{{FREQ_UNCERTAINTY_3}}',
+                        '{FREQ_TOLERANCE_LIMIT_3}}': '{{FREQ_TOLERANCE_LIMIT_3}}',
+                        '{VOLT_UUC_RANGE_3}}': '{{VOLT_UUC_RANGE_3}}',
+                        '{VOLT_UUC_SETTING_3}}': '{{VOLT_UUC_SETTING_3}}',
+                        '{VOLT_MEASURED_VALUE_3}}': '{{VOLT_MEASURED_VALUE_3}}',
+                        '{VOLT_UNCERTAINTY_3}}': '{{VOLT_UNCERTAINTY_3}}',
+                        '{VOLT_TOLERANCE_LIMIT_3}}': '{{VOLT_TOLERANCE_LIMIT_3}}',
+                        '{ERROR_4}}': '{{ERROR_4}}',
+                        '{FREQ_UUC_RANGE_4}}': '{{FREQ_UUC_RANGE_4}}',
+                        '{FREQ_UUC_SETTING_4}}': '{{FREQ_UUC_SETTING_4}}',
+                        '{FREQ_MEASURED_VALUE_4}}': '{{FREQ_MEASURED_VALUE_4}}',
+                        '{FREQ_UNCERTAINTY_4}}': '{{FREQ_UNCERTAINTY_4}}',
+                        '{FREQ_TOLERANCE_LIMIT_4}}': '{{FREQ_TOLERANCE_LIMIT_4}}',
+                        '{VOLT_UUC_RANGE_4}}': '{{VOLT_UUC_RANGE_4}}',
+                        '{VOLT_UUC_SETTING_4}}': '{{VOLT_UUC_SETTING_4}}',
+                        '{VOLT_MEASURED_VALUE_4}}': '{{VOLT_MEASURED_VALUE_4}}',
+                        '{VOLT_UNCERTAINTY_4}}': '{{VOLT_UNCERTAINTY_4}}',
+                        '{VOLT_TOLERANCE_LIMIT_4}}': '{{VOLT_TOLERANCE_LIMIT_4}}',
+                        '{ERROR_5}}': '{{ERROR_5}}',
+                        '{FREQ_UUC_RANGE_5}}': '{{FREQ_UUC_RANGE_5}}',
+                        '{FREQ_UUC_SETTING_5}}': '{{FREQ_UUC_SETTING_5}}',
+                        '{FREQ_MEASURED_VALUE_5}}': '{{FREQ_MEASURED_VALUE_5}}',
+                        '{FREQ_UNCERTAINTY_5}}': '{{FREQ_UNCERTAINTY_5}}',
+                        '{FREQ_TOLERANCE_LIMIT_5}}': '{{FREQ_TOLERANCE_LIMIT_5}}',
+                        '{VOLT_UUC_RANGE_5}}': '{{VOLT_UUC_RANGE_5}}',
+                        '{VOLT_UUC_SETTING_5}}': '{{VOLT_UUC_SETTING_5}}',
+                        '{VOLT_MEASURED_VALUE_5}}': '{{VOLT_MEASURED_VALUE_5}}',
+                        '{VOLT_UNCERTAINTY_5}}': '{{VOLT_UNCERTAINTY_5}}',
+                        '{VOLT_TOLERANCE_LIMIT_5}}': '{{VOLT_TOLERANCE_LIMIT_5}}',
+                    }
+                    
+                    # Debug: แสดงข้อมูลในตาราง
+                    if paragraph.text.strip():
+                        print(f"DEBUG: Table cell text: '{paragraph.text}'")
+                        for placeholder in ['{{FREQ_UUC_RANGE}}', '{{FREQ_UUC_SETTING}}', '{{FREQ_MEASURED_VALUE}}']:
+                            if placeholder in paragraph.text:
+                                print(f"DEBUG: Found placeholder {placeholder} in table cell")
+                    
+                    # แทนที่ placeholder ที่ถูกต้อง
+                    correct_placeholders = {
+                        '{{FREQ_UUC_RANGE}}': replacements.get('{{FREQ_UUC_RANGE}}', '-'),
+                        '{{FREQ_UUC_SETTING}}': replacements.get('{{FREQ_UUC_SETTING}}', '-'),
+                        '{{FREQ_MEASURED_VALUE}}': replacements.get('{{FREQ_MEASURED_VALUE}}', '-'),
+                        '{{FREQ_UNCERTAINTY}}': replacements.get('{{FREQ_UNCERTAINTY}}', '-'),
+                        '{{FREQ_TOLERANCE_LIMIT}}': replacements.get('{{FREQ_TOLERANCE_LIMIT}}', '-'),
+                        '{{VOLT_UUC_RANGE}}': replacements.get('{{VOLT_UUC_RANGE}}', '-'),
+                        '{{VOLT_UUC_SETTING}}': replacements.get('{{VOLT_UUC_SETTING}}', '-'),
+                        '{{VOLT_MEASURED_VALUE}}': replacements.get('{{VOLT_MEASURED_VALUE}}', '-'),
+                        '{{VOLT_UNCERTAINTY}}': replacements.get('{{VOLT_UNCERTAINTY}}', '-'),
+                        '{{VOLT_TOLERANCE_LIMIT}}': replacements.get('{{VOLT_TOLERANCE_LIMIT}}', '-'),
+                        '{{DATE_OF_CALIBRATION}}': replacements.get('{{DATE_OF_CALIBRATION}}', '-'),
+                        '{{CUSTOMER_ADDRESS}}': replacements.get('{{CUSTOMER_ADDRESS}}', '-'),
+                        '{{RANGE}}': replacements.get('{{RANGE}}', '-'),
+                        '{{APPROVER}}': replacements.get('{{APPROVER}}', '-'),
+                        '{{CALIBRATOR}}': replacements.get('{{CALIBRATOR}}', '-'),
+                        '{{UUC_SET}}': replacements.get('{{UUC_SET}}', '-'),
+                        '{{ACTUAL}}': replacements.get('{{ACTUAL}}', '-'),
+                        '{{ERROR}}': replacements.get('{{ERROR}}', '-'),
+                        '{{TOLERANCE_LIMIT}}': replacements.get('{{TOLERANCE_LIMIT}}', '-'),
+                        '{{UUC_SET_2}}': replacements.get('{{UUC_SET_2}}', '-'),
+                        '{{ACTUAL_2}}': replacements.get('{{ACTUAL_2}}', '-'),
+                        '{{ERROR_2}}': replacements.get('{{ERROR_2}}', '-'),
+                        '{{TOLERANCE_LIMIT_2}}': replacements.get('{{TOLERANCE_LIMIT_2}}', '-'),
+                        '{{UUC_SET_3}}': replacements.get('{{UUC_SET_3}}', '-'),
+                        '{{ACTUAL_3}}': replacements.get('{{ACTUAL_3}}', '-'),
+                        '{{ERROR_3}}': replacements.get('{{ERROR_3}}', '-'),
+                        '{{TOLERANCE_LIMIT_3}}': replacements.get('{{TOLERANCE_LIMIT_3}}', '-'),
+                        '{{UUC_SET_4}}': replacements.get('{{UUC_SET_4}}', '-'),
+                        '{{ACTUAL_4}}': replacements.get('{{ACTUAL_4}}', '-'),
+                        '{{ERROR_4}}': replacements.get('{{ERROR_4}}', '-'),
+                        '{{TOLERANCE_LIMIT_4}}': replacements.get('{{TOLERANCE_LIMIT_4}}', '-'),
+                        '{{UUC_SET_5}}': replacements.get('{{UUC_SET_5}}', '-'),
+                        '{{ACTUAL_5}}': replacements.get('{{ACTUAL_5}}', '-'),
+                        '{{ERROR_5}}': replacements.get('{{ERROR_5}}', '-'),
+                        '{{TOLERANCE_LIMIT_5}}': replacements.get('{{TOLERANCE_LIMIT_5}}', '-'),
+                        '{{UUC_SET_6}}': replacements.get('{{UUC_SET_6}}', '-'),
+                        '{{ACTUAL_6}}': replacements.get('{{ACTUAL_6}}', '-'),
+                        '{{ERROR_6}}': replacements.get('{{ERROR_6}}', '-'),
+                        '{{TOLERANCE_LIMIT_6}}': replacements.get('{{TOLERANCE_LIMIT_6}}', '-'),
+                        '{{CW_SET}}': replacements.get('{{CW_SET}}', '-'),
+                        '{{CW_0}}': replacements.get('{{CW_0}}', '-'),
+                        '{{CW_90}}': replacements.get('{{CW_90}}', '-'),
+                        '{{CW_180}}': replacements.get('{{CW_180}}', '-'),
+                        '{{CW_270}}': replacements.get('{{CW_270}}', '-'),
+                        '{{CW_AVG}}': replacements.get('{{CW_AVG}}', '-'),
+                        '{{CW_ACTUAL}}': replacements.get('{{CW_ACTUAL}}', '-'),
+                        '{{CW_ERROR}}': replacements.get('{{CW_ERROR}}', '-'),
+                        '{{CW_UNCERTAINTY}}': replacements.get('{{CW_UNCERTAINTY}}', '-'),
+                        '{{CW_TOLERANCE_LIMIT}}': replacements.get('{{CW_TOLERANCE_LIMIT}}', '-'),
+                        '{{CCW_SET}}': replacements.get('{{CCW_SET}}', '-'),
+                        '{{CCW_0}}': replacements.get('{{CCW_0}}', '-'),
+                        '{{CCW_90}}': replacements.get('{{CCW_90}}', '-'),
+                        '{{CCW_180}}': replacements.get('{{CCW_180}}', '-'),
+                        '{{CCW_270}}': replacements.get('{{CCW_270}}', '-'),
+                        '{{CCW_AVG}}': replacements.get('{{CCW_AVG}}', '-'),
+                        '{{CCW_ACTUAL}}': replacements.get('{{CCW_ACTUAL}}', '-'),
+                        '{{CCW_ERROR}}': replacements.get('{{CCW_ERROR}}', '-'),
+                        '{{CCW_UNCERTAINTY}}': replacements.get('{{CCW_UNCERTAINTY}}', '-'),
+                        '{{CCW_TOLERANCE_LIMIT}}': replacements.get('{{CCW_TOLERANCE_LIMIT}}', '-'),
+                        '{{CCW_ACTUAL_2}}': replacements.get('{{CCW_ACTUAL_2}}', '-'),
+                        '{{CCW_ERROR_2}}': replacements.get('{{CCW_ERROR_2}}', '-'),
+                        '{{CCW_TOLERANCE_LIMIT_2}}': replacements.get('{{CCW_TOLERANCE_LIMIT_2}}', '-'),
+                        '{{CCW_ACTUAL_3}}': replacements.get('{{CCW_ACTUAL_3}}', '-'),
+                        '{{CCW_ERROR_3}}': replacements.get('{{CCW_ERROR_3}}', '-'),
+                        '{{CCW_TOLERANCE_LIMIT_3}}': replacements.get('{{CCW_TOLERANCE_LIMIT_3}}', '-'),
+                        '{{FREQ_UUC_RANGE_2}}': replacements.get('{{FREQ_UUC_RANGE_2}}', '-'),
+                        '{{FREQ_UUC_SETTING_2}}': replacements.get('{{FREQ_UUC_SETTING_2}}', '-'),
+                        '{{FREQ_MEASURED_VALUE_2}}': replacements.get('{{FREQ_MEASURED_VALUE_2}}', '-'),
+                        '{{FREQ_UNCERTAINTY_2}}': replacements.get('{{FREQ_UNCERTAINTY_2}}', '-'),
+                        '{{FREQ_TOLERANCE_LIMIT_2}}': replacements.get('{{FREQ_TOLERANCE_LIMIT_2}}', '-'),
+                        '{{VOLT_UUC_RANGE_2}}': replacements.get('{{VOLT_UUC_RANGE_2}}', '-'),
+                        '{{VOLT_UUC_SETTING_2}}': replacements.get('{{VOLT_UUC_SETTING_2}}', '-'),
+                        '{{VOLT_MEASURED_VALUE_2}}': replacements.get('{{VOLT_MEASURED_VALUE_2}}', '-'),
+                        '{{VOLT_UNCERTAINTY_2}}': replacements.get('{{VOLT_UNCERTAINTY_2}}', '-'),
+                        '{{VOLT_TOLERANCE_LIMIT_2}}': replacements.get('{{VOLT_TOLERANCE_LIMIT_2}}', '-'),
+                        '{{FREQ_UUC_RANGE_3}}': replacements.get('{{FREQ_UUC_RANGE_3}}', '-'),
+                        '{{FREQ_UUC_SETTING_3}}': replacements.get('{{FREQ_UUC_SETTING_3}}', '-'),
+                        '{{FREQ_MEASURED_VALUE_3}}': replacements.get('{{FREQ_MEASURED_VALUE_3}}', '-'),
+                        '{{FREQ_UNCERTAINTY_3}}': replacements.get('{{FREQ_UNCERTAINTY_3}}', '-'),
+                        '{{FREQ_TOLERANCE_LIMIT_3}}': replacements.get('{{FREQ_TOLERANCE_LIMIT_3}}', '-'),
+                        '{{VOLT_UUC_RANGE_3}}': replacements.get('{{VOLT_UUC_RANGE_3}}', '-'),
+                        '{{VOLT_UUC_SETTING_3}}': replacements.get('{{VOLT_UUC_SETTING_3}}', '-'),
+                        '{{VOLT_MEASURED_VALUE_3}}': replacements.get('{{VOLT_MEASURED_VALUE_3}}', '-'),
+                        '{{VOLT_UNCERTAINTY_3}}': replacements.get('{{VOLT_UNCERTAINTY_3}}', '-'),
+                        '{{VOLT_TOLERANCE_LIMIT_3}}': replacements.get('{{VOLT_TOLERANCE_LIMIT_3}}', '-'),
+                        '{{FREQ_UUC_RANGE_4}}': replacements.get('{{FREQ_UUC_RANGE_4}}', '-'),
+                        '{{FREQ_UUC_SETTING_4}}': replacements.get('{{FREQ_UUC_SETTING_4}}', '-'),
+                        '{{FREQ_MEASURED_VALUE_4}}': replacements.get('{{FREQ_MEASURED_VALUE_4}}', '-'),
+                        '{{FREQ_UNCERTAINTY_4}}': replacements.get('{{FREQ_UNCERTAINTY_4}}', '-'),
+                        '{{FREQ_TOLERANCE_LIMIT_4}}': replacements.get('{{FREQ_TOLERANCE_LIMIT_4}}', '-'),
+                        '{{VOLT_UUC_RANGE_4}}': replacements.get('{{VOLT_UUC_RANGE_4}}', '-'),
+                        '{{VOLT_UUC_SETTING_4}}': replacements.get('{{VOLT_UUC_SETTING_4}}', '-'),
+                        '{{VOLT_MEASURED_VALUE_4}}': replacements.get('{{VOLT_MEASURED_VALUE_4}}', '-'),
+                        '{{VOLT_UNCERTAINTY_4}}': replacements.get('{{VOLT_UNCERTAINTY_4}}', '-'),
+                        '{{VOLT_TOLERANCE_LIMIT_4}}': replacements.get('{{VOLT_TOLERANCE_LIMIT_4}}', '-'),
+                        '{{FREQ_UUC_RANGE_5}}': replacements.get('{{FREQ_UUC_RANGE_5}}', '-'),
+                        '{{FREQ_UUC_SETTING_5}}': replacements.get('{{FREQ_UUC_SETTING_5}}', '-'),
+                        '{{FREQ_MEASURED_VALUE_5}}': replacements.get('{{FREQ_MEASURED_VALUE_5}}', '-'),
+                        '{{FREQ_UNCERTAINTY_5}}': replacements.get('{{FREQ_UNCERTAINTY_5}}', '-'),
+                        '{{FREQ_TOLERANCE_LIMIT_5}}': replacements.get('{{FREQ_TOLERANCE_LIMIT_5}}', '-'),
+                        '{{VOLT_UUC_RANGE_5}}': replacements.get('{{VOLT_UUC_RANGE_5}}', '-'),
+                        '{{VOLT_UUC_SETTING_5}}': replacements.get('{{VOLT_UUC_SETTING_5}}', '-'),
+                        '{{VOLT_MEASURED_VALUE_5}}': replacements.get('{{VOLT_MEASURED_VALUE_5}}', '-'),
+                        '{{VOLT_UNCERTAINTY_5}}': replacements.get('{{VOLT_UNCERTAINTY_5}}', '-'),
+                        '{{VOLT_TOLERANCE_LIMIT_5}}': replacements.get('{{VOLT_TOLERANCE_LIMIT_5}}', '-'),
+                    }
+                    
+                    # แทนที่ placeholder ที่มีปัญหา
+                    for wrong_placeholder, correct_placeholder in problematic_placeholders.items():
+                        if wrong_placeholder in paragraph.text and correct_placeholder in replacements:
+                            for run in paragraph.runs:
+                                if wrong_placeholder in run.text:
+                                    run.text = run.text.replace(wrong_placeholder, str(replacements[correct_placeholder]))
+                                    print(f"DEBUG: Replaced {wrong_placeholder} with {replacements[correct_placeholder]}")
+                    
+                    # แทนที่ placeholder ที่ถูกต้อง
+                    for placeholder, value in correct_placeholders.items():
+                        if placeholder in paragraph.text:
+                            for run in paragraph.runs:
+                                if placeholder in run.text:
+                                    run.text = run.text.replace(placeholder, str(value))
+                                    print(f"DEBUG: Replaced {placeholder} with {value}")
+
+def export_high_frequency_certificate_docx(request, cal_id):
+    """Export High Frequency certificate as DOCX"""
+    try:
+        print(f"DEBUG: Attempting to export High Frequency certificate for ID: {cal_id}")
+        
+        # ดึงข้อมูลการสอบเทียบ
+        cal = get_object_or_404(HighFrequencyCalibration, id=cal_id)
+        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {cal.machine.name}")
+        
+        # ดึงข้อมูลเครื่องมือมาตรฐาน
+        std = cal.std_id
+        if std:
+            print(f"DEBUG: Standard equipment found: {std.name}")
+        else:
+            print("DEBUG: No standard equipment found")
+        
+        # สร้าง path ไปยัง template
+        template_path = os.path.join(settings.BASE_DIR, 'cert_templates', 'High Frequency_template.docx')
+        print(f"DEBUG: Template path: {template_path}")
+        
+        # เปิด template
+        doc = Document(template_path)
+        
+        # สร้าง replacements dictionary
+        replacements = {
+            # ข้อมูลเครื่องมือ
+            '{{MODEL}}': getattr(cal.machine, 'model', '-'),
+            '{{MANUFACTURER}}': getattr(cal.machine, 'manufacturer', '-'),
+            '{{DESCRIPTION}}': getattr(cal.machine, 'description', '-'),
+            '{{SERIAL_NUMBER}}': getattr(cal.machine, 'serial_number', '-'),
+            '{{ASSET_NUMBER}}': getattr(cal.machine, 'asset_number', '-'),
+            '{{RANGE}}': getattr(cal, 'measurement_range', '-'),
+            
+            # ข้อมูลการสอบเทียบ
+            '{{CALIBRATION_DATE}}': cal.date_calibration.strftime('%d/%m/%Y') if cal.date_calibration else '-',
+            '{{DATE_OF_CALIBRATION}}': cal.date_calibration.strftime('%d/%m/%Y') if cal.date_calibration else '-',
+            '{{CERTIFICATE_NUMBER}}': cal.certificate_number or '-',
+            '{{DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
+            '{{STATUS}}': cal.get_status_display(),
+            
+            # ข้อมูลผู้รับผิดชอบ
+            '{{CALIBRATOR}}': cal.calibrator.username if cal.calibrator else '-',
+            '{{APPROVER}}': cal.certificate_issuer.username if cal.certificate_issuer else '-',
+            
+            # ข้อมูลหน่วยงาน
+            '{{CUSTOMER}}': getattr(cal.machine.organize, 'name', '-') if cal.machine.organize else '-',
+            '{{CUSTOMER_ADDRESS}}': getattr(cal.machine.organize, 'address', '-') if cal.machine.organize else '-',
+            '{{LOCATION_NAME}}': getattr(cal.machine.organize, 'name', '-') if cal.machine.organize else '-',
+            '{{LOCATION_ADDRESS}}': getattr(cal.machine.organize, 'address', '-') if cal.machine.organize else '-',
+            
+            # ข้อมูลตารางผลการสอบเทียบ Frequency (5 แถว)
+            '{{FREQ_UUC_RANGE}}': cal.freq_uuc_range or '-',
+            '{{FREQ_UUC_SETTING}}': cal.freq_uuc_setting or '-',
+            '{{FREQ_MEASURED_VALUE}}': cal.freq_measured_value or '-',
+            '{{FREQ_UNCERTAINTY}}': cal.freq_uncertainty or '-',
+            '{{FREQ_TOLERANCE_LIMIT}}': cal.freq_tolerance_limit or '-',
+            
+                    '{{FREQ_UUC_RANGE_2}}': cal.freq_uuc_range_2 or '-',
+                    '{{FREQ_UUC_SETTING_2}}': cal.freq_uuc_setting_2 or '-',
+                    '{{VOLT_UUC_RANGE_2}}': cal.freq_uuc_setting_2 or '-',  # แก้ไข placeholder ที่ผิดใน template
+                    '{{FREQ_MEASURED_VALUE_2}}': cal.freq_measured_value_2 or '-',
+                    '{{FREQ_UNCERTAINTY_2}}': cal.freq_uncertainty_2 or '-',
+                    '{{FREQ_TOLERANCE_LIMIT_2}}': cal.freq_tolerance_limit_2 or '-',
+            
+            '{{FREQ_UUC_RANGE_3}}': cal.freq_uuc_range_3 or '-',
+            '{{FREQ_UUC_SETTING_3}}': cal.freq_uuc_setting_3 or '-',
+            '{{FREQ_MEASURED_VALUE_3}}': cal.freq_measured_value_3 or '-',
+            '{{FREQ_UNCERTAINTY_3}}': cal.freq_uncertainty_3 or '-',
+            '{{FREQ_TOLERANCE_LIMIT_3}}': cal.freq_tolerance_limit_3 or '-',
+            
+            '{{FREQ_UUC_RANGE_4}}': cal.freq_uuc_range_4 or '-',
+            '{{FREQ_UUC_SETTING_4}}': cal.freq_uuc_setting_4 or '-',
+            '{{FREQ_MEASURED_VALUE_4}}': cal.freq_measured_value_4 or '-',
+            '{{FREQ_UNCERTAINTY_4}}': cal.freq_uncertainty_4 or '-',
+            '{{FREQ_TOLERANCE_LIMIT_4}}': cal.freq_tolerance_limit_4 or '-',
+            
+            '{{FREQ_UUC_RANGE_5}}': cal.freq_uuc_range_5 or '-',
+            '{{FREQ_UUC_SETTING_5}}': cal.freq_uuc_setting_5 or '-',
+            '{{FREQ_MEASURED_VALUE_5}}': cal.freq_measured_value_5 or '-',
+            '{{FREQ_UNCERTAINTY_5}}': cal.freq_uncertainty_5 or '-',
+            '{{FREQ_TOLERANCE_LIMIT_5}}': cal.freq_tolerance_limit_5 or '-',
+            
+            # ข้อมูลตารางผลการสอบเทียบ Voltage (5 แถว)
+            '{{VOLT_UUC_RANGE}}': cal.volt_uuc_range or '-',
+            '{{VOLT_UUC_SETTING}}': cal.volt_uuc_setting or '-',
+            '{{VOLT_MEASURED_VALUE}}': cal.volt_measured_value or '-',
+            '{{VOLT_UNCERTAINTY}}': cal.volt_uncertainty or '-',
+            '{{VOLT_TOLERANCE_LIMIT}}': cal.volt_tolerance_limit or '-',
+            
+            '{{VOLT_UUC_RANGE_2}}': cal.volt_uuc_range_2 or '-',
+            '{{VOLT_UUC_SETTING_2}}': cal.volt_uuc_setting_2 or '-',
+            '{{VOLT_MEASURED_VALUE_2}}': cal.volt_measured_value_2 or '-',
+            '{{VOLT_UNCERTAINTY_2}}': cal.volt_uncertainty_2 or '-',
+            '{{VOLT_TOLERANCE_LIMIT_2}}': cal.volt_tolerance_limit_2 or '-',
+            
+            '{{VOLT_UUC_RANGE_3}}': cal.volt_uuc_range_3 or '-',
+            '{{VOLT_UUC_SETTING_3}}': cal.volt_uuc_setting_3 or '-',
+            '{{VOLT_MEASURED_VALUE_3}}': cal.volt_measured_value_3 or '-',
+            '{{VOLT_UNCERTAINTY_3}}': cal.volt_uncertainty_3 or '-',
+            '{{VOLT_TOLERANCE_LIMIT_3}}': cal.volt_tolerance_limit_3 or '-',
+            
+            '{{VOLT_UUC_RANGE_4}}': cal.volt_uuc_range_4 or '-',
+            '{{VOLT_UUC_SETTING_4}}': cal.volt_uuc_setting_4 or '-',
+            '{{VOLT_MEASURED_VALUE_4}}': cal.volt_measured_value_4 or '-',
+            '{{VOLT_UNCERTAINTY_4}}': cal.volt_uncertainty_4 or '-',
+            '{{VOLT_TOLERANCE_LIMIT_4}}': cal.volt_tolerance_limit_4 or '-',
+            
+            '{{VOLT_UUC_RANGE_5}}': cal.volt_uuc_range_5 or '-',
+            '{{VOLT_UUC_SETTING_5}}': cal.volt_uuc_setting_5 or '-',
+            '{{VOLT_MEASURED_VALUE_5}}': cal.volt_measured_value_5 or '-',
+            '{{VOLT_UNCERTAINTY_5}}': cal.volt_uncertainty_5 or '-',
+            '{{VOLT_TOLERANCE_LIMIT_5}}': cal.volt_tolerance_limit_5 or '-',
+        }
+        
+        # ข้อมูลมาตรฐาน
+        if std:
+            replacements.update({
+                '{{STANDARD_ASSET_NO}}': getattr(std, 'asset_number', None) or getattr(std, 'serial_number', '-'),
+                '{{STANDARD_DESCRIPTION}}': std.name or '-',
+                '{{STANDARD_MAKER_MODEL}}': getattr(std, 'maker_model', '-'),
+                '{{STANDARD_SERIAL}}': std.serial_number or '-',
+                '{{STANDARD_CERTIFICATE}}': getattr(std, 'certificate_number', '-'),
+                '{{STANDARD_DUE_DATE}}': getattr(std, 'due_date', '-'),
+            })
+        else:
+            replacements.update({
+                '{{STANDARD_ASSET_NO}}': '-',
+                '{{STANDARD_DESCRIPTION}}': '-',
+                '{{STANDARD_MAKER_MODEL}}': '-',
+                '{{STANDARD_SERIAL}}': '-',
+                '{{STANDARD_CERTIFICATE}}': '-',
+                '{{STANDARD_DUE_DATE}}': '-',
+            })
+        
+        # ข้อมูลมาตรฐานชุดที่ 2 (ถ้ามี)
+        try:
+            std2 = cal.calibration_equipment_used.filter(equipment_type='standard').exclude(equipment=std).first()
+            if std2:
+                eq2 = std2.equipment
+                replacements.update({
+                    '{{STANDARD_ASSET_NO_2}}': getattr(eq2, 'asset_number', None) or getattr(eq2, 'serial_number', '-'),
+                    '{{STANDARD_DESCRIPTION_2}}': eq2.name or '-',
+                    '{{STANDARD_MAKER_MODEL_2}}': getattr(eq2, 'maker_model', '-'),
+                    '{{STANDARD_SERIAL_2}}': eq2.serial_number or '-',
+                    '{{STANDARD_CERTIFICATE_2}}': getattr(eq2, 'certificate_number', '-'),
+                    '{{STANDARD_DUE_DATE_2}}': getattr(eq2, 'due_date', '-'),
+                })
+            else:
+                replacements.update({
+                    '{{STANDARD_ASSET_NO_2}}': '-',
+                    '{{STANDARD_DESCRIPTION_2}}': '-',
+                    '{{STANDARD_MAKER_MODEL_2}}': '-',
+                    '{{STANDARD_SERIAL_2}}': '-',
+                    '{{STANDARD_CERTIFICATE_2}}': '-',
+                    '{{STANDARD_DUE_DATE_2}}': '-',
+                })
+        except Exception as e:
+            print(f"DEBUG: Error getting second standard: {e}")
+            replacements.update({
+                '{{STANDARD_ASSET_NO_2}}': '-',
+                '{{STANDARD_DESCRIPTION_2}}': '-',
+                '{{STANDARD_MAKER_MODEL_2}}': '-',
+                '{{STANDARD_SERIAL_2}}': '-',
+                '{{STANDARD_CERTIFICATE_2}}': '-',
+                '{{STANDARD_DUE_DATE_2}}': '-',
+            })
+        
+        # สร้างตารางเครื่องมือที่ใช้
+        equipment_table = ""
+        try:
+            equipment_used = cal.calibration_equipment_used.all()
+            for i, eq_used in enumerate(equipment_used, 1):
+                try:
+                    eq = eq_used.equipment
+                    asset_no = getattr(eq, 'asset_number', None) or getattr(eq, 'serial_number', '-')
+                    name = eq.name or '-'
+                    maker_model = getattr(eq, 'maker_model', '-')
+                    serial = eq.serial_number or '-'
+                    certificate = getattr(eq, 'certificate_number', '-')
+                    due_date = getattr(eq, 'due_date', '-')
+                    
+                    equipment_table += f"{asset_no}\t{name}\t{maker_model}\t{serial}\t{certificate}\t{due_date}\n"
+                except Exception as e:
+                    print(f"DEBUG: Error getting equipment {i}: {e}")
+                    equipment_table += "-\t-\t-\t-\t-\t-\n"
+        except Exception as e:
+            print(f"DEBUG: Error getting equipment list: {e}")
+            equipment_table = "-\t-\t-\t-\t-\t-\n"
+        
+        replacements['{{EQUIPMENT_TABLE}}'] = equipment_table
+        
+        print(f"DEBUG: Total replacements: {len(replacements)}")
+        
+        # Debug: แสดงข้อมูลตารางที่ส่งไป
+        print(f"DEBUG: FREQ_UUC_RANGE: {getattr(cal, 'freq_uuc_range', None)}")
+        print(f"DEBUG: FREQ_UUC_SETTING: {getattr(cal, 'freq_uuc_setting', None)}")
+        print(f"DEBUG: FREQ_MEASURED_VALUE: {getattr(cal, 'freq_measured_value', None)}")
+        print(f"DEBUG: FREQ_UUC_RANGE_2: {getattr(cal, 'freq_uuc_range_2', None)}")
+        print(f"DEBUG: FREQ_UUC_SETTING_2: {getattr(cal, 'freq_uuc_setting_2', None)}")
+        print(f"DEBUG: FREQ_MEASURED_VALUE_2: {getattr(cal, 'freq_measured_value_2', None)}")
+        
+        # Debug: แสดงข้อมูล APPROVER และ CALIBRATOR
+        print(f"DEBUG: APPROVER: {replacements.get('{{APPROVER}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CALIBRATOR: {replacements.get('{{CALIBRATOR}}', 'NOT_FOUND')}")
+        print(f"DEBUG: Certificate issuer: {cal.certificate_issuer}")
+        print(f"DEBUG: Calibrator: {cal.calibrator}")
+        
+        # Debug: แสดงข้อมูลมาตรฐาน
+        print(f"DEBUG: Standard 1 - Asset: {getattr(std, 'asset_number', None) if std else None}")
+        print(f"DEBUG: Standard 1 - Name: {std.name if std else None}")
+        print(f"DEBUG: Standard 1 - Serial: {std.serial_number if std else None}")
+        print(f"DEBUG: Standard 2 - Asset: {getattr(std, 'asset_number', None) if std else None}")
+        print(f"DEBUG: Standard 2 - Name: {std.name if std else None}")
+        print(f"DEBUG: Standard 2 - Serial: {std.serial_number if std else None}")
+        
+        # Debug: แสดงข้อมูลดิบ
+        print(f"DEBUG: Raw data - freq_uuc_range: {cal.freq_uuc_range}")
+        print(f"DEBUG: Raw data - freq_uuc_setting: {cal.freq_uuc_setting}")
+        print(f"DEBUG: Raw data - freq_measured_value: {cal.freq_measured_value}")
+        print(f"DEBUG: Raw data - freq_uuc_range_2: {cal.freq_uuc_range_2}")
+        print(f"DEBUG: Raw data - freq_uuc_setting_2: {cal.freq_uuc_setting_2}")
+        print(f"DEBUG: Raw data - freq_measured_value_2: {cal.freq_measured_value_2}")
+        
+        # แทนค่าในเอกสาร
+        replace_text_in_document(doc, replacements)
+        print("DEBUG: Document replacement completed")
+        
+        # สร้าง response
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        response['Content-Disposition'] = f'attachment; filename="High_Frequency_Certificate_{cal_id}.docx"'
+        
+        # บันทึกเอกสาร
+        doc.save(response)
+        print("DEBUG: Creating response for High Frequency certificate")
+        print("DEBUG: Response created successfully")
+        
+        return response
+        
+    except Exception as e:
+        print(f"DEBUG: Error in export_high_frequency_certificate_docx: {e}")
+        return HttpResponse(f"Error: {e}", status=500)
+
+def export_pressure_certificate_docx(request, cal_id):
+    """Export Pressure certificate as DOCX"""
+    try:
+        print(f"DEBUG: Attempting to export Pressure certificate for ID: {cal_id}")
+        
+        # ดึงข้อมูลการสอบเทียบ
+        cal = get_object_or_404(CalibrationPressure, cal_pressure_id=cal_id)
+        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {cal.uuc_id.name}")
+        
+        # ดึงข้อมูลเครื่องมือมาตรฐาน
+        std = cal.std_id
+        if std:
+            print(f"DEBUG: Standard equipment found: {std.name}")
+        else:
+            print("DEBUG: No standard equipment found")
+        
+        # สร้าง path ไปยัง template
+        template_path = os.path.join(settings.BASE_DIR, 'cert_templates', 'pressure_template.docx')
+        print(f"DEBUG: Template path: {template_path}")
+        
+        # เปิด template
+        doc = Document(template_path)
+        
+        # สร้าง replacements dictionary
+        replacements = {
+            # ข้อมูลเครื่องมือ
+            '{{MODEL}}': getattr(cal.uuc_id, 'model', '-'),
+            '{{MANUFACTURER}}': getattr(cal.uuc_id, 'manufacturer', '-'),
+            '{{DESCRIPTION}}': getattr(cal.uuc_id, 'description', '-'),
+            '{{SERIAL_NUMBER}}': getattr(cal.uuc_id, 'serial_number', '-'),
+            '{{ASSET_NUMBER}}': getattr(cal.uuc_id, 'asset_number', '-'),
+            '{{RANGE}}': getattr(cal, 'measurement_range', '-'),
+            
+            # ข้อมูลการสอบเทียบ
+            '{{CALIBRATION_DATE}}': cal.update.strftime('%d/%m/%Y') if cal.update else '-',
+            '{{DATE_OF_CALIBRATION}}': cal.update.strftime('%d/%m/%Y') if cal.update else '-',
+            '{{CERTIFICATE_NUMBER}}': cal.certificate_number or '-',
+            '{{DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
+            '{{STATUS}}': cal.get_status_display(),
+            
+            # ข้อมูลผู้รับผิดชอบ
+            '{{CALIBRATOR}}': cal.calibrator.username if cal.calibrator else '-',
+            '{{APPROVER}}': cal.certificate_issuer.username if cal.certificate_issuer else '-',
+            
+            # ข้อมูลหน่วยงาน
+            '{{CUSTOMER}}': getattr(cal.uuc_id.organize, 'name', '-') if cal.uuc_id.organize else '-',
+            '{{CUSTOMER_ADDRESS}}': getattr(cal.uuc_id.organize, 'address', '-') if cal.uuc_id.organize else '-',
+            '{{LOCATION_NAME}}': getattr(cal.uuc_id.organize, 'name', '-') if cal.uuc_id.organize else '-',
+            '{{LOCATION_ADDRESS}}': getattr(cal.uuc_id.organize, 'address', '-') if cal.uuc_id.organize else '-',
+            
+            # ข้อมูลตารางผลการสอบเทียบ Pressure (6 แถว)
+            # แถวที่ 1
+            '{{UUC_SET}}': cal.set or '-',
+            '{{ACTUAL}}': cal.actual or '-',
+            '{{ERROR}}': cal.error or '-',
+            '{{TOLERANCE_LIMIT}}': f"{cal.tolerance_start or '-'} - {cal.tolerance_end or '-'}" if cal.tolerance_start and cal.tolerance_end else '-',
+            
+            # แถวที่ 2
+            '{{UUC_SET_2}}': cal.set_2 or '-',
+            '{{ACTUAL_2}}': cal.actual_2 or '-',
+            '{{ERROR_2}}': cal.error_2 or '-',
+            '{{TOLERANCE_LIMIT_2}}': f"{cal.tolerance_start_2 or '-'} - {cal.tolerance_end_2 or '-'}" if cal.tolerance_start_2 and cal.tolerance_end_2 else '-',
+            
+            # แถวที่ 3
+            '{{UUC_SET_3}}': cal.set_3 or '-',
+            '{{ACTUAL_3}}': cal.actual_3 or '-',
+            '{{ERROR_3}}': cal.error_3 or '-',
+            '{{TOLERANCE_LIMIT_3}}': f"{cal.tolerance_start_3 or '-'} - {cal.tolerance_end_3 or '-'}" if cal.tolerance_start_3 and cal.tolerance_end_3 else '-',
+            
+            # แถวที่ 4
+            '{{UUC_SET_4}}': cal.set_4 or '-',
+            '{{ACTUAL_4}}': cal.actual_4 or '-',
+            '{{ERROR_4}}': cal.error_4 or '-',
+            '{{TOLERANCE_LIMIT_4}}': f"{cal.tolerance_start_4 or '-'} - {cal.tolerance_end_4 or '-'}" if cal.tolerance_start_4 and cal.tolerance_end_4 else '-',
+            
+            # แถวที่ 5
+            '{{UUC_SET_5}}': cal.set_5 or '-',
+            '{{ACTUAL_5}}': cal.actual_5 or '-',
+            '{{ERROR_5}}': cal.error_5 or '-',
+            '{{TOLERANCE_LIMIT_5}}': f"{cal.tolerance_start_5 or '-'} - {cal.tolerance_end_5 or '-'}" if cal.tolerance_start_5 and cal.tolerance_end_5 else '-',
+            
+            # แถวที่ 6
+            '{{UUC_SET_6}}': cal.set_6 or '-',
+            '{{ACTUAL_6}}': cal.actual_6 or '-',
+            '{{ERROR_6}}': cal.error_6 or '-',
+            '{{TOLERANCE_LIMIT_6}}': f"{cal.tolerance_start_6 or '-'} - {cal.tolerance_end_6 or '-'}" if cal.tolerance_start_6 and cal.tolerance_end_6 else '-',
+        }
+        
+        # ข้อมูลมาตรฐาน
+        if std:
+            replacements.update({
+                '{{STANDARD_ASSET_NO}}': getattr(std, 'asset_number', None) or getattr(std, 'serial_number', '-'),
+                '{{STANDARD_DESCRIPTION}}': std.name or '-',
+                '{{STANDARD_MAKER_MODEL}}': getattr(std, 'maker_model', '-'),
+                '{{STANDARD_SERIAL}}': std.serial_number or '-',
+                '{{STANDARD_CERTIFICATE}}': getattr(std, 'certificate_number', '-'),
+                '{{STANDARD_DUE_DATE}}': getattr(std, 'due_date', '-'),
+            })
+        else:
+            replacements.update({
+                '{{STANDARD_ASSET_NO}}': '-',
+                '{{STANDARD_DESCRIPTION}}': '-',
+                '{{STANDARD_MAKER_MODEL}}': '-',
+                '{{STANDARD_SERIAL}}': '-',
+                '{{STANDARD_CERTIFICATE}}': '-',
+                '{{STANDARD_DUE_DATE}}': '-',
+            })
+        
+        # ข้อมูลมาตรฐานชุดที่ 2 (ถ้ามี)
+        try:
+            std2 = cal.calibration_equipment_used.filter(equipment_type='standard').exclude(equipment=std).first()
+            if std2:
+                eq2 = std2.equipment
+                replacements.update({
+                    '{{STANDARD_ASSET_NO_2}}': getattr(eq2, 'asset_number', None) or getattr(eq2, 'serial_number', '-'),
+                    '{{STANDARD_DESCRIPTION_2}}': eq2.name or '-',
+                    '{{STANDARD_MAKER_MODEL_2}}': getattr(eq2, 'maker_model', '-'),
+                    '{{STANDARD_SERIAL_2}}': eq2.serial_number or '-',
+                    '{{STANDARD_CERTIFICATE_2}}': getattr(eq2, 'certificate_number', '-'),
+                    '{{STANDARD_DUE_DATE_2}}': getattr(eq2, 'due_date', '-'),
+                })
+            else:
+                replacements.update({
+                    '{{STANDARD_ASSET_NO_2}}': '-',
+                    '{{STANDARD_DESCRIPTION_2}}': '-',
+                    '{{STANDARD_MAKER_MODEL_2}}': '-',
+                    '{{STANDARD_SERIAL_2}}': '-',
+                    '{{STANDARD_CERTIFICATE_2}}': '-',
+                    '{{STANDARD_DUE_DATE_2}}': '-',
+                })
+        except Exception as e:
+            print(f"DEBUG: Error getting second standard: {e}")
+            replacements.update({
+                '{{STANDARD_ASSET_NO_2}}': '-',
+                '{{STANDARD_DESCRIPTION_2}}': '-',
+                '{{STANDARD_MAKER_MODEL_2}}': '-',
+                '{{STANDARD_SERIAL_2}}': '-',
+                '{{STANDARD_CERTIFICATE_2}}': '-',
+                '{{STANDARD_DUE_DATE_2}}': '-',
+            })
+        
+        # สร้างตารางเครื่องมือที่ใช้
+        equipment_table = ""
+        try:
+            equipment_used = cal.calibration_equipment_used.all()
+            for i, eq_used in enumerate(equipment_used, 1):
+                try:
+                    eq = eq_used.equipment
+                    asset_no = getattr(eq, 'asset_number', None) or getattr(eq, 'serial_number', '-')
+                    name = eq.name or '-'
+                    maker_model = getattr(eq, 'maker_model', '-')
+                    serial = eq.serial_number or '-'
+                    certificate = getattr(eq, 'certificate_number', '-')
+                    due_date = getattr(eq, 'due_date', '-')
+                    
+                    equipment_table += f"{asset_no}\t{name}\t{maker_model}\t{serial}\t{certificate}\t{due_date}\n"
+                except Exception as e:
+                    print(f"DEBUG: Error getting equipment {i}: {e}")
+                    equipment_table += "-\t-\t-\t-\t-\t-\n"
+        except Exception as e:
+            print(f"DEBUG: Error getting equipment list: {e}")
+            equipment_table = "-\t-\t-\t-\t-\t-\n"
+        
+        replacements['{{EQUIPMENT_TABLE}}'] = equipment_table
+        
+        print(f"DEBUG: Total replacements: {len(replacements)}")
+        
+        # Debug: แสดงข้อมูลตารางที่ส่งไป
+        print(f"DEBUG: SET: {getattr(cal, 'set', None)}")
+        print(f"DEBUG: M1: {getattr(cal, 'm1', None)}")
+        print(f"DEBUG: M2: {getattr(cal, 'm2', None)}")
+        print(f"DEBUG: M3: {getattr(cal, 'm3', None)}")
+        print(f"DEBUG: M4: {getattr(cal, 'm4', None)}")
+        print(f"DEBUG: AVG: {getattr(cal, 'avg', None)}")
+        print(f"DEBUG: ACTUAL: {getattr(cal, 'actual', None)}")
+        print(f"DEBUG: ERROR: {getattr(cal, 'error', None)}")
+        
+        # Debug: แสดงข้อมูล APPROVER และ CALIBRATOR
+        print(f"DEBUG: APPROVER: {replacements.get('{{APPROVER}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CALIBRATOR: {replacements.get('{{CALIBRATOR}}', 'NOT_FOUND')}")
+        print(f"DEBUG: Certificate issuer: {cal.certificate_issuer}")
+        print(f"DEBUG: Calibrator: {cal.calibrator}")
+        
+        # แทนค่าในเอกสาร
+        replace_text_in_document(doc, replacements)
+        print("DEBUG: Document replacement completed")
+        
+        # สร้าง response
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        response['Content-Disposition'] = f'attachment; filename="Pressure_Certificate_{cal_id}.docx"'
+        
+        # บันทึกเอกสาร
+        doc.save(response)
+        print("DEBUG: Creating response for Pressure certificate")
+        print("DEBUG: Response created successfully")
+        
+        return response
+        
+    except Exception as e:
+        print(f"DEBUG: Error in export_pressure_certificate_docx: {e}")
+        return HttpResponse(f"Error: {e}", status=500)
+
+def export_torque_certificate_docx(request, cal_id):
+    """Export Torque certificate as DOCX"""
+    try:
+        print(f"DEBUG: Attempting to export Torque certificate for ID: {cal_id}")
+        
+        # ดึงข้อมูลการสอบเทียบ
+        cal = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
+        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {cal.uuc_id.name}")
+        
+        # ดึงข้อมูลเครื่องมือมาตรฐาน
+        std = cal.std_id
+        if std:
+            print(f"DEBUG: Standard equipment found: {std.name}")
+        else:
+            print("DEBUG: No standard equipment found")
+        
+        # สร้าง path ไปยัง template
+        template_path = os.path.join(settings.BASE_DIR, 'cert_templates', 'Torque_template.docx')
+        print(f"DEBUG: Template path: {template_path}")
+        
+        # เปิด template
+        doc = Document(template_path)
+        
+        # สร้าง replacements dictionary
+        replacements = {
+            # ข้อมูลเครื่องมือ
+            '{{MODEL}}': getattr(cal.uuc_id, 'model', '-'),
+            '{{MANUFACTURER}}': getattr(cal.uuc_id, 'manufacturer', '-'),
+            '{{DESCRIPTION}}': getattr(cal.uuc_id, 'description', '-'),
+            '{{SERIAL_NUMBER}}': getattr(cal.uuc_id, 'serial_number', '-'),
+            '{{ASSET_NUMBER}}': getattr(cal.uuc_id, 'asset_number', '-'),
+            '{{RANGE}}': getattr(cal, 'measurement_range', '-'),
+            
+            # ข้อมูลการสอบเทียบ
+            '{{CALIBRATION_DATE}}': cal.update.strftime('%d/%m/%Y') if cal.update else '-',
+            '{{DATE_OF_CALIBRATION}}': cal.update.strftime('%d/%m/%Y') if cal.update else '-',
+            '{{CERTIFICATE_NUMBER}}': cal.certificate_number or '-',
+            '{{DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
+            '{{STATUS}}': cal.get_status_display(),
+            
+            # ข้อมูลผู้รับผิดชอบ
+            '{{CALIBRATOR}}': cal.calibrator.username if cal.calibrator else '-',
+            '{{APPROVER}}': cal.certificate_issuer.username if cal.certificate_issuer else '-',
+            
+            # ข้อมูลหน่วยงาน
+            '{{CUSTOMER}}': getattr(cal.uuc_id.organize, 'name', '-') if cal.uuc_id.organize else '-',
+            '{{CUSTOMER_ADDRESS}}': getattr(cal.uuc_id.organize, 'address', '-') if cal.uuc_id.organize else '-',
+            '{{LOCATION_NAME}}': getattr(cal.uuc_id.organize, 'name', '-') if cal.uuc_id.organize else '-',
+            '{{LOCATION_ADDRESS}}': getattr(cal.uuc_id.organize, 'address', '-') if cal.uuc_id.organize else '-',
+            
+            # ข้อมูลตารางผลการสอบเทียบ Torque CW (3 แถว)
+            # แถวที่ 1
+            '{{CW_SET}}': str(cal.cwset) if cal.cwset is not None else '-',
+            '{{CW_0}}': str(cal.cw0) if cal.cw0 is not None else '-',
+            '{{CW_90}}': str(cal.cw90) if cal.cw90 is not None else '-',
+            '{{CW_180}}': str(cal.cw180) if cal.cw180 is not None else '-',
+            '{{CW_270}}': str(cal.cw270) if cal.cw270 is not None else '-',
+            '{{CW_AVG}}': str(cal.cw_avg) if cal.cw_avg is not None else '-',
+            '{{CW_ACTUAL}}': str(cal.cw_actual) if cal.cw_actual is not None else '-',
+            '{{CW_ERROR}}': str(cal.cw_error) if cal.cw_error is not None else '0.0',
+            '{{CW_UNCERTAINTY}}': str(cal.cw_uncen) if cal.cw_uncen is not None else '-',
+            '{{CW_TOLERANCE_LIMIT}}': f"{cal.cw_tolerance_start} - {cal.cw_tolerance_end}" if cal.cw_tolerance_start is not None and cal.cw_tolerance_end is not None else '-',
+            
+            # แถวที่ 2
+            '{{CW_SET_2}}': str(cal.cwset_2) if cal.cwset_2 is not None else '-',
+            '{{CW_ACTUAL_2}}': str(cal.cw_actual_2) if cal.cw_actual_2 is not None else '-',
+            '{{CW_ERROR_2}}': str(cal.cw_error_2) if cal.cw_error_2 is not None else '0.0',
+            '{{CW_TOLERANCE_LIMIT_2}}': f"{cal.cw_tolerance_start_2} - {cal.cw_tolerance_end_2}" if cal.cw_tolerance_start_2 is not None and cal.cw_tolerance_end_2 is not None else '-',
+            
+            # แถวที่ 3
+            '{{CW_SET_3}}': str(cal.cwset_3) if cal.cwset_3 is not None else '-',
+            '{{CW_ACTUAL_3}}': str(cal.cw_actual_3) if cal.cw_actual_3 is not None else '-',
+            '{{CW_ERROR_3}}': str(cal.cw_error_3) if cal.cw_error_3 is not None else '0.0',
+            '{{CW_TOLERANCE_LIMIT_3}}': f"{cal.cw_tolerance_start_3} - {cal.cw_tolerance_end_3}" if cal.cw_tolerance_start_3 is not None and cal.cw_tolerance_end_3 is not None else '-',
+            
+            # ข้อมูลตารางผลการสอบเทียบ Torque CCW (3 แถว)
+            # แถวที่ 1
+            '{{CCW_SET}}': str(cal.ccwset) if cal.ccwset is not None else '-',
+            '{{CCW_0}}': str(cal.ccw0) if cal.ccw0 is not None else '-',
+            '{{CCW_90}}': str(cal.ccw90) if cal.ccw90 is not None else '-',
+            '{{CCW_180}}': str(cal.ccw180) if cal.ccw180 is not None else '-',
+            '{{CCW_270}}': str(cal.ccw270) if cal.ccw270 is not None else '-',
+            '{{CCW_AVG}}': str(cal.ccw_avg) if cal.ccw_avg is not None else '-',
+            '{{CCW_ACTUAL}}': str(cal.ccw_actual) if cal.ccw_actual is not None else '-',
+            '{{CCW_ERROR}}': str(cal.ccw_error) if cal.ccw_error is not None else '0.0',
+            '{{CCW_UNCERTAINTY}}': str(cal.ccw_uncen) if cal.ccw_uncen is not None else '-',
+            '{{CCW_TOLERANCE_LIMIT}}': f"{cal.ccw_tolerance_start} - {cal.ccw_tolerance_end}" if cal.ccw_tolerance_start is not None and cal.ccw_tolerance_end is not None else '-',
+            
+            # แถวที่ 2
+            '{{CCW_SET_2}}': str(cal.ccwset_2) if cal.ccwset_2 is not None else '-',
+            '{{CCW_ACTUAL_2}}': str(cal.ccw_actual_2) if cal.ccw_actual_2 is not None else '-',
+            '{{CCW_ERROR_2}}': str(cal.ccw_error_2) if cal.ccw_error_2 is not None else '0.0',
+            '{{CCW_TOLERANCE_LIMIT_2}}': f"{cal.ccw_tolerance_start_2} - {cal.ccw_tolerance_end_2}" if cal.ccw_tolerance_start_2 is not None and cal.ccw_tolerance_end_2 is not None else '-',
+            
+            # แถวที่ 3
+            '{{CCW_SET_3}}': str(cal.ccwset_3) if cal.ccwset_3 is not None else '-',
+            '{{CCW_ACTUAL_3}}': str(cal.ccw_actual_3) if cal.ccw_actual_3 is not None else '-',
+            '{{CCW_ERROR_3}}': str(cal.ccw_error_3) if cal.ccw_error_3 is not None else '0.0',
+            '{{CCW_TOLERANCE_LIMIT_3}}': f"{cal.ccw_tolerance_start_3} - {cal.ccw_tolerance_end_3}" if cal.ccw_tolerance_start_3 is not None and cal.ccw_tolerance_end_3 is not None else '-',
+        }
+        
+        # ข้อมูลมาตรฐาน
+        if std:
+            replacements.update({
+                '{{STANDARD_ASSET_NO}}': getattr(std, 'asset_number', None) or getattr(std, 'serial_number', '-'),
+                '{{STANDARD_DESCRIPTION}}': std.name or '-',
+                '{{STANDARD_MAKER_MODEL}}': getattr(std, 'maker_model', '-'),
+                '{{STANDARD_SERIAL}}': std.serial_number or '-',
+                '{{STANDARD_CERTIFICATE}}': getattr(std, 'certificate_number', '-'),
+                '{{STANDARD_DUE_DATE}}': getattr(std, 'due_date', '-'),
+            })
+        else:
+            replacements.update({
+                '{{STANDARD_ASSET_NO}}': '-',
+                '{{STANDARD_DESCRIPTION}}': '-',
+                '{{STANDARD_MAKER_MODEL}}': '-',
+                '{{STANDARD_SERIAL}}': '-',
+                '{{STANDARD_CERTIFICATE}}': '-',
+                '{{STANDARD_DUE_DATE}}': '-',
+            })
+        
+        # ข้อมูลมาตรฐานชุดที่ 2 (ถ้ามี)
+        try:
+            std2 = cal.calibration_equipment_used.filter(equipment_type='standard').exclude(equipment=std).first()
+            if std2:
+                eq2 = std2.equipment
+                replacements.update({
+                    '{{STANDARD_ASSET_NO_2}}': getattr(eq2, 'asset_number', None) or getattr(eq2, 'serial_number', '-'),
+                    '{{STANDARD_DESCRIPTION_2}}': eq2.name or '-',
+                    '{{STANDARD_MAKER_MODEL_2}}': getattr(eq2, 'maker_model', '-'),
+                    '{{STANDARD_SERIAL_2}}': eq2.serial_number or '-',
+                    '{{STANDARD_CERTIFICATE_2}}': getattr(eq2, 'certificate_number', '-'),
+                    '{{STANDARD_DUE_DATE_2}}': getattr(eq2, 'due_date', '-'),
+                })
+            else:
+                replacements.update({
+                    '{{STANDARD_ASSET_NO_2}}': '-',
+                    '{{STANDARD_DESCRIPTION_2}}': '-',
+                    '{{STANDARD_MAKER_MODEL_2}}': '-',
+                    '{{STANDARD_SERIAL_2}}': '-',
+                    '{{STANDARD_CERTIFICATE_2}}': '-',
+                    '{{STANDARD_DUE_DATE_2}}': '-',
+                })
+        except Exception as e:
+            print(f"DEBUG: Error getting second standard: {e}")
+            replacements.update({
+                '{{STANDARD_ASSET_NO_2}}': '-',
+                '{{STANDARD_DESCRIPTION_2}}': '-',
+                '{{STANDARD_MAKER_MODEL_2}}': '-',
+                '{{STANDARD_SERIAL_2}}': '-',
+                '{{STANDARD_CERTIFICATE_2}}': '-',
+                '{{STANDARD_DUE_DATE_2}}': '-',
+            })
+        
+        # สร้างตารางเครื่องมือที่ใช้
+        equipment_table = ""
+        try:
+            equipment_used = cal.calibration_equipment_used.all()
+            for i, eq_used in enumerate(equipment_used, 1):
+                try:
+                    eq = eq_used.equipment
+                    asset_no = getattr(eq, 'asset_number', None) or getattr(eq, 'serial_number', '-')
+                    name = eq.name or '-'
+                    maker_model = getattr(eq, 'maker_model', '-')
+                    serial = eq.serial_number or '-'
+                    certificate = getattr(eq, 'certificate_number', '-')
+                    due_date = getattr(eq, 'due_date', '-')
+                    
+                    equipment_table += f"{asset_no}\t{name}\t{maker_model}\t{serial}\t{certificate}\t{due_date}\n"
+                except Exception as e:
+                    print(f"DEBUG: Error getting equipment {i}: {e}")
+                    equipment_table += "-\t-\t-\t-\t-\t-\n"
+        except Exception as e:
+            print(f"DEBUG: Error getting equipment list: {e}")
+            equipment_table = "-\t-\t-\t-\t-\t-\n"
+        
+        replacements['{{EQUIPMENT_TABLE}}'] = equipment_table
+        
+        print(f"DEBUG: Total replacements: {len(replacements)}")
+        
+        # Debug: แสดงข้อมูลตารางที่ส่งไป
+        print(f"DEBUG: CW_SET: {getattr(cal, 'cwset', None)}")
+        print(f"DEBUG: CW_0: {getattr(cal, 'cw0', None)}")
+        print(f"DEBUG: CW_90: {getattr(cal, 'cw90', None)}")
+        print(f"DEBUG: CW_180: {getattr(cal, 'cw180', None)}")
+        print(f"DEBUG: CW_270: {getattr(cal, 'cw270', None)}")
+        print(f"DEBUG: CW_AVG: {getattr(cal, 'cw_avg', None)}")
+        print(f"DEBUG: CW_ACTUAL: {getattr(cal, 'cw_actual', None)}")
+        print(f"DEBUG: CW_ERROR: {getattr(cal, 'cw_error', None)}")
+        print(f"DEBUG: CW_TOLERANCE_START: {getattr(cal, 'cw_tolerance_start', None)}")
+        print(f"DEBUG: CW_TOLERANCE_END: {getattr(cal, 'cw_tolerance_end', None)}")
+        
+        print(f"DEBUG: CCW_SET: {getattr(cal, 'ccwset', None)}")
+        print(f"DEBUG: CCW_0: {getattr(cal, 'ccw0', None)}")
+        print(f"DEBUG: CCW_90: {getattr(cal, 'ccw90', None)}")
+        print(f"DEBUG: CCW_180: {getattr(cal, 'ccw180', None)}")
+        print(f"DEBUG: CCW_270: {getattr(cal, 'ccw270', None)}")
+        print(f"DEBUG: CCW_AVG: {getattr(cal, 'ccw_avg', None)}")
+        print(f"DEBUG: CCW_ACTUAL: {getattr(cal, 'ccw_actual', None)}")
+        print(f"DEBUG: CCW_ERROR: {getattr(cal, 'ccw_error', None)}")
+        print(f"DEBUG: CCW_TOLERANCE_START: {getattr(cal, 'ccw_tolerance_start', None)}")
+        print(f"DEBUG: CCW_TOLERANCE_END: {getattr(cal, 'ccw_tolerance_end', None)}")
+        
+        # Debug: แสดงค่าที่ส่งไปใน replacements
+        print(f"DEBUG: CW_SET replacement: {replacements.get('{{CW_SET}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CW_ACTUAL replacement: {replacements.get('{{CW_ACTUAL}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CW_ERROR replacement: {replacements.get('{{CW_ERROR}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CW_TOLERANCE_LIMIT replacement: {replacements.get('{{CW_TOLERANCE_LIMIT}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CCW_SET replacement: {replacements.get('{{CCW_SET}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CCW_ACTUAL replacement: {replacements.get('{{CCW_ACTUAL}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CCW_ERROR replacement: {replacements.get('{{CCW_ERROR}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CCW_TOLERANCE_LIMIT replacement: {replacements.get('{{CCW_TOLERANCE_LIMIT}}', 'NOT_FOUND')}")
+        
+        # Debug: แสดงข้อมูลแถวที่ 2 และ 3
+        print(f"DEBUG: CW_SET_2: {getattr(cal, 'cwset_2', None)}")
+        print(f"DEBUG: CW_ACTUAL_2: {getattr(cal, 'cw_actual_2', None)}")
+        print(f"DEBUG: CW_ERROR_2: {getattr(cal, 'cw_error_2', None)}")
+        print(f"DEBUG: CW_SET_3: {getattr(cal, 'cwset_3', None)}")
+        print(f"DEBUG: CW_ACTUAL_3: {getattr(cal, 'cw_actual_3', None)}")
+        print(f"DEBUG: CW_ERROR_3: {getattr(cal, 'cw_error_3', None)}")
+        
+        print(f"DEBUG: CCW_SET_2: {getattr(cal, 'ccwset_2', None)}")
+        print(f"DEBUG: CCW_ACTUAL_2: {getattr(cal, 'ccw_actual_2', None)}")
+        print(f"DEBUG: CCW_ERROR_2: {getattr(cal, 'ccw_error_2', None)}")
+        print(f"DEBUG: CCW_SET_3: {getattr(cal, 'ccwset_3', None)}")
+        print(f"DEBUG: CCW_ACTUAL_3: {getattr(cal, 'ccw_actual_3', None)}")
+        print(f"DEBUG: CCW_ERROR_3: {getattr(cal, 'ccw_error_3', None)}")
+        
+        # Debug: แสดงค่าที่ส่งไปใน replacements สำหรับแถวที่ 2 และ 3
+        print(f"DEBUG: CCW_ACTUAL_2 replacement: {replacements.get('{{CCW_ACTUAL_2}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CCW_ERROR_2 replacement: {replacements.get('{{CCW_ERROR_2}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CCW_ACTUAL_3 replacement: {replacements.get('{{CCW_ACTUAL_3}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CCW_ERROR_3 replacement: {replacements.get('{{CCW_ERROR_3}}', 'NOT_FOUND')}")
+        
+        # Debug: แสดงข้อมูล APPROVER และ CALIBRATOR
+        print(f"DEBUG: APPROVER: {replacements.get('{{APPROVER}}', 'NOT_FOUND')}")
+        print(f"DEBUG: CALIBRATOR: {replacements.get('{{CALIBRATOR}}', 'NOT_FOUND')}")
+        print(f"DEBUG: Certificate issuer: {cal.certificate_issuer}")
+        print(f"DEBUG: Calibrator: {cal.calibrator}")
+        
+        # แทนค่าในเอกสาร
+        replace_text_in_document(doc, replacements)
+        print("DEBUG: Document replacement completed")
+        
+        # สร้าง response
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        response['Content-Disposition'] = f'attachment; filename="Torque_Certificate_{cal_id}.docx"'
+        
+        # บันทึกเอกสาร
+        doc.save(response)
+        print("DEBUG: Creating response for Torque certificate")
+        print("DEBUG: Response created successfully")
+        
+        return response
+        
+    except Exception as e:
+        print(f"DEBUG: Error in export_torque_certificate_docx: {e}")
+        return HttpResponse(f"Error: {e}", status=500)
