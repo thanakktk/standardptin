@@ -152,7 +152,7 @@
                                             </a>
                                         {% elif cal.type == 'microwave' %}
                                             <a href="{% url 'export-microwave-certificate-docx' cal.id %}" class="btn btn-sm btn-outline-success" title="ดาวน์โหลดใบรับรอง">
-                                                <i class="fas fa-file-excel"></i>
+                                                <i class="fas fa-file-word"></i>
                                             </a>
                                         {% else %}
                                             <a href="{% url 'export-certificate-excel' cal.id cal.type %}" class="btn btn-sm btn-outline-success" title="ดาวน์โหลดใบรับรอง">

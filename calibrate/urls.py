@@ -9,7 +9,7 @@ from .views import (
     MicrowaveCalibrationDeleteView, DialGaugeCalibrationDeleteView,
     calibration_dashboard, machine_calibration_list, create_calibration_for_machine, calibration_by_type,
     select_machine_for_calibration, create_calibration_with_machine, calibration_report, calibration_report_detail, export_to_word, export_to_excel,
-    increase_priority, close_work, export_certificate_excel, export_balance_certificate_docx, export_low_frequency_certificate_docx, export_dial_gauge_certificate_docx, export_high_frequency_certificate_docx, export_pressure_certificate_docx, export_torque_certificate_docx
+    increase_priority, close_work, export_certificate_excel, export_balance_certificate_docx, export_low_frequency_certificate_docx, export_dial_gauge_certificate_docx, export_high_frequency_certificate_docx, export_pressure_certificate_docx, export_torque_certificate_docx, export_microwave_certificate_docx
 )
 from .views_pressure_new import CalibrationPressureUpdateViewNew
 
@@ -74,7 +74,7 @@ urlpatterns = [
     path('export-high-frequency-certificate/<int:cal_id>/', export_high_frequency_certificate_docx, name='export-high-frequency-certificate-docx'),
     path('export-pressure-certificate/<int:cal_id>/', export_pressure_certificate_docx, name='export-pressure-certificate-docx'),
     path('export-torque-certificate/<int:cal_id>/', export_torque_certificate_docx, name='export-torque-certificate-docx'),
-    path('export-microwave-certificate/<int:cal_id>/', export_certificate_excel, name='export-microwave-certificate-docx'),
+    path('export-microwave-certificate/<int:cal_id>/', export_microwave_certificate_docx, name='export-microwave-certificate-docx'),
     
     # Test URLs สำหรับทดสอบ
     path('test/export-balance/<int:cal_id>/', export_balance_certificate_docx, name='test-export-balance'),

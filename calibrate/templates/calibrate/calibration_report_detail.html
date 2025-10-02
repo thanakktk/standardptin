@@ -232,8 +232,8 @@
                                             </a>
                                         {% elif cal.type == 'microwave' %}
                                             <a href="{% url 'export-microwave-certificate-docx' cal.id %}" 
-                                               class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Microwave แบบ Excel">
-                                                <i class="fas fa-file-excel"></i>
+                                               class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Microwave แบบ DOCX">
+                                                <i class="fas fa-file-word"></i>
                                             </a>
                                         {% else %}
                                             <a href="{% url 'export-certificate-excel' cal.id cal.type %}" 

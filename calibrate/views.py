@@ -6016,3 +6016,133 @@ def export_torque_certificate_docx(request, cal_id):
     except Exception as e:
         print(f"DEBUG: Error in export_torque_certificate_docx: {e}")
         return HttpResponse(f"Error: {e}", status=500)
+
+
+def export_microwave_certificate_docx(request, cal_id):
+    """Export Microwave certificate as DOCX"""
+    try:
+        print(f"DEBUG: Attempting to export Microwave certificate for ID: {cal_id}")
+        
+        # ดึงข้อมูลการสอบเทียบ
+        cal = get_object_or_404(MicrowaveCalibration, id=cal_id)
+        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {cal.machine.name}")
+        
+        # ข้อมูลเครื่องมือ
+        machine = cal.machine
+        print(f"DEBUG: Machine info - Name: {machine.name}, Model: {machine.model}, Serial: {machine.serial_number}")
+        
+        # ข้อมูลมาตรฐาน
+        standard_equipment = cal.calibration_equipment_used.first()
+        print(f"DEBUG: Standard equipment found: {standard_equipment.equipment.name if standard_equipment else 'None'}")
+        
+        # Template path
+        template_path = os.path.join(settings.BASE_DIR, 'cert_templates', 'Microwave_template.docx')
+        print(f"DEBUG: Template path: {template_path}")
+        
+        # เปิด template
+        doc = Document(template_path)
+        
+        # สร้าง replacements dictionary
+        replacements = {
+            # ข้อมูลเครื่องมือ
+            '{{MACHINE_NAME}}': machine.name or '-',
+            '{{MACHINE_MODEL}}': machine.model or '-',
+            '{{MACHINE_SERIAL}}': machine.serial_number or '-',
+            '{{MACHINE_MANUFACTURER}}': '-',
+            '{{MACHINE_RANGE}}': cal.readings or '-',
+            
+            # ข้อมูลการสอบเทียบ
+            '{{CALIBRATION_DATE}}': cal.date_calibration.strftime('%d/%m/%Y') if cal.date_calibration else '-',
+            '{{NEXT_DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
+            '{{CERTIFICATE_NUMBER}}': cal.certificate_number or '-',
+            '{{STATUS}}': cal.status or '-',
+            
+            # ข้อมูลมาตรฐาน
+            '{{STANDARD_NAME}}': standard_equipment.equipment.name if standard_equipment else '-',
+            '{{STANDARD_MODEL}}': standard_equipment.equipment.model if standard_equipment else '-',
+            '{{STANDARD_SERIAL}}': standard_equipment.equipment.serial_number if standard_equipment else '-',
+            '{{STANDARD_CERTIFICATE}}': '-',
+            '{{STANDARD_DUE_DATE}}': '-',
+            
+            # ข้อมูลผู้สอบเทียบ
+            '{{CALIBRATOR}}': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            '{{APPROVER}}': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            
+            # เพิ่ม placeholder ที่ขาดหายไป
+            '{{MODEL}}': machine.model or '-',
+            '{{DESCRIPTION}}': machine.machine_type.name if machine.machine_type else '-',
+            '{{DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
+            '{{SERIAL_NUMBER}}': machine.serial_number or '-',
+            '{{MANUFACTURER}}': '-',
+            '{{RANGE}}': cal.readings or '-',
+            
+            # เพิ่ม placeholder ที่ขาดหายไป
+            '{{CUSTOMER_ADDRESS}}': machine.organize.name if machine.organize else '-',
+            '{{DATE_OF_CALIBRATION}}': cal.date_calibration.strftime('%d/%m/%Y') if cal.date_calibration else '-',
+            
+            # ข้อมูลมาตรฐานเพิ่มเติม
+            '{{STANDARD_ASSET_NO}}': standard_equipment.equipment.asset_number if standard_equipment and hasattr(standard_equipment.equipment, 'asset_number') else '-',
+            '{{STANDARD_DESCRIPTION}}': standard_equipment.equipment.name if standard_equipment else '-',
+            '{{STANDARD_MAKER_MODEL}}': standard_equipment.equipment.model if standard_equipment else '-',
+            '{{STANDARD_SERIAL}}': standard_equipment.equipment.serial_number if standard_equipment else '-',
+            '{{STANDARD_ASSET_NO_2}}': '-',
+            '{{STANDARD_DESCRIPTION_2}}': '-',
+            '{{STANDARD_MAKER_MODEL_2}}': '-',
+            '{{STANDARD_SERIAL_2}}': '-',
+            
+            # ข้อมูลตาราง DC Voltage
+            '{{DC_UUC_RANGE}}': cal.dc_uuc_range or '-',
+            '{{DC_UUC_SETTING}}': cal.dc_uuc_setting or '-',
+            '{{DC_MEASURED_VALUE}}': cal.dc_measured_value or '-',
+            '{{DC_UNCERTAINTY}}': cal.dc_uncertainty or '-',
+            '{{DC_TOLERANCE_LIMIT}}': cal.dc_tolerance_limit or '-',
+            
+            # ข้อมูลตาราง DC Voltage แถวที่ 2
+            '{{DC_UUC_RANGE_2}}': cal.dc_uuc_range_2 or '-',
+            '{{DC_UUC_SETTING_2}}': cal.dc_uuc_setting_2 or '-',
+            '{{DC_MEASURED_VALUE_2}}': cal.dc_measured_value_2 or '-',
+            '{{DC_UNCERTAINTY_2}}': cal.dc_uncertainty_2 or '-',
+            '{{DC_TOLERANCE_LIMIT_2}}': cal.dc_tolerance_limit_2 or '-',
+            
+            # ข้อมูลตาราง DC Voltage แถวที่ 3
+            '{{DC_UUC_RANGE_3}}': cal.dc_uuc_range_3 or '-',
+            '{{DC_UUC_SETTING_3}}': cal.dc_uuc_setting_3 or '-',
+            '{{DC_MEASURED_VALUE_3}}': cal.dc_measured_value_3 or '-',
+            '{{DC_UNCERTAINTY_3}}': cal.dc_uncertainty_3 or '-',
+            '{{DC_TOLERANCE_LIMIT_3}}': cal.dc_tolerance_limit_3 or '-',
+            
+            # ข้อมูลตาราง DC Voltage แถวที่ 4
+            '{{DC_UUC_RANGE_4}}': cal.dc_uuc_range_4 or '-',
+            '{{DC_UUC_SETTING_4}}': cal.dc_uuc_setting_4 or '-',
+            '{{DC_MEASURED_VALUE_4}}': cal.dc_measured_value_4 or '-',
+            '{{DC_UNCERTAINTY_4}}': cal.dc_uncertainty_4 or '-',
+            '{{DC_TOLERANCE_LIMIT_4}}': cal.dc_tolerance_limit_4 or '-',
+            
+            # ข้อมูลตาราง DC Voltage แถวที่ 5
+            '{{DC_UUC_RANGE_5}}': cal.dc_uuc_range_5 or '-',
+            '{{DC_UUC_SETTING_5}}': cal.dc_uuc_setting_5 or '-',
+            '{{DC_MEASURED_VALUE_5}}': cal.dc_measured_value_5 or '-',
+            '{{DC_UNCERTAINTY_5}}': cal.dc_uncertainty_5 or '-',
+            '{{DC_TOLERANCE_LIMIT_5}}': cal.dc_tolerance_limit_5 or '-',
+        }
+        
+        print(f"DEBUG: Total replacements: {len(replacements)}")
+        
+        # แทนค่าในเอกสาร
+        replace_text_in_document(doc, replacements)
+        print("DEBUG: Document replacement completed")
+        
+        # สร้าง response
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        response['Content-Disposition'] = f'attachment; filename="Microwave_Certificate_{cal_id}.docx"'
+        
+        # บันทึกเอกสาร
+        doc.save(response)
+        print("DEBUG: Creating response for Microwave certificate")
+        print("DEBUG: Response created successfully")
+        
+        return response
+        
+    except Exception as e:
+        print(f"DEBUG: Error in export_microwave_certificate_docx: {e}")
+        return HttpResponse(f"Error: {e}", status=500)
