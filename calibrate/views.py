@@ -192,6 +192,25 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
             print(f"❌ Form errors: {form.errors}")
             return self.form_invalid(form)
         
+        # ตรวจสอบข้อมูลที่สำคัญก่อนบันทึก
+        print("=== DEBUG: ตรวจสอบข้อมูลก่อนบันทึก ===")
+        print(f"UUC Set: {form.cleaned_data.get('set', 'MISSING')}")
+        print(f"Actual: {form.cleaned_data.get('actual', 'MISSING')}")
+        print(f"Tolerance Start: {form.cleaned_data.get('tolerance_start', 'MISSING')}")
+        print(f"Tolerance End: {form.cleaned_data.get('tolerance_end', 'MISSING')}")
+        
+        # ตรวจสอบข้อมูลแถวที่ 2-6
+        for i in range(2, 7):
+            set_field = f'set_{i}'
+            actual_field = f'actual_{i}'
+            tolerance_start_field = f'tolerance_start_{i}'
+            tolerance_end_field = f'tolerance_end_{i}'
+            
+            print(f"Row {i} - Set: {form.cleaned_data.get(set_field, 'MISSING')}")
+            print(f"Row {i} - Actual: {form.cleaned_data.get(actual_field, 'MISSING')}")
+            print(f"Row {i} - Tolerance Start: {form.cleaned_data.get(tolerance_start_field, 'MISSING')}")
+            print(f"Row {i} - Tolerance End: {form.cleaned_data.get(tolerance_end_field, 'MISSING')}")
+        
         # ตรวจสอบ required fields
         required_fields = ['uuc_id', 'measurement_range', 'update', 'next_due']
         for field in required_fields:
@@ -199,6 +218,18 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
                 print(f"✅ {field}: {form.cleaned_data[field]}")
             else:
                 print(f"⚠️ {field}: {form.cleaned_data.get(field, 'MISSING')}")
+        
+        # ตรวจสอบ form fields ทั้งหมด
+        print("=== DEBUG: ตรวจสอบ form fields ทั้งหมด ===")
+        for field_name, field_value in form.cleaned_data.items():
+            if field_name.startswith(('set', 'actual', 'tolerance')):
+                print(f"Form field {field_name}: {field_value} (type: {type(field_value)})")
+        
+        # ตรวจสอบ POST data โดยตรง
+        print("=== DEBUG: ตรวจสอบ POST data โดยตรง ===")
+        for key, value in self.request.POST.items():
+            if key.startswith(('set', 'actual', 'tolerance')):
+                print(f"POST {key}: {value}")
         
         # ดูข้อมูลเครื่องมือก่อนบันทึก
         from calibrate.models import CalibrationEquipmentUsed
@@ -278,6 +309,26 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
             calibration_id=calibration.cal_pressure_id
         )
         print(f"เครื่องมือใหม่ที่บันทึกแล้ว: {list(new_equipment.values('equipment__name', 'equipment__id'))}")
+        
+        # ตรวจสอบข้อมูลที่บันทึกแล้ว
+        print("=== DEBUG: ตรวจสอบข้อมูลหลังบันทึก ===")
+        print(f"บันทึกแล้ว - UUC Set: {calibration.set}")
+        print(f"บันทึกแล้ว - Actual: {calibration.actual}")
+        print(f"บันทึกแล้ว - Tolerance Start: {calibration.tolerance_start}")
+        print(f"บันทึกแล้ว - Tolerance End: {calibration.tolerance_end}")
+        
+        # ตรวจสอบข้อมูลแถวที่ 2-6 หลังบันทึก
+        for i in range(2, 7):
+            set_field = f'set_{i}'
+            actual_field = f'actual_{i}'
+            tolerance_start_field = f'tolerance_start_{i}'
+            tolerance_end_field = f'tolerance_end_{i}'
+            
+            print(f"บันทึกแล้ว Row {i} - Set: {getattr(calibration, set_field, 'MISSING')}")
+            print(f"บันทึกแล้ว Row {i} - Actual: {getattr(calibration, actual_field, 'MISSING')}")
+            print(f"บันทึกแล้ว Row {i} - Tolerance Start: {getattr(calibration, tolerance_start_field, 'MISSING')}")
+            print(f"บันทึกแล้ว Row {i} - Tolerance End: {getattr(calibration, tolerance_end_field, 'MISSING')}")
+        
         print("=== DEBUG: หลังบันทึก Pressure ===")
         
         # ตรวจสอบสถานะอัตโนมัติ

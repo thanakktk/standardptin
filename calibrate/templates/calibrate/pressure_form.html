@@ -591,28 +591,54 @@ label[for="id_status"] {
 <script>
 // JavaScript สำหรับคำนวณ Error และ Tolerance สำหรับ Pressure
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== Pressure Form JavaScript Loaded ===');
+    
     // หาตาราง Pressure Verification
     const pressureTable = document.querySelector('table.table-bordered');
-    if (!pressureTable) return;
+    if (!pressureTable) {
+        console.log('❌ No pressure table found');
+        return;
+    }
     
+    console.log('✅ Pressure table found');
     const pressureRows = pressureTable.querySelectorAll('tbody tr');
+    console.log(`Found ${pressureRows.length} rows`);
     
     pressureRows.forEach((row, rowIndex) => {
-        const uucSetInput = row.querySelector('input[name^="set"]');
+        // หา input fields ในแต่ละแถว
+        const uucSetInput = row.querySelector('input[name^="set"]') || row.querySelector('input[name*="set"]');
         const actualInput = row.querySelector('input[name*="actual"]');
-        const errorInput = row.querySelector('input[name^="error"]');
+        const errorInput = row.querySelector('input[name^="error"]') || row.querySelector('input[name*="error"]');
         const toleranceStartInput = row.querySelector('input[name*="tolerance_start"]');
         const toleranceEndInput = row.querySelector('input[name*="tolerance_end"]');
         
+        console.log(`Row ${rowIndex + 1}:`, {
+            uucSetInput: uucSetInput?.name,
+            actualInput: actualInput?.name,
+            errorInput: errorInput?.name,
+            toleranceStartInput: toleranceStartInput?.name,
+            toleranceEndInput: toleranceEndInput?.name
+        });
+        
         // ฟังก์ชันคำนวณ Error (Actual - UUC Set)
         function calculateError() {
-            if (uucSetInput && actualInput) {
+            if (uucSetInput && actualInput && errorInput) {
                 const uucSet = parseFloat(uucSetInput.value) || 0;
                 const actual = parseFloat(actualInput.value) || 0;
                 const error = actual - uucSet;
-                if (errorInput) {
-                    errorInput.value = error.toFixed(1);
-                }
+                errorInput.value = error.toFixed(1);
+                console.log(`Row ${rowIndex + 1} Error calculation:`, {
+                    uucSet: uucSet,
+                    actual: actual,
+                    error: error,
+                    errorInput: errorInput.name
+                });
+            } else {
+                console.log(`Row ${rowIndex + 1} Missing inputs:`, {
+                    uucSetInput: !!uucSetInput,
+                    actualInput: !!actualInput,
+                    errorInput: !!errorInput
+                });
             }
         }
         
@@ -628,20 +654,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (toleranceEndInput) {
                     toleranceEndInput.value = maxValue;
                 }
+                console.log(`Row ${rowIndex + 1} Tolerance calculation:`, {
+                    uucSet: uucSet,
+                    minValue: minValue,
+                    maxValue: maxValue,
+                    toleranceStartInput: toleranceStartInput?.name,
+                    toleranceEndInput: toleranceEndInput?.name
+                });
+            } else {
+                console.log(`Row ${rowIndex + 1} Missing uucSetInput for tolerance calculation`);
             }
         }
         
         // เพิ่ม event listener
         if (uucSetInput) {
             uucSetInput.addEventListener('input', () => {
+                console.log(`Row ${rowIndex + 1} UUC Set changed:`, uucSetInput.value);
                 calculateError();
                 calculateTolerance();
             });
+            console.log(`Row ${rowIndex + 1} Added UUC Set listener`);
+        } else {
+            console.log(`Row ${rowIndex + 1} No UUC Set input found`);
         }
         
         if (actualInput) {
-            actualInput.addEventListener('input', calculateError);
+            actualInput.addEventListener('input', () => {
+                console.log(`Row ${rowIndex + 1} Actual changed:`, actualInput.value);
+                calculateError();
+            });
+            console.log(`Row ${rowIndex + 1} Added Actual listener`);
+        } else {
+            console.log(`Row ${rowIndex + 1} No Actual input found`);
         }
+        
+        // เรียกใช้ฟังก์ชันคำนวณครั้งแรกเมื่อโหลดหน้า
+        console.log(`Row ${rowIndex + 1} Initial calculation`);
+        calculateError();
+        calculateTolerance();
     });
     
     // จัดการเครื่องมือหลายตัว
