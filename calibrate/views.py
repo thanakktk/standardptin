@@ -3383,7 +3383,7 @@ def export_balance_certificate_docx(request, cal_id):
         
         m = cal.machine
         std = cal.std_id
-
+        
         # องค์กร (ออปชัน)
         try:
             from organize.models import Organize
@@ -3442,7 +3442,7 @@ def export_balance_certificate_docx(request, cal_id):
             "{{GRADUATION}}": fmt(m.res_uuc),
             "{{OPTION}}": fmt(m.option),
             "{{CUSTOMER_ASSET_ID}}": fmt(m.customer_asset_id),
-
+            
             # ข้อมูลการสอบเทียบ
             "{{RECEIVED_DATE}}": fmt_date(getattr(cal, "received_date", None)),
             "{{DATE_OF_CALIBRATION}}": fmt_date(cal.date_calibration),
@@ -3450,7 +3450,7 @@ def export_balance_certificate_docx(request, cal_id):
             "{{ISSUE_DATE}}": fmt_date(getattr(cal, "issue_date", None)),
             "{{CERTIFICATE_NUMBER}}": fmt(getattr(cal, "certificate_number", None)),
             "{{PROCEDURE}}": fmt(getattr(cal, "procedure_number", None)),
-
+            
             # ข้อมูลมาตรฐาน
             "{{STANDARD_ASSET_NO}}": fmt(getattr(std, 'asset_number', None) if std else None),
             "{{STANDARD_DESCRIPTION}}": fmt(std.name if std else None),

@@ -70,11 +70,12 @@ urlpatterns = [
     path('export-certificate/<int:cal_id>/<str:cal_type>/', export_certificate_excel, name='export-certificate-excel'),
     path('export-balance-certificate/<int:cal_id>/', export_balance_certificate_docx, name='export-balance-certificate-docx'),
     path('export-low-frequency-certificate/<int:cal_id>/', export_low_frequency_certificate_docx, name='export-low-frequency-certificate-docx'),
-    
-    # Test URLs สำหรับทดสอบ
-    path('test/export-balance/<int:cal_id>/', export_balance_certificate_docx, name='test-export-balance'),
     path('export-dial-gauge-certificate/<int:cal_id>/', export_dial_gauge_certificate_docx, name='export-dial-gauge-certificate-docx'),
     path('export-high-frequency-certificate/<int:cal_id>/', export_high_frequency_certificate_docx, name='export-high-frequency-certificate-docx'),
     path('export-pressure-certificate/<int:cal_id>/', export_pressure_certificate_docx, name='export-pressure-certificate-docx'),
     path('export-torque-certificate/<int:cal_id>/', export_torque_certificate_docx, name='export-torque-certificate-docx'),
+    path('export-microwave-certificate/<int:cal_id>/', export_certificate_excel, name='export-microwave-certificate-docx'),
+    
+    # Test URLs สำหรับทดสอบ
+    path('test/export-balance/<int:cal_id>/', export_balance_certificate_docx, name='test-export-balance'),
 ] 

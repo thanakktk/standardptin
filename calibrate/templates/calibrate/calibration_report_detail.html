@@ -210,7 +210,7 @@
                                                class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Low Frequency แบบ DOCX">
                                                 <i class="fas fa-file-word"></i>
                                             </a>
-                                        {% elif cal.type == 'dial-gauge' %}
+                                        {% elif cal.type == 'dial_gauge' %}
                                             <a href="{% url 'export-dial-gauge-certificate-docx' cal.id %}" 
                                                class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Dial Gauge แบบ DOCX">
                                                 <i class="fas fa-file-word"></i>
@@ -229,6 +229,11 @@
                                             <a href="{% url 'export-torque-certificate-docx' cal.id %}" 
                                                class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Torque แบบ DOCX">
                                                 <i class="fas fa-file-word"></i>
+                                            </a>
+                                        {% elif cal.type == 'microwave' %}
+                                            <a href="{% url 'export-microwave-certificate-docx' cal.id %}" 
+                                               class="btn btn-outline-primary btn-sm" title="Export ใบรับรอง Microwave แบบ Excel">
+                                                <i class="fas fa-file-excel"></i>
                                             </a>
                                         {% else %}
                                             <a href="{% url 'export-certificate-excel' cal.id cal.type %}" 
