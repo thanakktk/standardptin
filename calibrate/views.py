@@ -1851,7 +1851,7 @@ def process_torque_calibration(request, machine):
                 print(f"Next Due Date (default): {calibration.next_due}")
             
             # ข้อมูลเพิ่มเติม
-            status = request.POST.get('status', 'not_set')
+            status = request.POST.get('status', 'pending')
             priority = request.POST.get('priority', 'normal')
             std_id = request.POST.get('std_id')
             calibrator_id = request.POST.get('calibrator')
@@ -1991,7 +1991,7 @@ def process_pressure_calibration(request, machine):
                 print(f"Next Due Date (default): {calibration.next_due}")
             
             # ข้อมูลเพิ่มเติม
-            status = request.POST.get('status', 'not_set')
+            status = request.POST.get('status', 'pending')
             priority = request.POST.get('priority', 'normal')
             std_id = request.POST.get('std_id')
             calibrator_id = request.POST.get('calibrator')
@@ -2429,7 +2429,7 @@ def calibration_report_detail(request):
         if status_filter:
             if status_filter == 'cert_issued' and cal['status'] not in ['cert_issued', 'passed', 'active']:
                 include_item = False
-            elif status_filter == 'failed' and cal['status'] not in ['failed', 'pending', 'in_progress', 'not_set']:
+            elif status_filter == 'failed' and cal['status'] not in ['failed', 'pending', 'in_progress']:
                 include_item = False
         
         # กรองตามวันที่
@@ -2605,7 +2605,7 @@ def export_to_word(request):
         if status_filter:
             if status_filter == 'cert_issued' and cal['status'] not in ['cert_issued', 'passed', 'active']:
                 include_item = False
-            elif status_filter == 'failed' and cal['status'] not in ['failed', 'pending', 'in_progress', 'not_set']:
+            elif status_filter == 'failed' and cal['status'] not in ['failed', 'pending', 'in_progress']:
                 include_item = False
         
         # กรองตามวันที่
@@ -2709,7 +2709,7 @@ def export_to_word(request):
         # หมายเหตุ
         if cal['status'] in ['cert_issued', 'passed', 'active']:
             remark = 'ออกใบรับรอง'
-        elif cal['status'] in ['failed', 'pending', 'in_progress', 'not_set']:
+        elif cal['status'] in ['failed', 'pending', 'in_progress']:
             remark = 'ไม่ผ่านการสอบเทียบ'
         else:
             remark = cal['status']
@@ -2860,7 +2860,7 @@ def export_to_excel(request):
         if status_filter:
             if status_filter == 'cert_issued' and cal['status'] not in ['cert_issued', 'passed', 'active']:
                 include_item = False
-            elif status_filter == 'failed' and cal['status'] not in ['failed', 'pending', 'in_progress', 'not_set']:
+            elif status_filter == 'failed' and cal['status'] not in ['failed', 'pending', 'in_progress']:
                 include_item = False
         
         # กรองตามวันที่
@@ -2952,7 +2952,7 @@ def export_to_excel(request):
         # หมายเหตุ
         if cal['status'] in ['cert_issued', 'passed', 'active']:
             remark = 'ออกใบรับรอง'
-        elif cal['status'] in ['failed', 'pending', 'in_progress', 'not_set']:
+        elif cal['status'] in ['failed', 'pending', 'in_progress']:
             remark = 'ไม่ผ่านการสอบเทียบ'
         else:
             remark = cal['status']

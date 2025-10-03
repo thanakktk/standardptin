@@ -105,7 +105,7 @@
                                 {% elif c.status == 'failed' %}
                                     <span class="badge bg-danger">ไม่ผ่านการสอบเทียบ</span>
                                 {% elif c.status == 'not_set' %}
-                                    <span class="badge bg-secondary">ยังไม่ตั้งค่า</span>
+                                    <span class="badge bg-warning">รอการสอบเทียบ</span>
                                 {% else %}
                                     <span class="badge bg-secondary">{{ c.status }}</span>
                                 {% endif %}
