@@ -768,6 +768,22 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
             # บันทึกข้อมูลการสอบเทียบ
             calibration = form.save()
             print(f"✅ บันทึก calibration ID: {calibration.pk}")
+            
+            # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
+            from .utils import calculate_next_due_date
+            
+            if calibration.update:
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.update)
+                print(f"Next Due Date: {calibration.next_due}")
+            else:
+                # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
+                today = datetime.now().date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
+            
+            calibration.save()
         except Exception as e:
             print(f"❌ Error saving calibration: {e}")
             return self.form_invalid(form)
@@ -1388,41 +1404,18 @@ def create_calibration_with_machine(request, machine_id):
                 calibration.uuc_id = machine
             
             # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
-            from datetime import datetime, timedelta
+            from .utils import calculate_next_due_date
             
             if calibration.update:
                 # คำนวณ 6 เดือนจากวันที่สอบเทียบ
-                year = calibration.update.year
-                month = calibration.update.month + 6
-                if month > 12:
-                    year += month // 12
-                    month = month % 12
-                    if month == 0:
-                        month = 12
-                
-                # ใช้วันที่เดิม แต่เปลี่ยนปีและเดือน
-                day = min(calibration.update.day, 28)  # ป้องกันปัญหาเดือนกุมภาพันธ์
-                try:
-                    calibration.next_due = datetime(year, month, day).date()
-                except ValueError:
-                    # ถ้าวันที่ไม่ถูกต้อง ให้ใช้วันที่ 28 ของเดือนนั้น
-                    calibration.next_due = datetime(year, month, 28).date()
+                calibration.next_due = calculate_next_due_date(calibration.update)
+                print(f"Next Due Date: {calibration.next_due}")
             else:
                 # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
                 today = datetime.now().date()
-                year = today.year
-                month = today.month + 6
-                if month > 12:
-                    year += month // 12
-                    month = month % 12
-                    if month == 0:
-                        month = 12
-                
-                day = min(today.day, 28)
-                try:
-                    calibration.next_due = datetime(year, month, day).date()
-                except ValueError:
-                    calibration.next_due = datetime(year, month, 28).date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
             
             calibration.save()
             # ลบ success message ออกตามที่ผู้ใช้ต้องการ
@@ -1632,63 +1625,17 @@ def process_torque_calibration(request, machine):
                 print(f"Update Date: {update_date}")
             
             # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
-            from datetime import datetime, timedelta
+            from .utils import calculate_next_due_date
             
             if calibration.update:
-                # แปลง string เป็น date object
-                try:
-                    update_date_obj = datetime.strptime(calibration.update, '%Y-%m-%d').date()
-                    # คำนวณ 6 เดือนจากวันที่สอบเทียบ
-                    year = update_date_obj.year
-                    month = update_date_obj.month + 6
-                    if month > 12:
-                        year += month // 12
-                        month = month % 12
-                        if month == 0:
-                            month = 12
-                    
-                    # ใช้วันที่เดิม แต่เปลี่ยนปีและเดือน
-                    day = min(update_date_obj.day, 28)  # ป้องกันปัญหาเดือนกุมภาพันธ์
-                    try:
-                        calibration.next_due = datetime(year, month, day).date()
-                    except ValueError:
-                        # ถ้าวันที่ไม่ถูกต้อง ให้ใช้วันที่ 28 ของเดือนนั้น
-                        calibration.next_due = datetime(year, month, 28).date()
-                    print(f"Next Due Date: {calibration.next_due}")
-                except ValueError as e:
-                    print(f"Error parsing date: {e}")
-                    # ถ้าแปลงวันที่ไม่ได้ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
-                    today = datetime.now().date()
-                    year = today.year
-                    month = today.month + 6
-                    if month > 12:
-                        year += month // 12
-                        month = month % 12
-                        if month == 0:
-                            month = 12
-                    
-                    day = min(today.day, 28)
-                    try:
-                        calibration.next_due = datetime(year, month, day).date()
-                    except ValueError:
-                        calibration.next_due = datetime(year, month, 28).date()
-                    print(f"Next Due Date (default): {calibration.next_due}")
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.update)
+                print(f"Next Due Date: {calibration.next_due}")
             else:
                 # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
                 today = datetime.now().date()
-                year = today.year
-                month = today.month + 6
-                if month > 12:
-                    year += month // 12
-                    month = month % 12
-                    if month == 0:
-                        month = 12
-                
-                day = min(today.day, 28)
-                try:
-                    calibration.next_due = datetime(year, month, day).date()
-                except ValueError:
-                    calibration.next_due = datetime(year, month, 28).date()
+                calibration.next_due = calculate_next_due_date(today)
                 print(f"Next Due Date (default): {calibration.next_due}")
             
             # ข้อมูลเพิ่มเติม
@@ -1818,63 +1765,17 @@ def process_pressure_calibration(request, machine):
                 print(f"Update Date: {update_date}")
             
             # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
-            from datetime import datetime, timedelta
+            from .utils import calculate_next_due_date
             
             if calibration.update:
-                # แปลง string เป็น date object
-                try:
-                    update_date_obj = datetime.strptime(calibration.update, '%Y-%m-%d').date()
-                    # คำนวณ 6 เดือนจากวันที่สอบเทียบ
-                    year = update_date_obj.year
-                    month = update_date_obj.month + 6
-                    if month > 12:
-                        year += month // 12
-                        month = month % 12
-                        if month == 0:
-                            month = 12
-                    
-                    # ใช้วันที่เดิม แต่เปลี่ยนปีและเดือน
-                    day = min(update_date_obj.day, 28)  # ป้องกันปัญหาเดือนกุมภาพันธ์
-                    try:
-                        calibration.next_due = datetime(year, month, day).date()
-                    except ValueError:
-                        # ถ้าวันที่ไม่ถูกต้อง ให้ใช้วันที่ 28 ของเดือนนั้น
-                        calibration.next_due = datetime(year, month, 28).date()
-                    print(f"Next Due Date: {calibration.next_due}")
-                except ValueError as e:
-                    print(f"Error parsing date: {e}")
-                    # ถ้าแปลงวันที่ไม่ได้ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
-                    today = datetime.now().date()
-                    year = today.year
-                    month = today.month + 6
-                    if month > 12:
-                        year += month // 12
-                        month = month % 12
-                        if month == 0:
-                            month = 12
-                    
-                    day = min(today.day, 28)
-                    try:
-                        calibration.next_due = datetime(year, month, day).date()
-                    except ValueError:
-                        calibration.next_due = datetime(year, month, 28).date()
-                    print(f"Next Due Date (default): {calibration.next_due}")
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.update)
+                print(f"Next Due Date: {calibration.next_due}")
             else:
                 # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
                 today = datetime.now().date()
-                year = today.year
-                month = today.month + 6
-                if month > 12:
-                    year += month // 12
-                    month = month % 12
-                    if month == 0:
-                        month = 12
-                
-                day = min(today.day, 28)
-                try:
-                    calibration.next_due = datetime(year, month, day).date()
-                except ValueError:
-                    calibration.next_due = datetime(year, month, 28).date()
+                calibration.next_due = calculate_next_due_date(today)
                 print(f"Next Due Date (default): {calibration.next_due}")
             
             # ข้อมูลเพิ่มเติม
