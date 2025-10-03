@@ -196,6 +196,8 @@
                                                 <span class="badge bg-primary">ออกใบรับรอง</span>
                                             {% elif cal.status == 'failed' %}
                                                 <span class="badge bg-danger">ไม่ผ่านการสอบเทียบ</span>
+                                            {% elif cal.status == 'closed' %}
+                                                <span class="badge bg-dark">ปิดงาน</span>
                                             {% elif cal.status == 'not_set' %}
                                                 <span class="badge bg-warning">รอการสอบเทียบ</span>
                                             {% else %}
@@ -977,7 +979,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 alert('ปิดงานสำเร็จ');
-                location.reload();
+                // ไปที่หน้า report detail หลังจากปิดงาน
+                window.location.href = '/calibrate/report/detail/';
             } else {
                 alert('เกิดข้อผิดพลาด: ' + data.message);
             }

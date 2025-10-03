@@ -153,6 +153,8 @@
                                     <span class="badge bg-danger">ไม่ผ่านการสอบเทียบ</span>
                                 {% elif cal.status == 'pending' or cal.status == 'in_progress' %}
                                     <span class="badge bg-warning">รอการสอบเทียบ</span>
+                                {% elif cal.status == 'closed' %}
+                                    <span class="badge bg-dark">ปิดงาน</span>
                                 {% else %}
                                     <span class="badge bg-secondary">รอการสอบเทียบ</span>
                                 {% endif %}
