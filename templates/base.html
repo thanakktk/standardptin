@@ -269,42 +269,56 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
+                    {% if user_permissions.can_view_machine %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'machine-list' %}">
                             <i class="fas fa-tools me-1"></i>เครื่องมือวัด
                         </a>
                     </li>
+                    {% endif %}
+                    {% if user_permissions.can_view_calibration %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'calibrate-dashboard' %}">
                             <i class="fas fa-clipboard-check me-1"></i>สอบเทียบ
                         </a>
                     </li>
+                    {% endif %}
 
+                    {% if user_permissions.can_view_organization %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'organize-list' %}">
                             <i class="fas fa-building me-1"></i>หน่วยงาน
                         </a>
                     </li>
+                    {% endif %}
+                    {% if user_permissions.can_view_users %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'employee-list' %}">
                             <i class="fas fa-users me-1"></i>ผู้ใช้งาน
                         </a>
                     </li>
+                    {% endif %}
+                    {% if user_permissions.can_view_equipment %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'calibration-equipment-list' %}">
                             <i class="fas fa-tools me-1"></i>เครื่องมือที่ใช้สอบเทียบ
                         </a>
                     </li>
+                    {% endif %}
+                    {% if user_permissions.can_view_technical_docs %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'technical_docs:document_list' %}">
                             <i class="fas fa-file-alt me-1"></i>เอกสารเทคนิค (T.O.)
                         </a>
                     </li>
+                    {% endif %}
+                    {% if user_permissions.can_view_reports %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'calibrate-report-detail' %}">
                             <i class="fas fa-file-alt me-1"></i>รายงานผลสอบเทียบ
                         </a>
                     </li>
+                    {% endif %}
         </ul>
                 
         <ul class="navbar-nav">
@@ -314,8 +328,10 @@
                                 <i class="fas fa-user-circle me-1"></i>{{ user.get_display_name|default:user.username|truncatechars:10 }}
                             </a>
                             <ul class="dropdown-menu">
+                                {% if user_permissions.can_access_admin %}
                                 <li><a class="dropdown-item" href="/admin/"><i class="fas fa-cog me-2"></i>จัดการระบบ</a></li>
                                 <li><hr class="dropdown-divider"></li>
+                                {% endif %}
                                 <li><a class="dropdown-item" href="/admin/logout/"><i class="fas fa-sign-out-alt me-2"></i>ออกจากระบบ</a></li>
                             </ul>
                         </li>

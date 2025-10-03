@@ -15,12 +15,14 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from accounts.permissions import PermissionRequiredMixin, permission_required
 import json
 
-class MachineListView(LoginRequiredMixin, ListView):
+class MachineListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = Machine
     template_name = 'machine/list.html'
     context_object_name = 'machines'
+    permission_required = 'view_machine'
     
     def get_queryset(self):
         queryset = Machine.objects.filter(deleted=False)
@@ -75,22 +77,23 @@ class MachineCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     form_class = MachineForm
     template_name = 'machine/form.html'
     success_url = reverse_lazy('machine-list')
-    permission_required = 'machine.add_machine'
+    permission_required = 'add_machine'
 
 class MachineUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Machine
     form_class = MachineForm
     template_name = 'machine/form.html'
     success_url = reverse_lazy('machine-list')
-    permission_required = 'machine.change_machine'
+    permission_required = 'edit_machine'
 
 class MachineDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Machine
     template_name = 'machine/confirm_delete.html'
     success_url = reverse_lazy('machine-list')
-    permission_required = 'machine.delete_machine'
+    permission_required = 'delete_machine'
 
 @login_required
+@permission_required('send_notification')
 def send_machine_email(request, pk):
     machine = get_object_or_404(Machine, pk=pk)
     if request.method == 'POST':
@@ -413,10 +416,11 @@ def create_calibration_request(request, pk):
         return redirect('machine-list')
 
 # CalibrationEquipment Views
-class CalibrationEquipmentListView(LoginRequiredMixin, ListView):
+class CalibrationEquipmentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = CalibrationEquipment
     template_name = 'machine/calibration_equipment_list.html'
     context_object_name = 'calibration_equipment'
+    permission_required = 'view_equipment'
     
     def get_queryset(self):
         queryset = CalibrationEquipment.objects.all()
@@ -451,20 +455,20 @@ class CalibrationEquipmentCreateView(LoginRequiredMixin, PermissionRequiredMixin
     form_class = CalibrationEquipmentForm
     template_name = 'machine/calibration_equipment_form.html'
     success_url = reverse_lazy('calibration-equipment-list')
-    permission_required = 'machine.add_calibrationequipment'
+    permission_required = 'manage_equipment'
 
 class CalibrationEquipmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = CalibrationEquipment
     form_class = CalibrationEquipmentForm
     template_name = 'machine/calibration_equipment_form.html'
     success_url = reverse_lazy('calibration-equipment-list')
-    permission_required = 'machine.change_calibrationequipment'
+    permission_required = 'manage_equipment'
 
 class CalibrationEquipmentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = CalibrationEquipment
     template_name = 'machine/calibration_equipment_confirm_delete.html'
     success_url = reverse_lazy('calibration-equipment-list')
-    permission_required = 'machine.delete_calibrationequipment'
+    permission_required = 'manage_equipment'
 
 @login_required
 @require_http_methods(["POST"])

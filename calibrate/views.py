@@ -4,6 +4,7 @@ from typing import List
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from accounts.permissions import PermissionRequiredMixin as CustomPermissionRequiredMixin
 from django.db import models
 from django.http import HttpRequest, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
@@ -50,10 +51,11 @@ from django.http import HttpResponse, JsonResponse
 
 
 
-class CalibrationPressureListView(LoginRequiredMixin, ListView):
+class CalibrationPressureListView(LoginRequiredMixin, CustomPermissionRequiredMixin, ListView):
     model = CalibrationPressure
     template_name = 'calibrate/pressure_list.html'
     context_object_name = 'calibrations'
+    permission_required = 'view_calibration'
     
     def get_queryset(self):
         # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ
@@ -67,12 +69,12 @@ class CalibrationPressureListView(LoginRequiredMixin, ListView):
             )
         ).order_by('priority_order', '-update')
 
-class CalibrationPressureCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class CalibrationPressureCreateView(LoginRequiredMixin, CustomPermissionRequiredMixin, CreateView):
     model = CalibrationPressure
     form_class = CalibrationPressureForm
     template_name = 'calibrate/pressure_form.html'
     success_url = reverse_lazy('calibrate-dashboard')
-    permission_required = 'calibrate.add_calibrationpressure'
+    permission_required = 'add_calibration'
     
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -121,12 +123,12 @@ class CalibrationPressureCreateView(LoginRequiredMixin, PermissionRequiredMixin,
             messages.error(self.request, f'เกิดข้อผิดพลาดในการบันทึก: {str(e)}')
             return self.form_invalid(form)
 
-class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class CalibrationPressureUpdateView(LoginRequiredMixin, CustomPermissionRequiredMixin, UpdateView):
     model = CalibrationPressure
     form_class = CalibrationPressureForm
     template_name = 'calibrate/pressure_form.html'
     success_url = reverse_lazy('calibrate-dashboard')
-    permission_required = 'calibrate.change_calibrationpressure'
+    permission_required = 'edit_calibration'
     
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -403,16 +405,17 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
                     
         return True  # ผ่าน
 
-class CalibrationPressureDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class CalibrationPressureDeleteView(LoginRequiredMixin, CustomPermissionRequiredMixin, DeleteView):
     model = CalibrationPressure
     template_name = 'calibrate/pressure_confirm_delete.html'
     success_url = reverse_lazy('calibrate-dashboard')
-    permission_required = 'calibrate.delete_calibrationpressure'
+    permission_required = 'delete_calibration'
 
-class CalibrationTorqueListView(LoginRequiredMixin, ListView):
+class CalibrationTorqueListView(LoginRequiredMixin, CustomPermissionRequiredMixin, ListView):
     model = CalibrationTorque
     template_name = 'calibrate/torque_list.html'
     context_object_name = 'calibrations'
+    permission_required = 'view_calibration'
     
     def get_queryset(self):
         # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ

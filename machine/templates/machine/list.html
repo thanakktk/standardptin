@@ -18,10 +18,12 @@
                 </p>
             </div>
             <div class="col-md-4 text-md-end">
+                {% if user_permissions.can_add_machine %}
                 <a href="{% url 'machine-add' %}" class="btn btn-success btn-lg">
                     <i class="fas fa-plus me-2"></i>
                     เพิ่มเครื่องมือวัด
                 </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -93,9 +95,11 @@
                             <a href="{% url 'machine-list' %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-1"></i>ล้างการกรอง
                             </a>
+                            {% if user_permissions.can_send_notification %}
                             <button type="submit" formaction="{% url 'machine-send-filtered-email' %}" class="btn btn-success">
                                 <i class="fas fa-envelope me-1"></i>ส่งอีเมลข้อมูลที่กรอง
                             </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -194,15 +198,21 @@
                              <td>{{ m.res_uuc|default:"-" }}</td>
                             <td>
                                 <div class="btn-group" role="group">
+                                    {% if user_permissions.can_edit_machine %}
                                     <a href="{% url 'machine-edit' m.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    {% endif %}
+                                    {% if user_permissions.can_delete_machine %}
                                     <a href="{% url 'machine-delete' m.id %}" class="btn btn-outline-danger btn-sm" title="ลบ">
                                         <i class="fas fa-trash"></i>
                                     </a>
+                                    {% endif %}
+                                    {% if user_permissions.can_send_notification %}
                                     <a href="{% url 'machine-send-email' m.id %}" class="btn btn-outline-success btn-sm" title="ส่งข้อมูลทางอีเมล">
                                         <i class="fas fa-envelope"></i>
                                     </a>
+                                    {% endif %}
                                     <a href="{% url 'create-calibration-request' m.id %}?priority=normal" 
                                        class="btn btn-outline-warning btn-sm" 
                                        title="ส่งคำร้องขอบันทึกสอบเทียบ"
@@ -219,9 +229,11 @@
                                     <i class="fas fa-info-circle fa-3x mb-3"></i>
                                     <h5>ไม่พบข้อมูลเครื่องมือวัด</h5>
                                     <p>กรุณาเพิ่มเครื่องมือวัดใหม่หรือลองเปลี่ยนเงื่อนไขการค้นหา</p>
+                                    {% if user_permissions.can_add_machine %}
                                     <a href="{% url 'machine-add' %}" class="btn btn-primary">
                                         <i class="fas fa-plus me-2"></i>เพิ่มเครื่องมือวัด
                                     </a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
