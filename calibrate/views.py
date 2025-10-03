@@ -1372,10 +1372,9 @@ def calibration_dashboard(request):
             filtered_calibrations.append(cal)
     
     # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ แล้วตามด้วยวันที่สอบเทียบล่าสุด
-    priority_order = {'very_urgent': 1, 'urgent': 2, 'normal': 3}
     filtered_calibrations.sort(key=lambda x: (
-        priority_order.get(x['priority'], 4),  # เรียงตามระดับความเร่งด่วน
-        x['calibration_date'] if x['calibration_date'] else date.min  # แล้วตามด้วยวันที่
+        priority_order.get(x.get('priority'), 4),
+        (x.get('calibration_date') or x.get('update_date') or date.min)
     ))
     
     # ข้อมูลวันที่สำหรับการคำนวณสถานะ
@@ -2038,7 +2037,7 @@ def calibration_report(request):
     low_frequency_calibrations = LowFrequencyCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
     microwave_calibrations = MicrowaveCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
     dial_gauge_calibrations = DialGaugeCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
-    force_calibrations = []  # Empty list since CalibrationForce model no longer exists
+    # force_calibrations = []  # Empty list since CalibrationForce model no longer exists
     
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
@@ -2058,7 +2057,7 @@ def calibration_report(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'calibration_date': cal.update,  # วันที่สอบเทียบ
+    #         'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
             'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
@@ -2078,7 +2077,7 @@ def calibration_report(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'calibration_date': cal.update,  # วันที่สอบเทียบ
+    #         'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
             'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
@@ -2113,14 +2112,14 @@ def calibration_report(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
+    #         'next_due': cal.next_due,
+    #         'status': cal.status,
+    #         'priority': cal.priority,
             'calibration_date': cal.date_calibration,
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
             'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
         })
     
@@ -2133,14 +2132,14 @@ def calibration_report(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
+    #         'next_due': cal.next_due,
+    #         'status': cal.status,
+    #         'priority': cal.priority,
             'calibration_date': cal.date_calibration,
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
             'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
         })
     
@@ -2153,14 +2152,14 @@ def calibration_report(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
+    #         'next_due': cal.next_due,
+    #         'status': cal.status,
+    #         'priority': cal.priority,
             'calibration_date': cal.date_calibration,
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
             'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
         })
     
@@ -2173,14 +2172,14 @@ def calibration_report(request):
             'machine_name': cal.machine.name if cal.machine else '-',
             'machine_model': cal.machine.model if cal.machine else '-',
             'serial_number': cal.machine.serial_number if cal.machine else '-',
-            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.date_calibration,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
+    #         'next_due': cal.next_due,
+    #         'status': cal.status,
+    #         'priority': cal.priority,
             'calibration_date': cal.date_calibration,
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
             'user_unit': cal.machine.organize.name if cal.machine and cal.machine.organize else '-',
         })
     
@@ -2236,30 +2235,30 @@ def calibration_report_detail(request):
     high_frequency_calibrations = HighFrequencyCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
     low_frequency_calibrations = LowFrequencyCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
     dial_gauge_calibrations = DialGaugeCalibration.objects.select_related('machine', 'std_id', 'calibrator', 'certificate_issuer').all()
-    force_calibrations = []  # Empty list since CalibrationForce model no longer exists
+    # force_calibrations = []  # Empty list since CalibrationForce model no longer exists
     
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
     
-    # เพิ่มข้อมูล Force calibrations
-    for cal in force_calibrations:
-        all_calibrations.append({
-            'id': cal.cal_force_id,
-            'type': 'force',
-            'type_name': 'การสอบเทียบแรง',
-            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
-            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
-            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
-            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
-            'update_date': cal.update,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
-            'calibration_date': cal.update,  # ǹ��ͺ�º
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
-        })
+    # เพิ่มข้อมูล Force calibrations (ไม่มีในระบบแล้ว)
+    # for cal in force_calibrations:
+    #     all_calibrations.append({
+    #         'id': cal.cal_force_id,
+    #         'type': 'force',
+    #         'type_name': 'การสอบเทียบแรง',
+    #         'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+    #         'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+    #         'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
+    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+    #         'update_date': cal.update,
+    #         'next_due': cal.next_due,
+    #         'status': cal.status,
+    #         'priority': cal.priority,
+    #         'calibration_date': cal.update,  # ǹ��ͺ�º
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+        # })
     
     # เพิ่มข้อมูล Pressure calibrations
     for cal in pressure_calibrations:
@@ -2267,18 +2266,18 @@ def calibration_report_detail(request):
             'id': cal.cal_pressure_id,
             'type': 'pressure',
             'type_name': 'การสอบเทียบ Pressure',
-            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
-            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
-            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
-            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
-            'update_date': cal.update,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
-            'calibration_date': cal.update,  # ǹ��ͺ�º
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+    #         'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+    #         'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+    #         'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
+    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+    #         'update_date': cal.update,
+    #         'next_due': cal.next_due,
+    #         'status': cal.status,
+    #         'priority': cal.priority,
+    #         'calibration_date': cal.update,  # ǹ��ͺ�º
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -2295,10 +2294,10 @@ def calibration_report_detail(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'calibration_date': cal.update,  # ǹ��ͺ�º
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+    #         'calibration_date': cal.update,  # ǹ��ͺ�º
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Balance calibrations
@@ -2453,7 +2452,10 @@ def calibration_report_detail(request):
             filtered_calibrations.append(cal)
     
     # เรียงลำดับตามวันที่สอบเทียบล่าสุด
-    filtered_calibrations.sort(key=lambda x: x['calibration_date'] if x['calibration_date'] else date.min, reverse=True)
+    filtered_calibrations.sort(
+        key=lambda x: (x.get('calibration_date') or x.get('update_date') or date.min),
+        reverse=True
+)
     
     # ข้อมูลวันที่สำหรับการคำนวณสถานะ
     today = date.today()
@@ -2517,25 +2519,25 @@ def export_to_word(request):
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
     
-    # เพิ่มข้อมูล Force calibrations
-    for cal in force_calibrations:
-        all_calibrations.append({
-            'id': cal.cal_force_id,
-            'type': 'force',
-            'type_name': 'การสอบเทียบแรง',
-            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
-            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
-            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
-            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
-            'update_date': cal.update,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
-            'calibration_date': cal.update,  # ǹ��ͺ�º
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
-        })
+    # เพิ่มข้อมูล Force calibrations (ไม่มีในระบบแล้ว)
+    # for cal in force_calibrations:
+    #     all_calibrations.append({
+    #         'id': cal.cal_force_id,
+    #         'type': 'force',
+    #         'type_name': 'การสอบเทียบแรง',
+    #         'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+    #         'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+    #         'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
+    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+    #         'update_date': cal.update,
+    #         'next_due': cal.next_due,
+    #         'status': cal.status,
+    #         'priority': cal.priority,
+    #         'calibration_date': cal.update,  # ǹ��ͺ�º
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+        # })
     
     # เพิ่มข้อมูล Pressure calibrations
     for cal in pressure_calibrations:
@@ -2543,18 +2545,18 @@ def export_to_word(request):
             'id': cal.cal_pressure_id,
             'type': 'pressure',
             'type_name': 'การสอบเทียบ Pressure',
-            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
-            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
-            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
-            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
-            'update_date': cal.update,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
-            'calibration_date': cal.update,  # ǹ��ͺ�º
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+    #         'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+    #         'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+    #         'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
+    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+    #         'update_date': cal.update,
+    #         'next_due': cal.next_due,
+    #         'status': cal.status,
+    #         'priority': cal.priority,
+    #         'calibration_date': cal.update,  # ǹ��ͺ�º
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -2571,10 +2573,10 @@ def export_to_word(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'calibration_date': cal.update,  # ǹ��ͺ�º
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+    #         'calibration_date': cal.update,  # ǹ��ͺ�º
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)
@@ -2583,44 +2585,46 @@ def export_to_word(request):
         include_item = True
         
         # กรองตาม Serial Number
-        if serial_search and serial_search.lower() not in cal['serial_number'].lower():
+        if serial_search and serial_search.lower() not in (cal.get('serial_number') or '').lower():
             include_item = False
         
         # กรองตามชื่อเครื่องมือ
-        if name_search and name_search.lower() not in cal['machine_name'].lower():
+        if name_search and name_search.lower() not in (cal.get('machine_name') or '').lower():
             include_item = False
         
         # กรองตามประเภทเครื่องมือ
         if instrument_type:
-            if instrument_type == 'force' and cal['type'] != 'force':
+            if instrument_type == 'force' and cal.get('type') != 'force':
                 include_item = False
-            elif instrument_type == 'pressure' and cal['type'] != 'pressure':
+            elif instrument_type == 'pressure' and cal.get('type') != 'pressure':
                 include_item = False
-            elif instrument_type == 'torque' and cal['type'] != 'torque':
+            elif instrument_type == 'torque' and cal.get('type') != 'torque':
                 include_item = False
-            elif instrument_type == 'balance' and cal['type'] != 'balance':
+            elif instrument_type == 'balance' and cal.get('type') != 'balance':
                 include_item = False
         
         # กรองตามสถานะ
         if status_filter:
-            if status_filter == 'cert_issued' and cal['status'] not in ['cert_issued', 'passed', 'active']:
+            status = cal.get('status')
+            if status_filter == 'cert_issued' and status not in ['cert_issued', 'passed', 'active']:
                 include_item = False
-            elif status_filter == 'failed' and cal['status'] not in ['failed', 'pending', 'in_progress']:
+            elif status_filter == 'failed' and status not in ['failed', 'pending', 'in_progress']:
                 include_item = False
         
         # กรองตามวันที่
-        if start_date and cal['update_date']:
+        upd = cal.get('update_date')
+        if start_date and upd:
             try:
                 start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
-                if cal['update_date'] < start_date_obj:
+                if upd < start_date_obj:
                     include_item = False
             except:
                 pass
-        
-        if end_date and cal['update_date']:
+
+        if end_date and upd:
             try:
                 end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
-                if cal['update_date'] > end_date_obj:
+                if upd > end_date_obj:
                     include_item = False
             except:
                 pass
@@ -2772,25 +2776,25 @@ def export_to_excel(request):
     # รวมข้อมูลการสอบเทียบทั้งหมด
     all_calibrations = []
     
-    # เพิ่มข้อมูล Force calibrations
-    for cal in force_calibrations:
-        all_calibrations.append({
-            'id': cal.cal_force_id,
-            'type': 'force',
-            'type_name': 'การสอบเทียบแรง',
-            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
-            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
-            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
-            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
-            'update_date': cal.update,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
-            'calibration_date': cal.update,  # ǹ��ͺ�º
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
-        })
+    # เพิ่มข้อมูล Force calibrations (ไม่มีในระบบแล้ว)
+    # for cal in force_calibrations:
+    #     all_calibrations.append({
+    #         'id': cal.cal_force_id,
+    #         'type': 'force',
+    #         'type_name': 'การสอบเทียบแรง',
+    #         'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+    #         'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+    #         'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
+    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+    #         'update_date': cal.update,
+    #         'next_due': cal.next_due,
+    #         'status': cal.status,
+    #         'priority': cal.priority,
+    #         'calibration_date': cal.update,  # ǹ��ͺ�º
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+        # })
     
     # เพิ่มข้อมูล Pressure calibrations
     for cal in pressure_calibrations:
@@ -2798,18 +2802,18 @@ def export_to_excel(request):
             'id': cal.cal_pressure_id,
             'type': 'pressure',
             'type_name': 'การสอบเทียบ Pressure',
-            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
-            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
-            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
-            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
-            'update_date': cal.update,
-            'next_due': cal.next_due,
-            'status': cal.status,
-            'priority': cal.priority,
-            'calibration_date': cal.update,  # ǹ��ͺ�º
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+    #         'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+    #         'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+    #         'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
+    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+    #         'update_date': cal.update,
+    #         'next_due': cal.next_due,
+    #         'status': cal.status,
+    #         'priority': cal.priority,
+    #         'calibration_date': cal.update,  # ǹ��ͺ�º
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -2826,10 +2830,10 @@ def export_to_excel(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-            'calibration_date': cal.update,  # ǹ��ͺ�º
-            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+    #         'calibration_date': cal.update,  # ǹ��ͺ�º
+    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)
@@ -3113,8 +3117,8 @@ def close_work(request, cal_type, cal_id):
                 'message': 'งานนี้ถูกปิดแล้ว'
             })
         
-        # อัปเดตสถานะเป็นปิดงาน
-        calibration.status = 'closed'
+        # อัปเดตสถานะเป็นปิดงาน (ผ่านการสอบเทียบ)
+        calibration.status = 'passed'
         calibration.save()
         
         return JsonResponse({
