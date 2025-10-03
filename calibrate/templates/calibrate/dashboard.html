@@ -214,10 +214,10 @@
                                         <td>
                                             <div class="btn-group" role="group">
                                                 {% if cal.type == 'pressure' %}
-                                                    <a href="{% url 'calibrate-pressure-edit' cal.id %}" class="btn btn-sm btn-outline-success">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
                                                     {% if user.is_staff or user.is_superuser %}
+                                                        <a href="{% url 'calibrate-pressure-edit' cal.id %}" class="btn btn-sm btn-outline-success">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
                                                         <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
                                                                 data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
                                                                 data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
@@ -239,10 +239,10 @@
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 {% elif cal.type == 'torque' %}
-                                                    <a href="{% url 'calibrate-torque-edit' cal.id %}" class="btn btn-sm btn-outline-warning">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
                                                     {% if user.is_staff or user.is_superuser %}
+                                                        <a href="{% url 'calibrate-torque-edit' cal.id %}" class="btn btn-sm btn-outline-warning">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
                                                         <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
                                                                 data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
                                                                 data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
@@ -264,10 +264,10 @@
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 {% elif cal.type == 'balance' %}
-                                                    <a href="{% url 'calibrate-balance-edit' cal.id %}" class="btn btn-sm btn-outline-dark">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
                                                     {% if user.is_staff or user.is_superuser %}
+                                                        <a href="{% url 'calibrate-balance-edit' cal.id %}" class="btn btn-sm btn-outline-dark">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
                                                         <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
                                                                 data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
                                                                 data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
@@ -289,10 +289,10 @@
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 {% elif cal.type == 'microwave' %}
-                                                    <a href="{% url 'microwave-calibration-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
                                                     {% if user.is_staff or user.is_superuser %}
+                                                        <a href="{% url 'microwave-calibration-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
                                                         <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
                                                                 data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
                                                                 data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
@@ -314,10 +314,10 @@
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 {% elif cal.type == 'dial_gauge' %}
-                                                    <a href="{% url 'dial-gauge-calibration-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
                                                     {% if user.is_staff or user.is_superuser %}
+                                                        <a href="{% url 'dial-gauge-calibration-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
                                                         <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
                                                                 data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
                                                                 data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
@@ -339,10 +339,10 @@
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 {% elif cal.type == 'high-frequency' %}
-                                                    <a href="{% url 'calibrate-high-frequency-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
                                                     {% if user.is_staff or user.is_superuser %}
+                                                        <a href="{% url 'calibrate-high-frequency-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
                                                         <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
                                                                 data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
                                                                 data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"
@@ -364,10 +364,10 @@
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 {% elif cal.type == 'low-frequency' %}
-                                                    <a href="{% url 'calibrate-low-frequency-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
                                                     {% if user.is_staff or user.is_superuser %}
+                                                        <a href="{% url 'calibrate-low-frequency-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
                                                         <button type="button" class="btn btn-sm btn-outline-warning priority-btn" 
                                                                 data-id="{{ cal.id }}" data-type="{{ cal.type }}" 
                                                                 data-name="{{ cal.machine_name }}" data-current-priority="{{ cal.priority }}"

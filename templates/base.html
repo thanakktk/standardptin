@@ -332,12 +332,16 @@
                                 <li><a class="dropdown-item" href="/admin/"><i class="fas fa-cog me-2"></i>จัดการระบบ</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 {% endif %}
-                                <li><a class="dropdown-item" href="/admin/logout/"><i class="fas fa-sign-out-alt me-2"></i>ออกจากระบบ</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="logout()" style="cursor: pointer;">
+                                        <i class="fas fa-sign-out-alt me-2"></i>ออกจากระบบ
+                                    </a>
+                                </li>
                             </ul>
                         </li>
             {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="/admin/login/">
+                            <a class="nav-link" href="{% url 'login' %}">
                                 <i class="fas fa-sign-in-alt me-1"></i>เข้าสู่ระบบ
                             </a>
                         </li>
@@ -386,6 +390,37 @@
                 }
             });
         });
+
+        // Logout function
+        function logout() {
+            // Create a form and submit it via POST
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "logout" %}';
+            
+            // Add CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = csrfToken.value;
+                form.appendChild(csrfInput);
+            } else {
+                // Fallback: get CSRF token from cookie
+                const csrfCookie = document.cookie.split(';').find(cookie => cookie.trim().startsWith('csrftoken='));
+                if (csrfCookie) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = 'csrfmiddlewaretoken';
+                    csrfInput.value = csrfCookie.split('=')[1];
+                    form.appendChild(csrfInput);
+                }
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
     </script>
 </body>
 </html> 

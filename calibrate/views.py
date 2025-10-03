@@ -996,9 +996,9 @@ def calibration_dashboard(request):
             'id': cal.cal_pressure_id,
             'type': 'pressure',
             'type_name': 'การสอบเทียบ Pressure',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -1007,7 +1007,7 @@ def calibration_dashboard(request):
             'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -1016,9 +1016,9 @@ def calibration_dashboard(request):
             'id': cal.cal_torque_id,
             'type': 'torque',
             'type_name': 'การสอบเทียบ Torque',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -1027,7 +1027,7 @@ def calibration_dashboard(request):
             'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Dial Gauge calibrations
@@ -1258,7 +1258,7 @@ def create_calibration_for_machine(request, machine_id):
             if any(x in machine_type_name for x in ['balance', 'microwave', 'high frequency', 'low frequency', 'dial gauge']):
                 calibration.machine = machine
             else:
-                calibration.uuc_id = machine.id
+                calibration.uuc_id = machine
             calibration.save()
             # ลบ success message ออกตามที่ผู้ใช้ต้องการ
             return redirect(success_url)
@@ -1615,6 +1615,7 @@ def process_torque_calibration(request, machine):
             calibration.ccw_avg = ccw_avg_1
             calibration.ccw_error = ccw_error_1
             calibration.ccw_reading = ccw_reading_1
+            calibration.ccw_actual = ccw_avg_1  # ใช้ค่าเฉลี่ยเป็นค่าจริง
             
             # แยก tolerance string เป็น start และ end
             if ' - ' in ccw_tolerance_1:
@@ -1703,6 +1704,33 @@ def process_torque_calibration(request, machine):
                 calibration.calibrator_id = int(calibrator_id)
             if certificate_issuer_id and certificate_issuer_id != '':
                 calibration.certificate_issuer_id = int(certificate_issuer_id)
+            
+            # บันทึกข้อมูลแถวที่ 2 และ 3 (ถ้ามี)
+            # แถวที่ 2
+            ccwset_2 = safe_float(request.POST.get('ccwset_2', 0))
+            ccw_avg_2 = safe_float(request.POST.get('ccw_avg_2', 0))
+            if ccwset_2 > 0:
+                calibration.ccwset_2 = ccwset_2
+                calibration.ccw_actual_2 = ccw_avg_2
+                calibration.ccw_error_2 = safe_float(request.POST.get('ccw_error_2', 0))
+                ccw_tolerance_2 = request.POST.get('ccw_tolerance_2', '')
+                if ' - ' in ccw_tolerance_2:
+                    ccw_parts_2 = ccw_tolerance_2.split(' - ')
+                    calibration.ccw_tolerance_start_2 = safe_float(ccw_parts_2[0]) if ccw_parts_2[0] else None
+                    calibration.ccw_tolerance_end_2 = safe_float(ccw_parts_2[1]) if ccw_parts_2[1] else None
+            
+            # แถวที่ 3
+            ccwset_3 = safe_float(request.POST.get('ccwset_3', 0))
+            ccw_avg_3 = safe_float(request.POST.get('ccw_avg_3', 0))
+            if ccwset_3 > 0:
+                calibration.ccwset_3 = ccwset_3
+                calibration.ccw_actual_3 = ccw_avg_3
+                calibration.ccw_error_3 = safe_float(request.POST.get('ccw_error_3', 0))
+                ccw_tolerance_3 = request.POST.get('ccw_tolerance_3', '')
+                if ' - ' in ccw_tolerance_3:
+                    ccw_parts_3 = ccw_tolerance_3.split(' - ')
+                    calibration.ccw_tolerance_start_3 = safe_float(ccw_parts_3[0]) if ccw_parts_3[0] else None
+                    calibration.ccw_tolerance_end_3 = safe_float(ccw_parts_3[1]) if ccw_parts_3[1] else None
             
             print("=== DEBUG: บันทึกข้อมูล ===")
             calibration.save()
@@ -1905,9 +1933,9 @@ def calibration_report(request):
             'id': cal.cal_pressure_id,
             'type': 'pressure',
             'type_name': 'การสอบเทียบ Pressure',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -1916,7 +1944,7 @@ def calibration_report(request):
             'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -1925,9 +1953,9 @@ def calibration_report(request):
             'id': cal.cal_torque_id,
             'type': 'torque',
             'type_name': 'การสอบเทียบ Torque',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -1936,7 +1964,7 @@ def calibration_report(request):
             'calibration_date': cal.update,  # วันที่สอบเทียบ
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Balance calibrations
@@ -2102,9 +2130,9 @@ def calibration_report_detail(request):
             'id': cal.cal_force_id,
             'type': 'force',
             'type_name': 'การสอบเทียบแรง',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -2113,7 +2141,7 @@ def calibration_report_detail(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -2122,9 +2150,9 @@ def calibration_report_detail(request):
             'id': cal.cal_pressure_id,
             'type': 'pressure',
             'type_name': 'การสอบเทียบ Pressure',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -2133,7 +2161,7 @@ def calibration_report_detail(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -2142,9 +2170,9 @@ def calibration_report_detail(request):
             'id': cal.cal_torque_id,
             'type': 'torque',
             'type_name': 'การสอบเทียบ Torque',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -2153,7 +2181,7 @@ def calibration_report_detail(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Balance calibrations
@@ -2378,9 +2406,9 @@ def export_to_word(request):
             'id': cal.cal_force_id,
             'type': 'force',
             'type_name': 'การสอบเทียบแรง',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -2389,7 +2417,7 @@ def export_to_word(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -2398,9 +2426,9 @@ def export_to_word(request):
             'id': cal.cal_pressure_id,
             'type': 'pressure',
             'type_name': 'การสอบเทียบ Pressure',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -2409,7 +2437,7 @@ def export_to_word(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -2418,9 +2446,9 @@ def export_to_word(request):
             'id': cal.cal_torque_id,
             'type': 'torque',
             'type_name': 'การสอบเทียบ Torque',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -2429,7 +2457,7 @@ def export_to_word(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)
@@ -2633,9 +2661,9 @@ def export_to_excel(request):
             'id': cal.cal_force_id,
             'type': 'force',
             'type_name': 'การสอบเทียบแรง',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -2644,7 +2672,7 @@ def export_to_excel(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Pressure calibrations
@@ -2653,9 +2681,9 @@ def export_to_excel(request):
             'id': cal.cal_pressure_id,
             'type': 'pressure',
             'type_name': 'การสอบเทียบ Pressure',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -2664,7 +2692,7 @@ def export_to_excel(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -2673,9 +2701,9 @@ def export_to_excel(request):
             'id': cal.cal_torque_id,
             'type': 'torque',
             'type_name': 'การสอบเทียบ Torque',
-            'machine_name': cal.uuc_id.name if cal.uuc_id else '-',
-            'machine_model': cal.uuc_id.model if cal.uuc_id else '-',
-            'serial_number': cal.uuc_id.serial_number if cal.uuc_id else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
             'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
             'update_date': cal.update,
             'next_due': cal.next_due,
@@ -2684,7 +2712,7 @@ def export_to_excel(request):
             'calibration_date': cal.update,  # ǹ��ͺ�º
             'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
             'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-            'user_unit': cal.uuc_id.organize.name if cal.uuc_id and cal.uuc_id.organize else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)
@@ -3025,15 +3053,15 @@ def export_certificate_excel(request, cal_id, cal_type):
         # ข้อมูลเครื่องมือ
         row = 3
         ws[f'A{row}'] = 'ชื่อเครื่องมือ:'
-        ws[f'B{row}'] = calibration.uuc_id.name if calibration.uuc_id else '-'
+        ws[f'B{row}'] = get_machine_from_calibration(calibration).name if get_machine_from_calibration(calibration) else '-'
         ws[f'C{row}'] = 'รุ่น:'
-        ws[f'D{row}'] = calibration.uuc_id.model if calibration.uuc_id and calibration.uuc_id.model else '-'
+        ws[f'D{row}'] = get_machine_from_calibration(calibration).model if get_machine_from_calibration(calibration) and get_machine_from_calibration(calibration).model else '-'
         
         row += 1
         ws[f'A{row}'] = 'Serial Number:'
-        ws[f'B{row}'] = calibration.uuc_id.serial_number if calibration.uuc_id and calibration.uuc_id.serial_number else '-'
+        ws[f'B{row}'] = get_machine_from_calibration(calibration).serial_number if get_machine_from_calibration(calibration) and get_machine_from_calibration(calibration).serial_number else '-'
         ws[f'C{row}'] = 'ผู้ผลิต:'
-        ws[f'D{row}'] = str(calibration.uuc_id.manufacture) if calibration.uuc_id and calibration.uuc_id.manufacture else '-'
+        ws[f'D{row}'] = str(get_machine_from_calibration(calibration).manufacture) if get_machine_from_calibration(calibration) and get_machine_from_calibration(calibration).manufacture else '-'
         
         row += 1
         ws[f'A{row}'] = 'วันที่สอบเทียบ:'
@@ -3064,7 +3092,7 @@ def export_certificate_excel(request, cal_id, cal_type):
         )
         
         # สร้างชื่อไฟล์ที่ปลอดภัย
-        machine_name = calibration.uuc_id.name if calibration.uuc_id else "เครื่องมือ"
+        machine_name = get_machine_from_calibration(calibration).name if get_machine_from_calibration(calibration) else "เครื่องมือ"
         safe_filename = f"ใบรับรอง_{machine_name}_{datetime.now().strftime('%Y%m%d')}.xlsx"
         
         response['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
@@ -4211,21 +4239,35 @@ def export_dial_gauge_certificate_docx(request, cal_id):
         messages.error(request, f"เกิดข้อผิดพลาดในการสร้างใบรับรอง: {str(e)}")
         return redirect("calibrate-report-detail")
 
+def get_machine_from_calibration(calibration):
+    """Helper function to get machine from calibration object"""
+    # สำหรับ Balance, Microwave, High Frequency, Low Frequency, Dial Gauge ใช้ field 'machine'
+    if hasattr(calibration, 'machine'):
+        return calibration.machine
+    # สำหรับ Pressure, Torque ใช้ field 'uuc_id'
+    elif hasattr(calibration, 'uuc_id'):
+        return calibration.uuc_id
+    else:
+        return None
+
 from docxtpl import DocxTemplate
 def export_certificate(request, pk):
     # This function is no longer needed as Force Gauge is removed
     return HttpResponse("Force Gauge functionality has been removed", status=410)
 
     doc = DocxTemplate("Balance_template.docx")
+    
+    # ใช้ helper function เพื่อดึงข้อมูลเครื่องมือ
+    machine = get_machine_from_calibration(calibration)
 
     context = {
-        "MODEL": calibration.uuc_id.name if calibration.uuc_id else "",
-        "MANUFACTURER": calibration.uuc_id.manufacturer if hasattr(calibration.uuc_id, "manufacturer") else "",
-        "DESCRIPTION": calibration.uuc_id.name if calibration.uuc_id else "",
-        "SERIAL_NUMBER": getattr(calibration.uuc_id, "serial_number", ""),
-        "RANGE": getattr(calibration.uuc_id, "range", ""),
-        "GRADUATION": getattr(calibration.uuc_id, "graduation", ""),
-        "OPTION": getattr(calibration.uuc_id, "option", ""),
+        "MODEL": machine.name if machine else "",
+        "MANUFACTURER": machine.manufacturer if hasattr(machine, "manufacturer") else "",
+        "DESCRIPTION": machine.name if machine else "",
+        "SERIAL_NUMBER": getattr(machine, "serial_number", ""),
+        "RANGE": getattr(machine, "range", ""),
+        "GRADUATION": getattr(machine, "graduation", ""),
+        "OPTION": getattr(machine, "option", ""),
         "CERTIFICATE_NUMBER": getattr(calibration, "certificate_number", ""),
         "CUSTOMER_ASSET_ID": getattr(calibration, "customer_asset_id", ""),
         "PROCEDURE": getattr(calibration, "procedure", ""),
@@ -4235,7 +4277,7 @@ def export_certificate(request, pk):
         "ISSUE_DATE": calibration.update,
         "CALIBRATOR": calibration.calibrator.get_full_name() if calibration.calibrator else "",
         "APPROVER": calibration.certificate_issuer.get_full_name() if calibration.certificate_issuer else "",
-        "CUSTOMER_ADDRESS": getattr(calibration.uuc_id, "address", ""),
+        "CUSTOMER_ADDRESS": getattr(machine, "address", ""),
         "LOCATION_OF_CALIBRATION": "กบร.ทร.",
         "LOCATION_ADDRESS": "Somewhere Navy Base",
     }
@@ -5618,7 +5660,7 @@ def export_pressure_certificate_docx(request, cal_id):
         
         # ดึงข้อมูลการสอบเทียบ
         cal = get_object_or_404(CalibrationPressure, cal_pressure_id=cal_id)
-        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {cal.uuc_id.name}")
+        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {get_machine_from_calibration(cal).name}")
         
         # ดึงข้อมูลเครื่องมือมาตรฐาน
         std = cal.std_id
@@ -5637,12 +5679,12 @@ def export_pressure_certificate_docx(request, cal_id):
         # สร้าง replacements dictionary
         replacements = {
             # ข้อมูลเครื่องมือ
-            '{{MODEL}}': getattr(cal.uuc_id, 'model', '-'),
-            '{{MANUFACTURER}}': getattr(cal.uuc_id, 'manufacture', '-'),  # ดึงผู้ผลิตมา
-            '{{DESCRIPTION}}': getattr(cal.uuc_id, 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
-            '{{SERIAL_NUMBER}}': getattr(cal.uuc_id, 'serial_number', '-'),
-            '{{ASSET_NUMBER}}': getattr(cal.uuc_id, 'asset_number', '-'),
-            '{{RANGE}}': getattr(cal.uuc_id, 'range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
+            '{{MODEL}}': getattr(get_machine_from_calibration(cal), 'model', '-'),
+            '{{MANUFACTURER}}': getattr(get_machine_from_calibration(cal), 'manufacture', '-'),  # ดึงผู้ผลิตมา
+            '{{DESCRIPTION}}': getattr(get_machine_from_calibration(cal), 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
+            '{{SERIAL_NUMBER}}': getattr(get_machine_from_calibration(cal), 'serial_number', '-'),
+            '{{ASSET_NUMBER}}': getattr(get_machine_from_calibration(cal), 'asset_number', '-'),
+            '{{RANGE}}': getattr(get_machine_from_calibration(cal), 'range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             
             # ข้อมูลการสอบเทียบ
             '{{CALIBRATION_DATE}}': cal.update.strftime('%d/%m/%Y') if cal.update else '-',
@@ -5656,10 +5698,10 @@ def export_pressure_certificate_docx(request, cal_id):
             '{{APPROVER}}': cal.certificate_issuer.username if cal.certificate_issuer else '-',
             
             # ข้อมูลหน่วยงาน
-            '{{CUSTOMER}}': getattr(cal.uuc_id.organize, 'name', '-') if cal.uuc_id.organize else '-',
-            '{{CUSTOMER_ADDRESS}}': getattr(cal.uuc_id.organize, 'address', '-') if cal.uuc_id.organize else '-',
-            '{{LOCATION_NAME}}': getattr(cal.uuc_id.organize, 'name', '-') if cal.uuc_id.organize else '-',
-            '{{LOCATION_ADDRESS}}': getattr(cal.uuc_id.organize, 'address', '-') if cal.uuc_id.organize else '-',
+            '{{CUSTOMER}}': getattr(get_machine_from_calibration(cal).organize, 'name', '-') if get_machine_from_calibration(cal).organize else '-',
+            '{{CUSTOMER_ADDRESS}}': getattr(get_machine_from_calibration(cal).organize, 'address', '-') if get_machine_from_calibration(cal).organize else '-',
+            '{{LOCATION_NAME}}': getattr(get_machine_from_calibration(cal).organize, 'name', '-') if get_machine_from_calibration(cal).organize else '-',
+            '{{LOCATION_ADDRESS}}': getattr(get_machine_from_calibration(cal).organize, 'address', '-') if get_machine_from_calibration(cal).organize else '-',
             
             # ข้อมูลตารางผลการสอบเทียบ Pressure (6 แถว) - อัปเดตตามรูปแบบที่คุณต้องการ
             # แถวที่ 1
@@ -5705,17 +5747,17 @@ def export_pressure_certificate_docx(request, cal_id):
             '{{TOLERANCE_END_6}}': cal.tolerance_end_6 or '-',
             
             # ข้อมูลเพิ่มเติมสำหรับการแสดงผล
-            '{{MODEL_PART_NUMBER}}': f"{getattr(cal.uuc_id, 'model', '-')} / {getattr(cal.uuc_id, 'part_number', '-')}" if getattr(cal.uuc_id, 'part_number', None) else getattr(cal.uuc_id, 'model', '-'),
+            '{{MODEL_PART_NUMBER}}': f"{getattr(get_machine_from_calibration(cal), 'model', '-')} / {getattr(get_machine_from_calibration(cal), 'part_number', '-')}" if getattr(get_machine_from_calibration(cal), 'part_number', None) else getattr(get_machine_from_calibration(cal), 'model', '-'),
             '{{DATE_OF_CALIBRATION}}': cal.update.strftime('%d/%m/%Y') if cal.update else '-',
-            '{{DESCRIPTION}}': getattr(cal.uuc_id, 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
+            '{{DESCRIPTION}}': getattr(get_machine_from_calibration(cal), 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
             '{{DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
-            '{{SERIAL_NUMBER}}': getattr(cal.uuc_id, 'serial_number', '-'),
-            '{{RANGE}}': getattr(cal.uuc_id, 'measurement_range', '-') or getattr(cal, 'measurement_range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
-            '{{MANUFACTURER}}': getattr(cal.uuc_id, 'manufacture', '-'),  # ดึงผู้ผลิตมา
+            '{{SERIAL_NUMBER}}': getattr(get_machine_from_calibration(cal), 'serial_number', '-'),
+            '{{RANGE}}': getattr(get_machine_from_calibration(cal), 'measurement_range', '-') or getattr(cal, 'measurement_range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
+            '{{MANUFACTURER}}': getattr(get_machine_from_calibration(cal), 'manufacture', '-'),  # ดึงผู้ผลิตมา
             '{{CERTIFICATE_NO}}': cal.certificate_number or '-',
-            '{{TYPE}}': getattr(cal.uuc_id, 'type', '-') or 'Microwave',  # ประเภท Microwave
-            '{{CATEGORY}}': getattr(cal.uuc_id, 'category', '-') or 'Microwave',  # หมวดหมู่
-            '{{EQUIPMENT_TYPE}}': getattr(cal.uuc_id, 'equipment_type', '-') or 'Microwave',  # ประเภทเครื่องมือ
+            '{{TYPE}}': getattr(get_machine_from_calibration(cal), 'type', '-') or 'Microwave',  # ประเภท Microwave
+            '{{CATEGORY}}': getattr(get_machine_from_calibration(cal), 'category', '-') or 'Microwave',  # หมวดหมู่
+            '{{EQUIPMENT_TYPE}}': getattr(get_machine_from_calibration(cal), 'equipment_type', '-') or 'Microwave',  # ประเภทเครื่องมือ
         }
         
         # ข้อมูลมาตรฐาน
@@ -5827,11 +5869,11 @@ def export_pressure_certificate_docx(request, cal_id):
         print("DEBUG: === END REPLACEMENTS ===")
         
         # Debug: แสดงข้อมูลเครื่องมือ
-        print(f"DEBUG: Machine Range: {getattr(cal.uuc_id, 'measurement_range', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Range: {getattr(get_machine_from_calibration(cal), 'measurement_range', 'NOT_FOUND')}")
         print(f"DEBUG: Calibration Range: {getattr(cal, 'measurement_range', 'NOT_FOUND')}")
-        print(f"DEBUG: Machine Type: {getattr(cal.uuc_id, 'type', 'NOT_FOUND')}")
-        print(f"DEBUG: Machine Category: {getattr(cal.uuc_id, 'category', 'NOT_FOUND')}")
-        print(f"DEBUG: Machine Equipment Type: {getattr(cal.uuc_id, 'equipment_type', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Type: {getattr(get_machine_from_calibration(cal), 'type', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Category: {getattr(get_machine_from_calibration(cal), 'category', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Equipment Type: {getattr(get_machine_from_calibration(cal), 'equipment_type', 'NOT_FOUND')}")
         
         # แทนค่าในเอกสาร
         replace_text_in_document(doc, replacements)
@@ -5859,7 +5901,20 @@ def export_torque_certificate_docx(request, cal_id):
         
         # ดึงข้อมูลการสอบเทียบ
         cal = get_object_or_404(CalibrationTorque, cal_torque_id=cal_id)
-        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {cal.uuc_id.name}")
+        print(f"DEBUG: Found calibration - Status: {cal.status}, Machine: {get_machine_from_calibration(cal).name}")
+        
+        # Debug: ตรวจสอบข้อมูลในฐานข้อมูล
+        print(f"DEBUG: Database check - ccw_actual: {cal.ccw_actual}")
+        print(f"DEBUG: Database check - ccw_avg: {cal.ccw_avg}")
+        print(f"DEBUG: Database check - ccwset: {cal.ccwset}")
+        print(f"DEBUG: Database check - ccw_error: {cal.ccw_error}")
+        
+        # ถ้า ccw_actual เป็น None ให้ใช้ ccw_avg แทน
+        if cal.ccw_actual is None and cal.ccw_avg is not None:
+            print("DEBUG: ccw_actual is None, using ccw_avg instead")
+            cal.ccw_actual = cal.ccw_avg
+            cal.save()
+            print(f"DEBUG: Updated ccw_actual to: {cal.ccw_actual}")
         
         # ดึงข้อมูลเครื่องมือมาตรฐาน
         std = cal.std_id
@@ -5878,12 +5933,12 @@ def export_torque_certificate_docx(request, cal_id):
         # สร้าง replacements dictionary
         replacements = {
             # ข้อมูลเครื่องมือ
-            '{{MODEL}}': getattr(cal.uuc_id, 'model', '-'),
-            '{{MANUFACTURER}}': getattr(cal.uuc_id, 'manufacture', '-'),  # ดึงผู้ผลิตมา
-            '{{DESCRIPTION}}': getattr(cal.uuc_id, 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
-            '{{SERIAL_NUMBER}}': getattr(cal.uuc_id, 'serial_number', '-'),
-            '{{ASSET_NUMBER}}': getattr(cal.uuc_id, 'asset_number', '-'),
-            '{{RANGE}}': getattr(cal.uuc_id, 'range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
+            '{{MODEL}}': getattr(get_machine_from_calibration(cal), 'model', '-'),
+            '{{MANUFACTURER}}': getattr(get_machine_from_calibration(cal), 'manufacture', '-'),  # ดึงผู้ผลิตมา
+            '{{DESCRIPTION}}': getattr(get_machine_from_calibration(cal), 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
+            '{{SERIAL_NUMBER}}': getattr(get_machine_from_calibration(cal), 'serial_number', '-'),
+            '{{ASSET_NUMBER}}': getattr(get_machine_from_calibration(cal), 'asset_number', '-'),
+            '{{RANGE}}': getattr(get_machine_from_calibration(cal), 'range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             
             # ข้อมูลการสอบเทียบ
             '{{CALIBRATION_DATE}}': cal.update.strftime('%d/%m/%Y') if cal.update else '-',
@@ -5897,10 +5952,10 @@ def export_torque_certificate_docx(request, cal_id):
             '{{APPROVER}}': cal.certificate_issuer.username if cal.certificate_issuer else '-',
             
             # ข้อมูลหน่วยงาน
-            '{{CUSTOMER}}': getattr(cal.uuc_id.organize, 'name', '-') if cal.uuc_id.organize else '-',
-            '{{CUSTOMER_ADDRESS}}': getattr(cal.uuc_id.organize, 'address', '-') if cal.uuc_id.organize else '-',
-            '{{LOCATION_NAME}}': getattr(cal.uuc_id.organize, 'name', '-') if cal.uuc_id.organize else '-',
-            '{{LOCATION_ADDRESS}}': getattr(cal.uuc_id.organize, 'address', '-') if cal.uuc_id.organize else '-',
+            '{{CUSTOMER}}': getattr(get_machine_from_calibration(cal).organize, 'name', '-') if get_machine_from_calibration(cal).organize else '-',
+            '{{CUSTOMER_ADDRESS}}': getattr(get_machine_from_calibration(cal).organize, 'address', '-') if get_machine_from_calibration(cal).organize else '-',
+            '{{LOCATION_NAME}}': getattr(get_machine_from_calibration(cal).organize, 'name', '-') if get_machine_from_calibration(cal).organize else '-',
+            '{{LOCATION_ADDRESS}}': getattr(get_machine_from_calibration(cal).organize, 'address', '-') if get_machine_from_calibration(cal).organize else '-',
             
             # ข้อมูลตารางผลการสอบเทียบ Torque CW (3 แถว)
             # แถวที่ 1
@@ -6055,6 +6110,15 @@ def export_torque_certificate_docx(request, cal_id):
         print(f"DEBUG: CCW_TOLERANCE_START: {getattr(cal, 'ccw_tolerance_start', None)}")
         print(f"DEBUG: CCW_TOLERANCE_END: {getattr(cal, 'ccw_tolerance_end', None)}")
         
+        # Debug: ตรวจสอบค่า ccw_actual อย่างละเอียด
+        print(f"DEBUG: cal.ccw_actual type: {type(cal.ccw_actual)}")
+        print(f"DEBUG: cal.ccw_actual value: {cal.ccw_actual}")
+        print(f"DEBUG: cal.ccw_actual is None: {cal.ccw_actual is None}")
+        if cal.ccw_actual is not None:
+            print(f"DEBUG: CCW_ACTUAL replacement will be: {str(cal.ccw_actual)}")
+        else:
+            print("DEBUG: CCW_ACTUAL replacement will be: -")
+        
         # Debug: แสดงค่าที่ส่งไปใน replacements
         print(f"DEBUG: CW_SET replacement: {replacements.get('{{CW_SET}}', 'NOT_FOUND')}")
         print(f"DEBUG: CW_ACTUAL replacement: {replacements.get('{{CW_ACTUAL}}', 'NOT_FOUND')}")
@@ -6064,6 +6128,36 @@ def export_torque_certificate_docx(request, cal_id):
         print(f"DEBUG: CCW_ACTUAL replacement: {replacements.get('{{CCW_ACTUAL}}', 'NOT_FOUND')}")
         print(f"DEBUG: CCW_ERROR replacement: {replacements.get('{{CCW_ERROR}}', 'NOT_FOUND')}")
         print(f"DEBUG: CCW_TOLERANCE_LIMIT replacement: {replacements.get('{{CCW_TOLERANCE_LIMIT}}', 'NOT_FOUND')}")
+        
+        # Debug: ตรวจสอบ CCW_ACTUAL replacement อย่างละเอียด
+        ccw_actual_replacement = replacements.get('{{CCW_ACTUAL}}', 'NOT_FOUND')
+        print(f"DEBUG: CCW_ACTUAL replacement value: {ccw_actual_replacement}")
+        print(f"DEBUG: CCW_ACTUAL replacement type: {type(ccw_actual_replacement)}")
+        
+        # Debug: ตรวจสอบ replacements ทั้งหมด
+        print(f"DEBUG: Total replacements count: {len(replacements)}")
+        print(f"DEBUG: All CCW replacements:")
+        for key, value in replacements.items():
+            if 'CCW' in key:
+                print(f"  {key}: {value}")
+        
+        # Debug: ตรวจสอบ template content
+        print("DEBUG: Checking template content for CCW_ACTUAL placeholder...")
+        template_content = str(doc.paragraphs)
+        if '{{CCW_ACTUAL}}' in template_content:
+            print("DEBUG: Found {{CCW_ACTUAL}} in template")
+        else:
+            print("DEBUG: {{CCW_ACTUAL}} NOT found in template!")
+            
+        # Debug: ตรวจสอบ table cells
+        print("DEBUG: Checking table cells...")
+        for table in doc.tables:
+            for row_idx, row in enumerate(table.rows):
+                for cell_idx, cell in enumerate(row.cells):
+                    if '{{CCW_ACTUAL}}' in cell.text:
+                        print(f"DEBUG: Found {{CCW_ACTUAL}} in table row {row_idx}, cell {cell_idx}")
+                    elif 'CCW' in cell.text:
+                        print(f"DEBUG: Found CCW text in table row {row_idx}, cell {cell_idx}: {cell.text}")
         
         # Debug: แสดงข้อมูลแถวที่ 2 และ 3
         print(f"DEBUG: CW_SET_2: {getattr(cal, 'cwset_2', None)}")
@@ -6171,7 +6265,7 @@ def export_microwave_certificate_docx(request, cal_id):
             '{{TYPE}}': 'Microwave',  # ประเภท Microwave
             '{{CATEGORY}}': getattr(machine, 'category', '-') or 'Microwave',  # หมวดหมู่
             '{{EQUIPMENT_TYPE}}': getattr(machine, 'equipment_type', '-') or 'Microwave',  # ประเภทเครื่องมือ
-            '{{RANGE}}': getattr(cal.uuc_id, 'range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ  # ดึงจากช่วงการวัดหน้าเครื่องมือ
+            '{{RANGE}}': getattr(get_machine_from_calibration(cal), 'range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             
             # เพิ่ม placeholder ที่ขาดหายไป
             '{{CUSTOMER_ADDRESS}}': machine.organize.address if machine.organize else '-',
