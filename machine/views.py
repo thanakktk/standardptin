@@ -27,6 +27,16 @@ class MachineListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     def get_queryset(self):
         queryset = Machine.objects.filter(deleted=False)
         
+        # กรองตามหน่วยงานของผู้ใช้ (สำหรับหน่วยผู้ใช้)
+        user = self.request.user
+        if user.is_unit_user() and not user.is_superuser:
+            # หน่วยผู้ใช้เห็นเฉพาะเครื่องมือของหน่วยตัวเอง
+            if user.organize:
+                queryset = queryset.filter(organize=user.organize)
+            else:
+                # ถ้าไม่มีหน่วยงาน ให้แสดงข้อมูลว่าง
+                queryset = queryset.none()
+        
         # รับพารามิเตอร์การกรอง
         organize_id = self.request.GET.get('organize_id')
         machine_type = self.request.GET.get('machine_type')
@@ -35,8 +45,8 @@ class MachineListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         serial_search = self.request.GET.get('serial_search')
         name_search = self.request.GET.get('name_search')
         
-        # กรองตามหน่วยงาน
-        if organize_id:
+        # กรองตามหน่วยงาน (สำหรับ admin และ technician)
+        if organize_id and (user.is_superuser or user.is_admin_user() or user.is_technician()):
             queryset = queryset.filter(organize_id=organize_id)
         
         # กรองตามประเภทเครื่องมือ
