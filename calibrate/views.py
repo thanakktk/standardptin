@@ -1593,6 +1593,7 @@ def process_torque_calibration(request, machine):
             ccw180_1 = safe_float(request.POST.get('ccw180_1', 0))
             ccw270_1 = safe_float(request.POST.get('ccw270_1', 0))
             ccw_avg_1 = safe_float(request.POST.get('ccw_avg_1', 0))
+            ccw_actual_1 = safe_float(request.POST.get('ccw_actual', 0))
             ccw_error_1 = safe_float(request.POST.get('ccw_error_1', 0))
             ccw_reading_1 = safe_float(request.POST.get('ccw_reading_1', 0))
             ccw_tolerance_1 = request.POST.get('ccw_tolerance_1', '')
@@ -1603,6 +1604,7 @@ def process_torque_calibration(request, machine):
             print(f"CCW 180: {ccw180_1}")
             print(f"CCW 270: {ccw270_1}")
             print(f"CCW Avg: {ccw_avg_1}")
+            print(f"CCW Actual: {ccw_actual_1}")
             print(f"CCW Error: {ccw_error_1}")
             print(f"CCW Reading: {ccw_reading_1}")
             print(f"CCW Tolerance: {ccw_tolerance_1}")
@@ -1615,7 +1617,7 @@ def process_torque_calibration(request, machine):
             calibration.ccw_avg = ccw_avg_1
             calibration.ccw_error = ccw_error_1
             calibration.ccw_reading = ccw_reading_1
-            calibration.ccw_actual = ccw_avg_1  # ใช้ค่าเฉลี่ยเป็นค่าจริง
+            calibration.ccw_actual = ccw_actual_1 if ccw_actual_1 != 0 else ccw_avg_1  # ใช้ค่าจริงจากฟอร์ม หรือค่าเฉลี่ยถ้าไม่มี
             
             # แยก tolerance string เป็น start และ end
             if ' - ' in ccw_tolerance_1:
@@ -1709,9 +1711,10 @@ def process_torque_calibration(request, machine):
             # แถวที่ 2
             ccwset_2 = safe_float(request.POST.get('ccwset_2', 0))
             ccw_avg_2 = safe_float(request.POST.get('ccw_avg_2', 0))
+            ccw_actual_2 = safe_float(request.POST.get('ccw_actual_2', 0))
             if ccwset_2 > 0:
                 calibration.ccwset_2 = ccwset_2
-                calibration.ccw_actual_2 = ccw_avg_2
+                calibration.ccw_actual_2 = ccw_actual_2 if ccw_actual_2 != 0 else ccw_avg_2
                 calibration.ccw_error_2 = safe_float(request.POST.get('ccw_error_2', 0))
                 ccw_tolerance_2 = request.POST.get('ccw_tolerance_2', '')
                 if ' - ' in ccw_tolerance_2:
@@ -1722,9 +1725,10 @@ def process_torque_calibration(request, machine):
             # แถวที่ 3
             ccwset_3 = safe_float(request.POST.get('ccwset_3', 0))
             ccw_avg_3 = safe_float(request.POST.get('ccw_avg_3', 0))
+            ccw_actual_3 = safe_float(request.POST.get('ccw_actual_3', 0))
             if ccwset_3 > 0:
                 calibration.ccwset_3 = ccwset_3
-                calibration.ccw_actual_3 = ccw_avg_3
+                calibration.ccw_actual_3 = ccw_actual_3 if ccw_actual_3 != 0 else ccw_avg_3
                 calibration.ccw_error_3 = safe_float(request.POST.get('ccw_error_3', 0))
                 ccw_tolerance_3 = request.POST.get('ccw_tolerance_3', '')
                 if ' - ' in ccw_tolerance_3:
@@ -4262,7 +4266,7 @@ def export_certificate(request, pk):
 
     context = {
         "MODEL": machine.name if machine else "",
-        "MANUFACTURER": machine.manufacturer if hasattr(machine, "manufacturer") else "",
+        "MANUFACTURER": machine.manufacture if hasattr(machine, "manufacture") else "",
         "DESCRIPTION": machine.name if machine else "",
         "SERIAL_NUMBER": getattr(machine, "serial_number", ""),
         "RANGE": getattr(machine, "range", ""),
@@ -5438,7 +5442,7 @@ def export_high_frequency_certificate_docx(request, cal_id):
         replacements = {
             # ข้อมูลเครื่องมือ
             '{{MODEL}}': getattr(cal.machine, 'model', '-'),
-            '{{MANUFACTURER}}': getattr(cal.machine, 'manufacturer', '-'),
+            '{{MANUFACTURER}}': getattr(cal.machine, 'manufacture', '-'),
             '{{DESCRIPTION}}': getattr(cal.machine, 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
             '{{SERIAL_NUMBER}}': getattr(cal.machine, 'serial_number', '-'),
             '{{ASSET_NUMBER}}': getattr(cal.machine, 'asset_number', '-'),
@@ -5752,7 +5756,7 @@ def export_pressure_certificate_docx(request, cal_id):
             '{{DESCRIPTION}}': getattr(get_machine_from_calibration(cal), 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
             '{{DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
             '{{SERIAL_NUMBER}}': getattr(get_machine_from_calibration(cal), 'serial_number', '-'),
-            '{{RANGE}}': getattr(get_machine_from_calibration(cal), 'measurement_range', '-') or getattr(cal, 'measurement_range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
+            '{{RANGE}}': getattr(get_machine_from_calibration(cal), 'range', '-') or getattr(cal, 'measurement_range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             '{{MANUFACTURER}}': getattr(get_machine_from_calibration(cal), 'manufacture', '-'),  # ดึงผู้ผลิตมา
             '{{CERTIFICATE_NO}}': cal.certificate_number or '-',
             '{{TYPE}}': getattr(get_machine_from_calibration(cal), 'type', '-') or 'Microwave',  # ประเภท Microwave
@@ -5869,7 +5873,7 @@ def export_pressure_certificate_docx(request, cal_id):
         print("DEBUG: === END REPLACEMENTS ===")
         
         # Debug: แสดงข้อมูลเครื่องมือ
-        print(f"DEBUG: Machine Range: {getattr(get_machine_from_calibration(cal), 'measurement_range', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Range: {getattr(get_machine_from_calibration(cal), 'range', 'NOT_FOUND')}")
         print(f"DEBUG: Calibration Range: {getattr(cal, 'measurement_range', 'NOT_FOUND')}")
         print(f"DEBUG: Machine Type: {getattr(get_machine_from_calibration(cal), 'type', 'NOT_FOUND')}")
         print(f"DEBUG: Machine Category: {getattr(get_machine_from_calibration(cal), 'category', 'NOT_FOUND')}")
@@ -6261,7 +6265,7 @@ def export_microwave_certificate_docx(request, cal_id):
             '{{DESCRIPTION}}': machine.machine_type.name if machine.machine_type else '-',
             '{{DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
             '{{SERIAL_NUMBER}}': machine.serial_number or '-',
-            '{{MANUFACTURER}}': getattr(machine, 'manufacturer', '-') or '-',
+            '{{MANUFACTURER}}': getattr(machine, 'manufacture', '-') or '-',
             '{{TYPE}}': 'Microwave',  # ประเภท Microwave
             '{{CATEGORY}}': getattr(machine, 'category', '-') or 'Microwave',  # หมวดหมู่
             '{{EQUIPMENT_TYPE}}': getattr(machine, 'equipment_type', '-') or 'Microwave',  # ประเภทเครื่องมือ

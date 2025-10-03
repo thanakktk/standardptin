@@ -146,3 +146,4 @@ Serial Number: {{STANDARD_SERIAL_2}}  # หมายเลขเครื่อ�
 - **Model**: `BalanceCalibration`
 - **Template**: `cert_templates/Balance_template.docx`
 - **Equipment Model**: `CalibrationEquipment`
+
