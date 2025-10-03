@@ -5083,13 +5083,6 @@ class HighFrequencyCalibrationDeleteView(LoginRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'ลบการสอบเทียบ High Frequency - {self.object.machine.name}'
         return context
-    
-    def delete(self, request, *args, **kwargs):
-        try:
-            return super().delete(request, *args, **kwargs)
-        except Exception as e:
-            print(f"Error deleting HighFrequencyCalibration: {e}")
-            return JsonResponse({'error': 'เกิดข้อผิดพลาดในการลบข้อมูล'}, status=500)
 
 class LowFrequencyCalibrationDeleteView(LoginRequiredMixin, DeleteView):
     model = LowFrequencyCalibration
@@ -5100,13 +5093,6 @@ class LowFrequencyCalibrationDeleteView(LoginRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'ลบการสอบเทียบ Low Frequency - {self.object.machine.name}'
         return context
-    
-    def delete(self, request, *args, **kwargs):
-        try:
-            return super().delete(request, *args, **kwargs)
-        except Exception as e:
-            print(f"Error deleting LowFrequencyCalibration: {e}")
-            return JsonResponse({'error': 'เกิดข้อผิดพลาดในการลบข้อมูล'}, status=500)
 
 class MicrowaveCalibrationDeleteView(LoginRequiredMixin, DeleteView):
     model = MicrowaveCalibration
@@ -5117,13 +5103,6 @@ class MicrowaveCalibrationDeleteView(LoginRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'ลบการสอบเทียบ Microwave - {self.object.machine.name}'
         return context
-    
-    def delete(self, request, *args, **kwargs):
-        try:
-            return super().delete(request, *args, **kwargs)
-        except Exception as e:
-            print(f"Error deleting MicrowaveCalibration: {e}")
-            return JsonResponse({'error': 'เกิดข้อผิดพลาดในการลบข้อมูล'}, status=500)
 
 class DialGaugeCalibrationDeleteView(LoginRequiredMixin, DeleteView):
     model = DialGaugeCalibration
@@ -5134,13 +5113,6 @@ class DialGaugeCalibrationDeleteView(LoginRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'ลบการสอบเทียบ Dial Gauge - {self.object.machine.name}'
         return context
-    
-    def delete(self, request, *args, **kwargs):
-        try:
-            return super().delete(request, *args, **kwargs)
-        except Exception as e:
-            print(f"Error deleting DialGaugeCalibration: {e}")
-            return JsonResponse({'error': 'เกิดข้อผิดพลาดในการลบข้อมูล'}, status=500)
 
 def replace_text_in_paragraph(paragraph, replacements):
     """แทนที่ placeholder ใน paragraph"""

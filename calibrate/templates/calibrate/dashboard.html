@@ -779,18 +779,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'balance':
                     deleteUrl = `/calibrate/balance/${id}/delete/`;
                     break;
-                case 'high-frequency':
-                    deleteUrl = `/calibrate/high-frequency/${id}/delete/`;
-                    break;
-                case 'low-frequency':
-                    deleteUrl = `/calibrate/low-frequency/${id}/delete/`;
-                    break;
-                case 'microwave':
-                    deleteUrl = `/calibrate/microwave/${id}/delete/`;
-                    break;
-                case 'dial-gauge':
-                    deleteUrl = `/calibrate/dial-gauge/${id}/delete/`;
-                    break;
             }
 
             deletePromises.push(
@@ -806,19 +794,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         Promise.all(deletePromises)
             .then(responses => {
-                const successful = responses.filter(response => response.ok);
-                const failed = responses.filter(response => !response.ok);
-                
-                if (failed.length === 0) {
-                    // ลบสำเร็จทั้งหมด
-                    location.reload();
-                } else if (successful.length > 0) {
-                    // ลบบางรายการสำเร็จ
-                    alert(`ลบสำเร็จ ${successful.length} รายการ, ล้มเหลว ${failed.length} รายการ`);
+                const allSuccessful = responses.every(response => response.ok);
+                if (allSuccessful) {
                     location.reload();
                 } else {
-                    // ลบทั้งหมดล้มเหลว
-                    alert('เกิดข้อผิดพลาดในการลบข้อมูลทั้งหมด');
+                    alert('เกิดข้อผิดพลาดในการลบข้อมูลบางรายการ');
                 }
             })
             .catch(error => {
