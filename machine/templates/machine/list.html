@@ -98,9 +98,11 @@
                                 <i class="fas fa-times me-1"></i>ล้างการกรอง
                             </a>
                             {% if user_permissions.can_send_notification %}
+                            {% if not user.is_unit_user or user.is_superuser %}
                             <button type="submit" formaction="{% url 'machine-send-filtered-email' %}" class="btn btn-success">
                                 <i class="fas fa-envelope me-1"></i>ส่งอีเมลข้อมูลที่กรอง
                             </button>
+                            {% endif %}
                             {% endif %}
                         </div>
                     </div>
@@ -133,10 +135,12 @@
                         <i class="fas fa-clipboard-list me-1"></i>
                         ส่งคำร้องขอบันทึกสอบเทียบ (<span id="selectedCount">0</span> รายการ)
                     </button>
+                    {% if not user.is_unit_user or user.is_superuser %}
                     <button type="button" class="btn btn-info btn-sm" id="bulkEmailBtn" disabled>
                         <i class="fas fa-envelope me-1"></i>
                         ส่งข้อมูลทางอีเมล (<span id="selectedEmailCount">0</span> รายการ)
                     </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -211,9 +215,11 @@
                                     </a>
                                     {% endif %}
                                     {% if user_permissions.can_send_notification %}
+                                    {% if not user.is_unit_user or user.is_superuser %}
                                     <a href="{% url 'machine-send-email' m.id %}" class="btn btn-outline-success btn-sm" title="ส่งข้อมูลทางอีเมล">
                                         <i class="fas fa-envelope"></i>
                                     </a>
+                                    {% endif %}
                                     {% endif %}
                                     <a href="{% url 'create-calibration-request' m.id %}?priority=normal" 
                                        class="btn btn-outline-warning btn-sm" 
@@ -435,6 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Bulk email button click
+    {% if not user.is_unit_user or user.is_superuser %}
     bulkEmailBtn.addEventListener('click', function() {
         // Update selected machines list in email modal
         selectedMachinesForEmail.innerHTML = '';
@@ -454,6 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show email modal
         bulkEmailModal.show();
     });
+    {% endif %}
 
     // Confirm bulk calibration request
     confirmBulkCalibrationRequestBtn.addEventListener('click', function() {
@@ -510,6 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Confirm bulk email
+    {% if not user.is_unit_user or user.is_superuser %}
     confirmBulkEmailBtn.addEventListener('click', function() {
         const message = document.getElementById('emailMessage').value;
         
@@ -549,6 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Close modal
         bulkEmailModal.hide();
     });
+    {% endif %}
 
     // Initialize bulk actions state
     updateBulkActions();
