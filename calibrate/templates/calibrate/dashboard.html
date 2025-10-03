@@ -296,7 +296,7 @@
                                                     </button>
                                                 {% elif cal.type == 'microwave' %}
                                                     {% if user.is_staff or user.is_superuser or user.is_technician or user.is_coordinator %}
-                                                        <a href="{% url 'microwave-calibration-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
+                                                        <a href="{% url 'microwave-calibration-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="บันทึกการสอบเทียบ">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
                                                         {% if user.is_staff or user.is_superuser or user.is_coordinator %}
@@ -323,7 +323,7 @@
                                                     </button>
                                                 {% elif cal.type == 'dial_gauge' %}
                                                     {% if user.is_staff or user.is_superuser or user.is_technician or user.is_coordinator %}
-                                                        <a href="{% url 'dial-gauge-calibration-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
+                                                        <a href="{% url 'dial-gauge-calibration-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="บันทึกการสอบเทียบ">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
                                                         {% if user.is_staff or user.is_superuser or user.is_coordinator %}
@@ -350,7 +350,7 @@
                                                     </button>
                                                 {% elif cal.type == 'high-frequency' %}
                                                     {% if user.is_staff or user.is_superuser or user.is_technician or user.is_coordinator %}
-                                                        <a href="{% url 'calibrate-high-frequency-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
+                                                        <a href="{% url 'calibrate-high-frequency-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="บันทึกการสอบเทียบ">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
                                                         {% if user.is_staff or user.is_superuser or user.is_coordinator %}
@@ -377,7 +377,7 @@
                                                     </button>
                                                 {% elif cal.type == 'low-frequency' %}
                                                     {% if user.is_staff or user.is_superuser or user.is_technician or user.is_coordinator %}
-                                                        <a href="{% url 'calibrate-low-frequency-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
+                                                        <a href="{% url 'calibrate-low-frequency-edit' cal.id %}" class="btn btn-sm btn-outline-primary" title="บันทึกการสอบเทียบ">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
                                                         {% if user.is_staff or user.is_superuser or user.is_coordinator %}
