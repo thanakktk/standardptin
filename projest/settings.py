@@ -159,15 +159,61 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'  # เก็บอีเมลในโฟลเดอร์นี้
 
 # Email timeout settings to prevent connection issues
-EMAIL_TIMEOUT = 30
-EMAIL_CONNECTION_TIMEOUT = 10
+EMAIL_TIMEOUT = 60  # เพิ่ม timeout เป็น 60 วินาที
+EMAIL_CONNECTION_TIMEOUT = 30  # เพิ่ม connection timeout
 
 # Additional SMTP settings for better reliability
 EMAIL_USE_LOCALTIME = True
 EMAIL_SUBJECT_PREFIX = '[Django Project] '
+
+# SMTP settings for bulk email sending
+EMAIL_BATCH_SIZE = 10  # ส่งอีเมลทีละ 10 รายการ
+EMAIL_RETRY_ATTEMPTS = 3  # ลองส่งใหม่ 3 ครั้ง
+EMAIL_RETRY_DELAY = 5  # รอ 5 วินาทีก่อนลองใหม่
 
 # Fallback email backend for development (uncomment if needed)
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'machine.views': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django.core.mail': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}

@@ -3516,9 +3516,9 @@ def export_balance_certificate_docx(request, cal_id):
 
             # ข้อมูลมาตรฐานชุดที่ 2 (ถ้ามี)
             "{{STANDARD_ASSET_NO_2}}": fmt(getattr(std, 'asset_number', None) if std else None),
-            "{{STANDARD_DESCRIPTION_2}}": fmt(std.name if std else None),
-            "{{STANDARD_MAKER_MODEL_2}}": fmt(getattr(std, 'description', None) if std else None),
-            "{{STANDARD_SERIAL_2}}": fmt(std.serial_number if std else None),
+            "{{STANDARD_DESCRIPTION_2}}": fmt(std.name if std else None),  # Description Name
+            "{{STANDARD_MAKER_MODEL_2}}": fmt(getattr(std, 'model', None) if std else None),  # Maker / Model
+            "{{STANDARD_SERIAL_2}}": fmt(std.serial_number if std else None),  # Serial Number
             "{{STANDARD_CERTIFICATE_2}}": fmt(getattr(std, 'certificate_number', None) or std.certificate if std else None),
             "{{STANDARD_DUE_DATE_2}}": fmt_date(getattr(std, "due_date", None) if std else None),
 
@@ -3888,9 +3888,9 @@ def export_dial_gauge_certificate_docx(request, cal_id):
 
             # ข้อมูลมาตรฐานชุดที่ 2 (ถ้ามี)
             "{{STANDARD_ASSET_NO_2}}": fmt(getattr(std, 'asset_number', None) if std else None),
-            "{{STANDARD_DESCRIPTION_2}}": fmt(std.name if std else None),
-            "{{STANDARD_MAKER_MODEL_2}}": fmt(getattr(std, 'description', None) if std else None),
-            "{{STANDARD_SERIAL_2}}": fmt(std.serial_number if std else None),
+            "{{STANDARD_DESCRIPTION_2}}": fmt(std.name if std else None),  # Description Name
+            "{{STANDARD_MAKER_MODEL_2}}": fmt(getattr(std, 'model', None) if std else None),  # Maker / Model
+            "{{STANDARD_SERIAL_2}}": fmt(std.serial_number if std else None),  # Serial Number
             "{{STANDARD_CERTIFICATE_2}}": fmt(getattr(std, 'certificate_number', None) or std.certificate if std else None),
             "{{STANDARD_DUE_DATE_2}}": fmt_date(getattr(std, "due_date", None) if std else None),
 

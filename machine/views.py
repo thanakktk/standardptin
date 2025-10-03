@@ -207,10 +207,15 @@ def send_filtered_email(request):
         # ส่งอีเมลไปที่หน่วยงานของผู้ใช้
         try:
             recipient_emails = []
+            
+            # ตรวจสอบหน่วยงานหลัก (organize field)
+            if request.user.organize and request.user.organize.email:
+                recipient_emails.append(request.user.organize.email)
+            
+            # ตรวจสอบหน่วยงานเพิ่มเติม (organizations ManyToManyField)
             if request.user.organizations.exists():
-                # ส่งไปที่หน่วยงานของผู้ใช้
                 for org in request.user.organizations.all():
-                    if org.email:
+                    if org.email and org.email not in recipient_emails:
                         recipient_emails.append(org.email)
             
             if not recipient_emails:
@@ -662,10 +667,76 @@ def bulk_calibration_request(request):
             'message': f'เกิดข้อผิดพลาดในการประมวลผล: {str(e)}'
         })
 
+def _send_email_with_retry(email, max_attempts=3, delay=5):
+    """ส่งอีเมลพร้อม retry mechanism"""
+    import time
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    for attempt in range(max_attempts):
+        try:
+            logger.info(f"Attempting to send email (attempt {attempt + 1}/{max_attempts})")
+            email.send()
+            logger.info("Email sent successfully")
+            return True
+        except Exception as e:
+            logger.warning(f"Email send attempt {attempt + 1} failed: {str(e)}")
+            if attempt < max_attempts - 1:
+                logger.info(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                logger.error(f"All email send attempts failed: {str(e)}")
+                raise e
+
+@login_required
+def debug_user_organizations(request):
+    """Debug function to check user organizations and emails"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    user = request.user
+    debug_info = {
+        'username': user.username,
+        'main_organization': None,
+        'additional_organizations': [],
+        'all_emails': []
+    }
+    
+    # ตรวจสอบหน่วยงานหลัก
+    if user.organize:
+        debug_info['main_organization'] = {
+            'name': user.organize.name,
+            'email': user.organize.email
+        }
+        if user.organize.email:
+            debug_info['all_emails'].append(user.organize.email)
+    
+    # ตรวจสอบหน่วยงานเพิ่มเติม
+    for org in user.organizations.all():
+        org_info = {
+            'name': org.name,
+            'email': org.email
+        }
+        debug_info['additional_organizations'].append(org_info)
+        if org.email and org.email not in debug_info['all_emails']:
+            debug_info['all_emails'].append(org.email)
+    
+    logger.info(f"Debug info: {debug_info}")
+    
+    return JsonResponse(debug_info)
+
 @login_required
 @require_http_methods(["POST"])
 def bulk_send_email(request):
     """ส่งอีเมลข้อมูลเครื่องมือหลายตัว"""
+    import logging
+    import time
+    from django.core.mail import EmailMessage
+    from django.core.mail.backends.smtp import EmailBackend
+    
+    logger = logging.getLogger(__name__)
+    
     try:
         # รับข้อมูลจาก request
         machine_ids = request.POST.getlist('machine_ids')
@@ -686,8 +757,49 @@ def bulk_send_email(request):
                 'message': 'ไม่พบเครื่องมือที่ถูกต้อง'
             })
         
+        # ตรวจสอบจำนวนรายการที่ส่ง
+        machine_count = machines.count()
+        logger.info(f"Attempting to send email for {machine_count} machines")
+        
+        # ตรวจสอบอีเมลหน่วยงาน
+        recipient_emails = []
+        
+        # Debug: ตรวจสอบข้อมูลผู้ใช้
+        logger.info(f"User: {request.user.username}")
+        logger.info(f"User organize: {request.user.organize}")
+        logger.info(f"User organizations count: {request.user.organizations.count()}")
+        
+        # ตรวจสอบหน่วยงานหลัก (organize field)
+        if request.user.organize:
+            logger.info(f"Main organization: {request.user.organize.name}")
+            logger.info(f"Main organization email: {request.user.organize.email}")
+            if request.user.organize.email:
+                recipient_emails.append(request.user.organize.email)
+                logger.info(f"Found email from main organization: {request.user.organize.email}")
+        else:
+            logger.info("No main organization found")
+        
+        # ตรวจสอบหน่วยงานเพิ่มเติม (organizations ManyToManyField)
+        if request.user.organizations.exists():
+            logger.info(f"Found {request.user.organizations.count()} additional organizations")
+            for org in request.user.organizations.all():
+                logger.info(f"Additional organization: {org.name}, email: {org.email}")
+                if org.email and org.email not in recipient_emails:
+                    recipient_emails.append(org.email)
+                    logger.info(f"Found email from additional organization: {org.email}")
+        else:
+            logger.info("No additional organizations found")
+        
+        logger.info(f"Total recipient emails found: {recipient_emails}")
+        
+        if not recipient_emails:
+            return JsonResponse({
+                'success': False,
+                'message': 'ไม่พบอีเมลของหน่วยงาน กรุณาเพิ่มอีเมลหน่วยงานก่อน'
+            })
+        
         # สร้างเนื้อหาอีเมล
-        subject = f"ข้อมูลเครื่องมือวัด ({machines.count()} รายการ)"
+        subject = f"ข้อมูลเครื่องมือวัด ({machine_count} รายการ)"
         body = f"รายการข้อมูลเครื่องมือวัดที่เลือก:\n\n"
         
         for machine in machines:
@@ -711,33 +823,43 @@ def bulk_send_email(request):
         
         # ส่งอีเมลไปที่หน่วยงานของผู้ใช้
         try:
-            recipient_emails = []
-            if request.user.organizations.exists():
-                # ส่งไปที่หน่วยงานของผู้ใช้
-                for org in request.user.organizations.all():
-                    if org.email:
-                        recipient_emails.append(org.email)
+            # ใช้ EmailMessage แทน send_mail เพื่อควบคุมการส่งได้ดีขึ้น
+            email = EmailMessage(
+                subject=subject,
+                body=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=recipient_emails,
+            )
             
-            if not recipient_emails:
-                # ถ้าไม่มีอีเมลหน่วยงาน ให้แสดงข้อความแจ้งเตือน
-                messages.warning(request, 'ไม่พบอีเมลของหน่วยงาน กรุณาเพิ่มอีเมลหน่วยงานก่อน')
-                return redirect('machine-list')
-            
-            send_mail(
-                subject,
-                body,
-                settings.DEFAULT_FROM_EMAIL,
-                recipient_emails,
+            # ตั้งค่า timeout และ connection settings
+            email.connection = EmailBackend(
+                host=settings.EMAIL_HOST,
+                port=settings.EMAIL_PORT,
+                username=settings.EMAIL_HOST_USER,
+                password=settings.EMAIL_HOST_PASSWORD,
+                use_tls=settings.EMAIL_USE_TLS,
+                use_ssl=settings.EMAIL_USE_SSL,
+                timeout=getattr(settings, 'EMAIL_TIMEOUT', 60),
                 fail_silently=False,
             )
             
+            # ส่งอีเมลพร้อม retry mechanism
+            logger.info(f"Sending email to {recipient_emails}")
+            _send_email_with_retry(
+                email, 
+                max_attempts=getattr(settings, 'EMAIL_RETRY_ATTEMPTS', 3),
+                delay=getattr(settings, 'EMAIL_RETRY_DELAY', 5)
+            )
+            logger.info(f"Email sent successfully for {machine_count} machines")
+            
             return JsonResponse({
                 'success': True,
-                'sent_count': machines.count(),
-                'message': f'ส่งอีเมลข้อมูลเครื่องมือสำเร็จ {machines.count()} รายการไปยัง {", ".join(recipient_emails)}'
+                'sent_count': machine_count,
+                'message': f'ส่งอีเมลข้อมูลเครื่องมือสำเร็จ {machine_count} รายการไปยัง {", ".join(recipient_emails)}'
             })
             
         except Exception as e:
+            logger.error(f"SMTP Error: {str(e)}")
             # เก็บอีเมลเป็นไฟล์แทน
             try:
                 import datetime
@@ -755,21 +877,27 @@ def bulk_send_email(request):
                     f.write(f"Subject: {subject}\n")
                     f.write(f"From: {settings.DEFAULT_FROM_EMAIL}\n")
                     f.write(f"Date: {datetime.datetime.now()}\n")
+                    f.write(f"Machine Count: {machine_count}\n")
                     f.write("="*50 + "\n")
                     f.write(body)
                 
+                logger.info(f"Email saved to file: {email_file}")
+                
                 return JsonResponse({
                     'success': False,
-                    'message': f'ไม่สามารถส่งอีเมลผ่าน SMTP ได้ เก็บเป็นไฟล์แทน: {email_file.name}'
+                    'message': f'ไม่สามารถส่งอีเมลผ่าน SMTP ได้ เก็บเป็นไฟล์แทน: {email_file.name} (Error: {str(e)})'
                 })
             except Exception as file_error:
+                logger.error(f"File save error: {str(file_error)}")
                 return JsonResponse({
                     'success': False,
                     'message': f'ไม่สามารถเก็บอีเมลได้: {str(file_error)}'
                 })
         
     except Exception as e:
+        logger.error(f"General error in bulk_send_email: {str(e)}")
         return JsonResponse({
             'success': False,
             'message': f'เกิดข้อผิดพลาดในการประมวลผล: {str(e)}'
         })
+
