@@ -185,33 +185,146 @@ class CalibrationPressureUpdateView(LoginRequiredMixin, CustomPermissionRequired
         print(f"POST data: {dict(self.request.POST)}")
         print(f"Form is_valid: {form.is_valid()}")
         print(f"Form cleaned_data: {form.cleaned_data}")
-        print(f"Object ID: {self.object.cal_pressure_id if self.object else 'None'}")
-        print(f"Request method: {self.request.method}")
-        print(f"Request user: {self.request.user}")
         
         # ตรวจสอบ form errors
         if form.errors:
             print(f"❌ Form errors: {form.errors}")
             return self.form_invalid(form)
         
-        # ตรวจสอบข้อมูลที่สำคัญก่อนบันทึก
-        print("=== DEBUG: ตรวจสอบข้อมูลก่อนบันทึก ===")
-        print(f"UUC Set: {form.cleaned_data.get('set', 'MISSING')}")
-        print(f"Actual: {form.cleaned_data.get('actual', 'MISSING')}")
-        print(f"Tolerance Start: {form.cleaned_data.get('tolerance_start', 'MISSING')}")
-        print(f"Tolerance End: {form.cleaned_data.get('tolerance_end', 'MISSING')}")
-        
-        # ตรวจสอบข้อมูลแถวที่ 2-6
-        for i in range(2, 7):
-            set_field = f'set_{i}'
-            actual_field = f'actual_{i}'
-            tolerance_start_field = f'tolerance_start_{i}'
-            tolerance_end_field = f'tolerance_end_{i}'
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.cal_pressure_id}")
             
-            print(f"Row {i} - Set: {form.cleaned_data.get(set_field, 'MISSING')}")
-            print(f"Row {i} - Actual: {form.cleaned_data.get(actual_field, 'MISSING')}")
-            print(f"Row {i} - Tolerance Start: {form.cleaned_data.get(tolerance_start_field, 'MISSING')}")
-            print(f"Row {i} - Tolerance End: {form.cleaned_data.get(tolerance_end_field, 'MISSING')}")
+            # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
+            from .utils import calculate_next_due_date
+            
+            if calibration.update:
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.update)
+                print(f"Next Due Date: {calibration.next_due}")
+            else:
+                # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
+                today = datetime.now().date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
+            
+            calibration.save()
+            
+            # อัปเดต form instance เพื่อแสดงค่า next_due ที่คำนวณได้
+            form.instance.next_due = calibration.next_due
+            
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            messages.error(self.request, f'เกิดข้อผิดพลาดในการบันทึก: {str(e)}')
+            return self.form_invalid(form)
+        
+        # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
+        selected_equipment = self.request.POST.get('selected_equipment', '')
+        if selected_equipment:
+            print(f"Selected equipment: {selected_equipment}")
+            # ลบข้อมูลเครื่องมือเก่าที่เกี่ยวข้องกับการสอบเทียบนี้
+            from calibrate.models import CalibrationEquipmentUsed
+            CalibrationEquipmentUsed.objects.filter(
+                calibration_type='pressure',
+                calibration_id=calibration.cal_pressure_id
+            ).delete()
+            
+            # เพิ่มข้อมูลเครื่องมือใหม่ (ใช้ set เพื่อหลีกเลี่ยงการซ้ำ)
+            equipment_ids = set()
+            for eid in selected_equipment.split(','):
+                eid = eid.strip()
+                if eid:
+                    equipment_ids.add(eid)
+            
+            for equipment_id in equipment_ids:
+                try:
+                    from machine.models import CalibrationEquipment
+                    equipment = CalibrationEquipment.objects.get(id=equipment_id)
+                    CalibrationEquipmentUsed.objects.get_or_create(
+                        calibration_type='pressure',
+                        calibration_id=calibration.cal_pressure_id,
+                        equipment=equipment
+                    )
+                    print(f"Added equipment: {equipment.name}")
+                except Exception as e:
+                    print(f"Error adding equipment {equipment_id}: {e}")
+        
+        # เพิ่ม success message
+        from django.contrib import messages
+        # ลบ success message ออกตามที่ผู้ใช้ต้องการ
+        
+        # Redirect ไปยัง success_url โดยตรง
+        return redirect(self.success_url)
+
+class CalibrationPressureDeleteView(LoginRequiredMixin, CustomPermissionRequiredMixin, DeleteView):
+    model = CalibrationPressure
+    template_name = 'calibrate/pressure_confirm_delete.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    permission_required = 'delete_calibration'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'ลบการสอบเทียบ Pressure - {self.object.uuc_id.name if self.object.uuc_id else "เครื่องมือ"}'
+        return context
+
+class CalibrationTorqueListView(LoginRequiredMixin, CustomPermissionRequiredMixin, ListView):
+    model = CalibrationTorque
+    template_name = 'calibrate/torque_list.html'
+    context_object_name = 'calibrations'
+    permission_required = 'view_calibration'
+    
+    def get_queryset(self):
+        # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ
+        from django.db.models import Case, When, IntegerField
+        return CalibrationTorque.objects.annotate(
+            priority_order=Case(
+                When(priority='very_urgent', then=1),
+                When(priority='urgent', then=2),
+                When(priority='normal', then=3),
+                default=4,
+                output_field=IntegerField(),
+            )
+        ).order_by('priority_order', '-update')
+
+class CalibrationTorqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = CalibrationTorque
+    form_class = CalibrationTorqueForm
+    template_name = 'calibrate/torque_form.html'
+    success_url = reverse_lazy('calibrate-dashboard')
+    permission_required = 'calibrate.add_calibrationtorque'
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+        form.fields['calibrator'].queryset = users
+        form.fields['certificate_issuer'].queryset = users
+        return form
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            data = kwargs.get('data')
+            if data is None:
+                from django.http import QueryDict
+                data = QueryDict(mutable=True)
+            else:
+                data = data.copy()
+            if 'status' not in self.request.POST:
+                data['status'] = 'in_progress'
+            if 'priority' not in self.request.POST:
+                data['priority'] = 'normal'
+            kwargs['data'] = data
+        return kwargs
+    
+    def form_valid(self, form):
+        print("=== DEBUG: ก่อนบันทึก Torque Create ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        print(f"Form is_valid: {form.is_valid()}")
+        print(f"Form cleaned_data: {form.cleaned_data}")
         
         # ตรวจสอบ required fields
         required_fields = ['uuc_id', 'measurement_range', 'update', 'next_due']
@@ -476,6 +589,26 @@ class CalibrationTorqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, C
             # บันทึกข้อมูลการสอบเทียบ
             calibration = form.save()
             print(f"✅ บันทึก calibration ID: {calibration.cal_torque_id}")
+            
+            # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
+            from .utils import calculate_next_due_date
+            
+            if calibration.update:
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.update)
+                print(f"Next Due Date: {calibration.next_due}")
+            else:
+                # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
+                today = datetime.now().date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
+            
+            calibration.save()
+            
+            # อัปเดต form instance เพื่อแสดงค่า next_due ที่คำนวณได้
+            form.instance.next_due = calibration.next_due
+            
             # ลบ success message ออกตามที่ผู้ใช้ต้องการ
             return redirect(self.success_url)
         except Exception as e:
@@ -566,6 +699,26 @@ class CalibrationTorqueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, U
             # บันทึกข้อมูลการสอบเทียบ
             calibration = form.save()
             print(f"✅ บันทึก calibration ID: {calibration.pk}")
+            
+            # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
+            from .utils import calculate_next_due_date
+            
+            if calibration.update:
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.update)
+                print(f"Next Due Date: {calibration.next_due}")
+            else:
+                # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
+                today = datetime.now().date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
+            
+            calibration.save()
+            
+            # อัปเดต form instance เพื่อแสดงค่า next_due ที่คำนวณได้
+            form.instance.next_due = calibration.next_due
+            
         except Exception as e:
             print(f"❌ Error saving calibration: {e}")
             return self.form_invalid(form)
@@ -712,6 +865,46 @@ class BalanceCalibrationCreateView(LoginRequiredMixin, PermissionRequiredMixin, 
                 data['priority'] = 'normal'
             kwargs['data'] = data
         return kwargs
+    
+    def form_valid(self, form):
+        print("=== DEBUG: ก่อนบันทึก Balance Create ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        
+        # ตรวจสอบ form errors
+        if form.errors:
+            print(f"❌ Form errors: {form.errors}")
+            return self.form_invalid(form)
+        
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.pk}")
+            
+            # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
+            from .utils import calculate_next_due_date
+            
+            if calibration.update:
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.update)
+                print(f"Next Due Date: {calibration.next_due}")
+            else:
+                # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
+                today = datetime.now().date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
+            
+            calibration.save()
+            
+            # อัปเดต form instance เพื่อแสดงค่า next_due ที่คำนวณได้
+            form.instance.next_due = calibration.next_due
+            
+            # ลบ success message ออกตามที่ผู้ใช้ต้องการ
+            return redirect(self.success_url)
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            messages.error(self.request, f'เกิดข้อผิดพลาดในการบันทึก: {str(e)}')
+            return self.form_invalid(form)
 
 class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = BalanceCalibration
@@ -784,6 +977,10 @@ class BalanceCalibrationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
                 print(f"Next Due Date (default): {calibration.next_due}")
             
             calibration.save()
+            
+            # อัปเดต form instance เพื่อแสดงค่า next_due ที่คำนวณได้
+            form.instance.next_due = calibration.next_due
+            
         except Exception as e:
             print(f"❌ Error saving calibration: {e}")
             return self.form_invalid(form)
@@ -1275,6 +1472,21 @@ def create_calibration_for_machine(request, machine_id):
                 calibration.machine = machine
             else:
                 calibration.uuc_id = machine
+            
+            # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
+            from .utils import calculate_next_due_date
+            
+            if calibration.update:
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.update)
+                print(f"Next Due Date: {calibration.next_due}")
+            else:
+                # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
+                today = datetime.now().date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
+            
             calibration.save()
             # ลบ success message ออกตามที่ผู้ใช้ต้องการ
             return redirect(success_url)
@@ -4230,8 +4442,41 @@ class HighFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         return context
     
     def form_valid(self, form):
-        # บันทึกข้อมูลการสอบเทียบ
-        calibration = form.save()
+        print("=== DEBUG: ก่อนบันทึก High Frequency ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        
+        # ตรวจสอบ form errors
+        if form.errors:
+            print(f"❌ Form errors: {form.errors}")
+            return self.form_invalid(form)
+        
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.pk}")
+            
+            # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
+            from .utils import calculate_next_due_date
+            
+            if calibration.date_calibration:
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.date_calibration)
+                print(f"Next Due Date: {calibration.next_due}")
+            else:
+                # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
+                today = datetime.now().date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
+            
+            calibration.save()
+            
+            # อัปเดต form instance เพื่อแสดงค่า next_due ที่คำนวณได้
+            form.instance.next_due = calibration.next_due
+            
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            return self.form_invalid(form)
         
         # จัดการข้อมูลเครื่องมือที่ใช้สอบเทียบหลายตัว
         selected_equipment = self.request.POST.get('selected_equipment', '')
@@ -4329,8 +4574,41 @@ class LowFrequencyCalibrationUpdateView(LoginRequiredMixin, UpdateView):
         return context
     
     def form_valid(self, form):
-        # บันทึกข้อมูลการสอบเทียบ
-        calibration = form.save()
+        print("=== DEBUG: ก่อนบันทึก Low Frequency ===")
+        print(f"POST data: {dict(self.request.POST)}")
+        
+        # ตรวจสอบ form errors
+        if form.errors:
+            print(f"❌ Form errors: {form.errors}")
+            return self.form_invalid(form)
+        
+        try:
+            # บันทึกข้อมูลการสอบเทียบ
+            calibration = form.save()
+            print(f"✅ บันทึก calibration ID: {calibration.pk}")
+            
+            # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
+            from .utils import calculate_next_due_date
+            
+            if calibration.date_calibration:
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.date_calibration)
+                print(f"Next Due Date: {calibration.next_due}")
+            else:
+                # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
+                today = datetime.now().date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
+            
+            calibration.save()
+            
+            # อัปเดต form instance เพื่อแสดงค่า next_due ที่คำนวณได้
+            form.instance.next_due = calibration.next_due
+            
+        except Exception as e:
+            print(f"❌ Error saving calibration: {e}")
+            return self.form_invalid(form)
         
         # Debug: ดูข้อมูลที่ส่งมา
         print(f"=== DEBUG: POST data for equipment (Low Frequency) ===")
@@ -4518,6 +4796,26 @@ class MicrowaveCalibrationUpdateView(LoginRequiredMixin, UpdateView):
             # บันทึกข้อมูลการสอบเทียบ
             calibration = form.save()
             print(f"✅ บันทึก calibration ID: {calibration.pk}")
+            
+            # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
+            from .utils import calculate_next_due_date
+            
+            if calibration.date_calibration:
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.date_calibration)
+                print(f"Next Due Date: {calibration.next_due}")
+            else:
+                # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
+                today = datetime.now().date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
+            
+            calibration.save()
+            
+            # อัปเดต form instance เพื่อแสดงค่า next_due ที่คำนวณได้
+            form.instance.next_due = calibration.next_due
+            
         except Exception as e:
             print(f"❌ Error saving calibration: {e}")
             return self.form_invalid(form)
@@ -4657,6 +4955,26 @@ class DialGaugeCalibrationUpdateView(LoginRequiredMixin, UpdateView):
             # บันทึกข้อมูลการสอบเทียบ
             calibration = form.save()
             print(f"✅ บันทึก calibration ID: {calibration.pk}")
+            
+            # คำนวณวันที่ครบกำหนดถัดไป (+6 เดือน)
+            from .utils import calculate_next_due_date
+            
+            if calibration.date_calibration:
+                # คำนวณ 6 เดือนจากวันที่สอบเทียบ
+                calibration.next_due = calculate_next_due_date(calibration.date_calibration)
+                print(f"Next Due Date: {calibration.next_due}")
+            else:
+                # ถ้าไม่มีวันที่สอบเทียบ ให้ใช้วันที่ปัจจุบัน + 6 เดือน
+                from datetime import datetime
+                today = datetime.now().date()
+                calibration.next_due = calculate_next_due_date(today)
+                print(f"Next Due Date (default): {calibration.next_due}")
+            
+            calibration.save()
+            
+            # อัปเดต form instance เพื่อแสดงค่า next_due ที่คำนวณได้
+            form.instance.next_due = calibration.next_due
+            
         except Exception as e:
             print(f"❌ Error saving calibration: {e}")
             return self.form_invalid(form)

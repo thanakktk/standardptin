@@ -238,7 +238,7 @@ class BalanceCalibrationForm(forms.ModelForm):
 class HighFrequencyCalibrationForm(forms.ModelForm):
     class Meta:
         model = HighFrequencyCalibration
-        fields = ['measurement_range', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
+        fields = ['measurement_range', 'date_calibration', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
                   'freq_uuc_range', 'freq_uuc_setting', 'freq_measured_value', 'freq_uncertainty', 'freq_tolerance_limit',
                   'freq_uuc_range_2', 'freq_uuc_setting_2', 'freq_measured_value_2', 'freq_uncertainty_2', 'freq_tolerance_limit_2',
                   'freq_uuc_range_3', 'freq_uuc_setting_3', 'freq_measured_value_3', 'freq_uncertainty_3', 'freq_tolerance_limit_3',
@@ -246,6 +246,7 @@ class HighFrequencyCalibrationForm(forms.ModelForm):
                   'freq_uuc_range_5', 'freq_uuc_setting_5', 'freq_measured_value_5', 'freq_uncertainty_5', 'freq_tolerance_limit_5']
         widgets = {
             'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 MHz'}),
+            'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
@@ -300,7 +301,7 @@ class HighFrequencyCalibrationForm(forms.ModelForm):
 class LowFrequencyCalibrationForm(forms.ModelForm):
     class Meta:
         model = LowFrequencyCalibration
-        fields = ['measurement_range', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
+        fields = ['measurement_range', 'date_calibration', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
                   # DC VOLTAGE
                   'dc_uuc_range', 'dc_uuc_setting', 'dc_measured_value', 'dc_uncertainty', 'dc_tolerance_limit',
                   'dc_uuc_range_2', 'dc_uuc_setting_2', 'dc_measured_value_2', 'dc_uncertainty_2', 'dc_tolerance_limit_2',
@@ -321,6 +322,7 @@ class LowFrequencyCalibrationForm(forms.ModelForm):
                   'res_uuc_range_5', 'res_uuc_setting_5', 'res_measured_value_5', 'res_uncertainty_5', 'res_tolerance_limit_5']
         widgets = {
             'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 MHz'}),
+            'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
@@ -426,13 +428,14 @@ class LowFrequencyCalibrationForm(forms.ModelForm):
 class MicrowaveCalibrationForm(forms.ModelForm):
     class Meta:
         model = MicrowaveCalibration
-        fields = ['next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
+        fields = ['date_calibration', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
                   'dc_uuc_range', 'dc_uuc_setting', 'dc_measured_value', 'dc_uncertainty', 'dc_tolerance_limit',
                   'dc_uuc_range_2', 'dc_uuc_setting_2', 'dc_measured_value_2', 'dc_uncertainty_2', 'dc_tolerance_limit_2',
                   'dc_uuc_range_3', 'dc_uuc_setting_3', 'dc_measured_value_3', 'dc_uncertainty_3', 'dc_tolerance_limit_3',
                   'dc_uuc_range_4', 'dc_uuc_setting_4', 'dc_measured_value_4', 'dc_uncertainty_4', 'dc_tolerance_limit_4',
                   'dc_uuc_range_5', 'dc_uuc_setting_5', 'dc_measured_value_5', 'dc_uncertainty_5', 'dc_tolerance_limit_5']
         widgets = {
+            'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'std_id': forms.Select(attrs={'class': 'form-control'}),
@@ -482,7 +485,7 @@ class MicrowaveCalibrationForm(forms.ModelForm):
 class DialGaugeCalibrationForm(forms.ModelForm):
     class Meta:
         model = DialGaugeCalibration
-        fields = ['measurement_range', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
+        fields = ['measurement_range', 'date_calibration', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
                   'uuc_set', 'actual', 'error', 'uncertainty', 'tolerance_limit',
                   'set_2', 'actual_2', 'error_2', 'tolerance_limit_2',
                   'set_3', 'actual_3', 'error_3', 'tolerance_limit_3',
@@ -490,6 +493,7 @@ class DialGaugeCalibrationForm(forms.ModelForm):
                   'set_5', 'actual_5', 'error_5', 'tolerance_limit_5']
         widgets = {
             'measurement_range': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0-100 mm'}),
+            'date_calibration': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'update': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'next_due': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
