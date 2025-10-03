@@ -169,7 +169,7 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    {% if user.is_staff or user.is_superuser %}
+                                    {% if user.is_staff or user.is_superuser or user.is_technician or user.is_coordinator %}
                                         {% if cal.type == 'pressure' %}
                                             <a href="{% url 'calibrate-pressure-edit' cal.id %}" class="btn btn-outline-primary btn-sm" title="แก้ไข">
                                                 <i class="fas fa-edit"></i>
@@ -201,7 +201,7 @@
                                         {% endif %}
                                     {% endif %}
                                     
-                                    {% if user.is_staff or user.is_superuser %}
+                                    {% if user.is_staff or user.is_superuser or user.is_technician or user.is_coordinator %}
                                         {% if cal.status == 'cert_issued' or cal.status == 'passed' or cal.status == 'active' %}
                                             {% if cal.type == 'balance' %}
                                                 <a href="{% url 'export-balance-certificate-docx' cal.id %}" 
