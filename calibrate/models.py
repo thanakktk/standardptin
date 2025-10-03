@@ -539,6 +539,7 @@ class DialGaugeCalibration(models.Model):
     date_calibration = models.DateField(verbose_name="วันที่สอบเทียบ")
     update = models.DateField(blank=True, null=True, verbose_name="วันที่อัปเดต")
     next_due = models.DateField(blank=True, null=True, verbose_name="วันที่ครบกำหนดสอบเทียบถัดไป")
+    certificate_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="หมายเลขใบรับรอง")
     
     # ข้อมูลมาตรฐาน
     res_uuc = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True, verbose_name="ความละเอียด UUC (inch)")

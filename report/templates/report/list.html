@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}รายงานผลปรับเทียบ - ระบบจัดการการสอบเทียบเครื่องมือวัด{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-chart-bar me-3"></i>
+                    รายงานผลปรับเทียบ
+                </h1>
+                <p class="page-subtitle">
+                    สร้างและส่งออกรายงานผลการสอบเทียบ
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Export Options -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-word fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">ส่งออกเป็น Word</h5>
+                    <p class="card-text">สร้างรายงานในรูปแบบ Microsoft Word</p>
+                    {% if user_permissions.can_export_reports %}
+                    <a href="{% url 'report-export-word' %}" class="btn btn-primary">
+                        <i class="fas fa-download me-2"></i>ส่งออก Word
+                    </a>
+                    {% else %}
+                    <button class="btn btn-secondary" disabled>
+                        <i class="fas fa-lock me-2"></i>ไม่มีสิทธิ์
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">ส่งออกเป็น Excel</h5>
+                    <p class="card-text">สร้างรายงานในรูปแบบ Microsoft Excel</p>
+                    {% if user_permissions.can_export_reports %}
+                    <a href="{% url 'report-export-excel' %}" class="btn btn-success">
+                        <i class="fas fa-download me-2"></i>ส่งออก Excel
+                    </a>
+                    {% else %}
+                    <button class="btn btn-secondary" disabled>
+                        <i class="fas fa-lock me-2"></i>ไม่มีสิทธิ์
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-certificate fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">ดาวน์โหลดใบรับรอง</h5>
+                    <p class="card-text">ดาวน์โหลดใบรับรองการสอบเทียบ</p>
+                    {% if user_permissions.can_download_certificates %}
+                    <a href="{% url 'report-download-certificate' %}" class="btn btn-warning">
+                        <i class="fas fa-download me-2"></i>ดาวน์โหลดใบรับรอง
+                    </a>
+                    {% else %}
+                    <button class="btn btn-secondary" disabled>
+                        <i class="fas fa-lock me-2"></i>ไม่มีสิทธิ์
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Filters -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-2"></i>
+                ตัวกรองข้อมูล
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">หน่วยงาน</label>
+                        <select name="organize_id" class="form-select">
+                            <option value="">-- เลือกหน่วยงาน --</option>
+                            <!-- Add organize options here -->
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">วันที่เริ่มต้น</label>
+                        <input type="date" name="date_from" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">วันที่สิ้นสุด</label>
+                        <input type="date" name="date_to" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">สถานะ</label>
+                        <select name="status" class="form-select">
+                            <option value="">-- เลือกสถานะ --</option>
+                            <option value="completed">เสร็จสิ้น</option>
+                            <option value="in_progress">กำลังดำเนินการ</option>
+                            <option value="failed">ไม่ผ่าน</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>กรองข้อมูล
+                        </button>
+                        <a href="{% url 'report-list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>ล้างการกรอง
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Details -->
+    {% if user_permissions.can_edit_reports %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-edit me-2"></i>
+                รายงานผลการสอบเทียบแบบละเอียด
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">คุณสามารถแก้ไขรายงานผลการสอบเทียบแบบละเอียดได้</p>
+            <button class="btn btn-info">
+                <i class="fas fa-edit me-2"></i>แก้ไขรายงาน
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Back to Home -->
+    <div class="text-center mt-4">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="fas fa-home me-2"></i>กลับหน้าแรก
+        </a>
+    </div>
+</div>
+{% endblock %}

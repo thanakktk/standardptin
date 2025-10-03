@@ -13,9 +13,11 @@
                         เอกสารเทคนิค
                     </h3>
                     <div class="card-tools">
+                        {% if user_permissions.can_manage_technical_docs %}
                         <a href="{% url 'technical_docs:upload_document' %}" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus"></i> อัพโหลดเอกสารใหม่
                         </a>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="card-body">
@@ -99,17 +101,21 @@
                                         <td>{{ document.created_at|date:"d/m/Y H:i" }}</td>
                                         <td>
                                             <div class="btn-group">
+                                                {% if user_permissions.can_view_technical_docs %}
                                                 <a href="{% url 'technical_docs:download_document' document.pk %}" 
                                                    class="btn btn-sm btn-success" 
                                                    title="ดาวน์โหลด">
                                                     <i class="fas fa-download"></i>
                                                 </a>
+                                                {% endif %}
+                                                {% if user_permissions.can_manage_technical_docs %}
                                                 <a href="{% url 'technical_docs:delete_document' document.pk %}" 
                                                    class="btn btn-sm btn-danger" 
                                                    title="ลบ"
                                                    onclick="return confirm('คุณต้องการลบเอกสารนี้หรือไม่?')">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>
@@ -126,16 +132,20 @@
                                 <a href="{% url 'technical_docs:document_list' %}" class="btn btn-secondary me-2">
                                     <i class="fas fa-list"></i> ดูเอกสารทั้งหมด
                                 </a>
+                                {% if user_permissions.can_manage_technical_docs %}
                                 <a href="{% url 'technical_docs:upload_document' %}" class="btn btn-primary">
                                     <i class="fas fa-plus"></i> อัพโหลดเอกสารใหม่
                                 </a>
+                                {% endif %}
                             {% else %}
                                 <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
                                 <h5 class="text-muted">ยังไม่มีเอกสารเทคนิค</h5>
                                 <p class="text-muted">คลิกปุ่ม "อัพโหลดเอกสารใหม่" เพื่อเพิ่มเอกสาร</p>
+                                {% if user_permissions.can_manage_technical_docs %}
                                 <a href="{% url 'technical_docs:upload_document' %}" class="btn btn-primary">
                                     <i class="fas fa-plus"></i> อัพโหลดเอกสารใหม่
                                 </a>
+                                {% endif %}
                             {% endif %}
                         </div>
                     {% endif %}

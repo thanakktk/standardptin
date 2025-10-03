@@ -482,7 +482,7 @@ class MicrowaveCalibrationForm(forms.ModelForm):
 class DialGaugeCalibrationForm(forms.ModelForm):
     class Meta:
         model = DialGaugeCalibration
-        fields = ['measurement_range', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer',
+        fields = ['measurement_range', 'update', 'next_due', 'status', 'std_id', 'calibrator', 'certificate_issuer', 'certificate_number',
                   'uuc_set', 'actual', 'error', 'uncertainty', 'tolerance_limit',
                   'set_2', 'actual_2', 'error_2', 'tolerance_limit_2',
                   'set_3', 'actual_3', 'error_3', 'tolerance_limit_3',
@@ -496,6 +496,7 @@ class DialGaugeCalibrationForm(forms.ModelForm):
             'std_id': forms.Select(attrs={'class': 'form-control'}),
             'calibrator': forms.Select(attrs={'class': 'form-control'}),
             'certificate_issuer': forms.Select(attrs={'class': 'form-control'}),
+            'certificate_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น DG-2024-001'}),
             'uuc_set': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 inch'}),
             'actual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 10.0000 inch'}),
             'error': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'เช่น 0.0000 inch', 'readonly': 'readonly'}),

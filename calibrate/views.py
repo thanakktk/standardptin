@@ -3137,7 +3137,7 @@ def export_low_frequency_certificate_docx(request, cal_id):
             "{{MANUFACTURER}}": fmt(str(getattr(m, "manufacture", "")) if getattr(m, "manufacture", None) else None),
             "{{DESCRIPTION}}": fmt(getattr(m, "name", None)),
             "{{SERIAL_NUMBER}}": fmt(getattr(m, "serial_number", None)),
-            "{{RANGE}}": fmt(getattr(m, "range", None)),
+            "{{RANGE}}": fmt(getattr(m, "range", None)),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             "{{GRADUATION}}": fmt(getattr(m, "res_uuc", None)),
             "{{OPTION}}": fmt(getattr(m, "option", None), "N/A"),
             "{{CUSTOMER_ASSET_ID}}": fmt(getattr(m, "customer_asset_id", None)),
@@ -3208,11 +3208,12 @@ def export_low_frequency_certificate_docx(request, cal_id):
         for idx, e in enumerate(eqs, start=1):
             eq_rows.append({
                 "no": str(idx),
-                "name": fmt(getattr(e, "name", None)),
-                "model": fmt(getattr(e, "description", None)),
+                "name": fmt(getattr(e, "name", None)),  # Description Name
+                "model": fmt(getattr(e, "model", None)),  # Maker / Model
                 "asset": fmt(getattr(e, "asset_number", None)),
                 "cert": fmt(getattr(e, "certificate_number", None)),
                 "due": fmt_date(getattr(e, "due_date", None)),
+                "serial": fmt(getattr(e, "serial_number", None)),  # Serial Number
             })
 
         print(f"DEBUG: Equipment rows: {eq_rows}")
@@ -3232,9 +3233,9 @@ def export_low_frequency_certificate_docx(request, cal_id):
             # ใช้เครื่องมือตัวแรกสำหรับ placeholder หลัก
             first_eq = eq_rows[0]
             replacements["{{STANDARD_ASSET_NO}}"] = first_eq["asset"]
-            replacements["{{STANDARD_DESCRIPTION}}"] = first_eq["name"]
-            replacements["{{STANDARD_MAKER_MODEL}}"] = first_eq["model"]
-            replacements["{{STANDARD_SERIAL}}"] = first_eq["asset"]
+            replacements["{{STANDARD_DESCRIPTION}}"] = first_eq["name"]  # Description Name
+            replacements["{{STANDARD_MAKER_MODEL}}"] = first_eq["model"]  # Maker / Model
+            replacements["{{STANDARD_SERIAL}}"] = first_eq["serial"]  # Serial Number
             replacements["{{STANDARD_CERTIFICATE}}"] = first_eq["cert"]
             replacements["{{STANDARD_DUE_DATE}}"] = first_eq["due"]
             
@@ -3242,17 +3243,17 @@ def export_low_frequency_certificate_docx(request, cal_id):
             if len(eq_rows) > 1:
                 second_eq = eq_rows[1]
                 replacements["{{STANDARD_ASSET_NO_2}}"] = second_eq["asset"]
-                replacements["{{STANDARD_DESCRIPTION_2}}"] = second_eq["name"]
-                replacements["{{STANDARD_MAKER_MODEL_2}}"] = second_eq["model"]
-                replacements["{{STANDARD_SERIAL_2}}"] = second_eq["asset"]
+                replacements["{{STANDARD_DESCRIPTION_2}}"] = second_eq["name"]  # Description Name
+                replacements["{{STANDARD_MAKER_MODEL_2}}"] = second_eq["model"]  # Maker / Model
+                replacements["{{STANDARD_SERIAL_2}}"] = second_eq["serial"]  # Serial Number
                 replacements["{{STANDARD_CERTIFICATE_2}}"] = second_eq["cert"]
                 replacements["{{STANDARD_DUE_DATE_2}}"] = second_eq["due"]
             else:
                 # หากไม่มีเครื่องมือตัวที่ 2 ให้ใช้เครื่องมือตัวแรกซ้ำ
                 replacements["{{STANDARD_ASSET_NO_2}}"] = first_eq["asset"]
-                replacements["{{STANDARD_DESCRIPTION_2}}"] = first_eq["name"]
-                replacements["{{STANDARD_MAKER_MODEL_2}}"] = first_eq["model"]
-                replacements["{{STANDARD_SERIAL_2}}"] = first_eq["asset"]
+                replacements["{{STANDARD_DESCRIPTION_2}}"] = first_eq["name"]  # Description Name
+                replacements["{{STANDARD_MAKER_MODEL_2}}"] = first_eq["model"]  # Maker / Model
+                replacements["{{STANDARD_SERIAL_2}}"] = first_eq["serial"]  # Serial Number
                 replacements["{{STANDARD_CERTIFICATE_2}}"] = first_eq["cert"]
                 replacements["{{STANDARD_DUE_DATE_2}}"] = first_eq["due"]
             
@@ -3465,8 +3466,8 @@ def export_balance_certificate_docx(request, cal_id):
                 try:
                     eq_rows.append({
                         "no": str(i),
-                        "name": fmt(eq.equipment.name),
-                        "model": fmt(eq.equipment.model),
+                        "name": fmt(eq.equipment.name),  # Description Name
+                        "model": fmt(eq.equipment.model),  # Maker / Model
                         "asset": fmt(getattr(eq.equipment, 'asset_number', None) or getattr(eq.equipment, 'serial_number', '-')),
                         "cert": fmt(getattr(eq.equipment, 'certificate_number', None) or getattr(eq.equipment, 'certificate', '-')),
                         "due": fmt_date(getattr(eq.equipment, 'due_date', None)),
@@ -3492,7 +3493,7 @@ def export_balance_certificate_docx(request, cal_id):
             "{{MANUFACTURER}}": fmt(str(m.manufacture) if m.manufacture else None),
             "{{DESCRIPTION}}": fmt(m.name),
             "{{SERIAL_NUMBER}}": fmt(m.serial_number),
-            "{{RANGE}}": fmt(m.range),
+            "{{RANGE}}": fmt(m.range),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             "{{GRADUATION}}": fmt(m.res_uuc),
             "{{OPTION}}": fmt(m.option),
             "{{CUSTOMER_ASSET_ID}}": fmt(m.customer_asset_id),
@@ -3507,9 +3508,9 @@ def export_balance_certificate_docx(request, cal_id):
             
             # ข้อมูลมาตรฐาน
             "{{STANDARD_ASSET_NO}}": fmt(getattr(std, 'asset_number', None) if std else None),
-            "{{STANDARD_DESCRIPTION}}": fmt(std.name if std else None),
-            "{{STANDARD_MAKER_MODEL}}": fmt(getattr(std, 'description', None) if std else None),
-            "{{STANDARD_SERIAL}}": fmt(std.serial_number if std else None),
+            "{{STANDARD_DESCRIPTION}}": fmt(std.name if std else None),  # Description Name
+            "{{STANDARD_MAKER_MODEL}}": fmt(getattr(std, 'model', None) if std else None),  # Maker / Model
+            "{{STANDARD_SERIAL}}": fmt(std.serial_number if std else None),  # Serial Number
             "{{STANDARD_CERTIFICATE}}": fmt(getattr(std, 'certificate_number', None) or std.certificate if std else None),
             "{{STANDARD_DUE_DATE}}": fmt_date(getattr(std, "due_date", None) if std else None),
 
@@ -3837,8 +3838,8 @@ def export_dial_gauge_certificate_docx(request, cal_id):
                 try:
                     eq_rows.append({
                         "no": str(i),
-                        "name": fmt(eq.equipment.name),
-                        "model": fmt(eq.equipment.model),
+                        "name": fmt(eq.equipment.name),  # Description Name
+                        "model": fmt(eq.equipment.model),  # Maker / Model
                         "asset": fmt(getattr(eq.equipment, 'asset_number', None) or getattr(eq.equipment, 'serial_number', '-')),
                         "cert": fmt(getattr(eq.equipment, 'certificate_number', None) or getattr(eq.equipment, 'certificate', '-')),
                         "due": fmt_date(getattr(eq.equipment, 'due_date', None)),
@@ -3864,7 +3865,7 @@ def export_dial_gauge_certificate_docx(request, cal_id):
             "{{MANUFACTURER}}": fmt(str(m.manufacture) if m.manufacture else None),
             "{{DESCRIPTION}}": fmt(m.name),
             "{{SERIAL_NUMBER}}": fmt(m.serial_number),
-            "{{RANGE}}": fmt(m.range),
+            "{{RANGE}}": fmt(m.range),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             "{{GRADUATION}}": fmt(m.res_uuc),
             "{{OPTION}}": fmt(m.option),
             "{{CUSTOMER_ASSET_ID}}": fmt(m.customer_asset_id),
@@ -3879,9 +3880,9 @@ def export_dial_gauge_certificate_docx(request, cal_id):
 
             # ข้อมูลมาตรฐาน
             "{{STANDARD_ASSET_NO}}": fmt(getattr(std, 'asset_number', None) if std else None),
-            "{{STANDARD_DESCRIPTION}}": fmt(std.name if std else None),
-            "{{STANDARD_MAKER_MODEL}}": fmt(getattr(std, 'description', None) if std else None),
-            "{{STANDARD_SERIAL}}": fmt(std.serial_number if std else None),
+            "{{STANDARD_DESCRIPTION}}": fmt(std.name if std else None),  # Description Name
+            "{{STANDARD_MAKER_MODEL}}": fmt(getattr(std, 'model', None) if std else None),  # Maker / Model
+            "{{STANDARD_SERIAL}}": fmt(std.serial_number if std else None),  # Serial Number
             "{{STANDARD_CERTIFICATE}}": fmt(getattr(std, 'certificate_number', None) or std.certificate if std else None),
             "{{STANDARD_DUE_DATE}}": fmt_date(getattr(std, "due_date", None) if std else None),
 
@@ -5396,10 +5397,10 @@ def export_high_frequency_certificate_docx(request, cal_id):
             # ข้อมูลเครื่องมือ
             '{{MODEL}}': getattr(cal.machine, 'model', '-'),
             '{{MANUFACTURER}}': getattr(cal.machine, 'manufacturer', '-'),
-            '{{DESCRIPTION}}': getattr(cal.machine, 'description', '-'),
+            '{{DESCRIPTION}}': getattr(cal.machine, 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
             '{{SERIAL_NUMBER}}': getattr(cal.machine, 'serial_number', '-'),
             '{{ASSET_NUMBER}}': getattr(cal.machine, 'asset_number', '-'),
-            '{{RANGE}}': getattr(cal, 'measurement_range', '-'),
+            '{{RANGE}}': getattr(cal.machine, 'range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             
             # ข้อมูลการสอบเทียบ
             '{{CALIBRATION_DATE}}': cal.date_calibration.strftime('%d/%m/%Y') if cal.date_calibration else '-',
@@ -5486,9 +5487,9 @@ def export_high_frequency_certificate_docx(request, cal_id):
         if std:
             replacements.update({
                 '{{STANDARD_ASSET_NO}}': getattr(std, 'asset_number', None) or getattr(std, 'serial_number', '-'),
-                '{{STANDARD_DESCRIPTION}}': std.name or '-',
-                '{{STANDARD_MAKER_MODEL}}': getattr(std, 'maker_model', '-'),
-                '{{STANDARD_SERIAL}}': std.serial_number or '-',
+                '{{STANDARD_DESCRIPTION}}': std.name or '-',  # Description Name
+                '{{STANDARD_MAKER_MODEL}}': getattr(std, 'model', '-'),  # Maker / Model
+                '{{STANDARD_SERIAL}}': std.serial_number or '-',  # Serial Number
                 '{{STANDARD_CERTIFICATE}}': getattr(std, 'certificate_number', '-'),
                 '{{STANDARD_DUE_DATE}}': getattr(std, 'due_date', '-'),
             })
@@ -5509,9 +5510,9 @@ def export_high_frequency_certificate_docx(request, cal_id):
                 eq2 = std2.equipment
                 replacements.update({
                     '{{STANDARD_ASSET_NO_2}}': getattr(eq2, 'asset_number', None) or getattr(eq2, 'serial_number', '-'),
-                    '{{STANDARD_DESCRIPTION_2}}': eq2.name or '-',
-                    '{{STANDARD_MAKER_MODEL_2}}': getattr(eq2, 'maker_model', '-'),
-                    '{{STANDARD_SERIAL_2}}': eq2.serial_number or '-',
+                    '{{STANDARD_DESCRIPTION_2}}': eq2.name or '-',  # Description Name
+                    '{{STANDARD_MAKER_MODEL_2}}': getattr(eq2, 'model', '-'),  # Maker / Model
+                    '{{STANDARD_SERIAL_2}}': eq2.serial_number or '-',  # Serial Number
                     '{{STANDARD_CERTIFICATE_2}}': getattr(eq2, 'certificate_number', '-'),
                     '{{STANDARD_DUE_DATE_2}}': getattr(eq2, 'due_date', '-'),
                 })
@@ -5544,7 +5545,7 @@ def export_high_frequency_certificate_docx(request, cal_id):
                     eq = eq_used.equipment
                     asset_no = getattr(eq, 'asset_number', None) or getattr(eq, 'serial_number', '-')
                     name = eq.name or '-'
-                    maker_model = getattr(eq, 'maker_model', '-')
+                    maker_model = getattr(eq, 'model', '-')  # Maker / Model
                     serial = eq.serial_number or '-'
                     certificate = getattr(eq, 'certificate_number', '-')
                     due_date = getattr(eq, 'due_date', '-')
@@ -5637,11 +5638,11 @@ def export_pressure_certificate_docx(request, cal_id):
         replacements = {
             # ข้อมูลเครื่องมือ
             '{{MODEL}}': getattr(cal.uuc_id, 'model', '-'),
-            '{{MANUFACTURER}}': getattr(cal.uuc_id, 'manufacturer', '-'),
-            '{{DESCRIPTION}}': getattr(cal.uuc_id, 'description', '-'),
+            '{{MANUFACTURER}}': getattr(cal.uuc_id, 'manufacture', '-'),  # ดึงผู้ผลิตมา
+            '{{DESCRIPTION}}': getattr(cal.uuc_id, 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
             '{{SERIAL_NUMBER}}': getattr(cal.uuc_id, 'serial_number', '-'),
             '{{ASSET_NUMBER}}': getattr(cal.uuc_id, 'asset_number', '-'),
-            '{{RANGE}}': getattr(cal, 'measurement_range', '-'),
+            '{{RANGE}}': getattr(cal.uuc_id, 'range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             
             # ข้อมูลการสอบเทียบ
             '{{CALIBRATION_DATE}}': cal.update.strftime('%d/%m/%Y') if cal.update else '-',
@@ -5660,51 +5661,70 @@ def export_pressure_certificate_docx(request, cal_id):
             '{{LOCATION_NAME}}': getattr(cal.uuc_id.organize, 'name', '-') if cal.uuc_id.organize else '-',
             '{{LOCATION_ADDRESS}}': getattr(cal.uuc_id.organize, 'address', '-') if cal.uuc_id.organize else '-',
             
-            # ข้อมูลตารางผลการสอบเทียบ Pressure (6 แถว)
+            # ข้อมูลตารางผลการสอบเทียบ Pressure (6 แถว) - อัปเดตตามรูปแบบที่คุณต้องการ
             # แถวที่ 1
-            '{{UUC_SET}}': cal.set or '-',
+            '{{SET}}': cal.set or '-',
             '{{ACTUAL}}': cal.actual or '-',
             '{{ERROR}}': cal.error or '-',
-            '{{TOLERANCE_LIMIT}}': f"{cal.tolerance_start or '-'} - {cal.tolerance_end or '-'}" if cal.tolerance_start and cal.tolerance_end else '-',
+            '{{TOLERANCE_START}}': cal.tolerance_start or '-',
+            '{{TOLERANCE_END}}': cal.tolerance_end or '-',
             
             # แถวที่ 2
-            '{{UUC_SET_2}}': cal.set_2 or '-',
+            '{{SET_2}}': cal.set_2 or '-',
             '{{ACTUAL_2}}': cal.actual_2 or '-',
             '{{ERROR_2}}': cal.error_2 or '-',
-            '{{TOLERANCE_LIMIT_2}}': f"{cal.tolerance_start_2 or '-'} - {cal.tolerance_end_2 or '-'}" if cal.tolerance_start_2 and cal.tolerance_end_2 else '-',
+            '{{TOLERANCE_START_2}}': cal.tolerance_start_2 or '-',
+            '{{TOLERANCE_END_2}}': cal.tolerance_end_2 or '-',
             
             # แถวที่ 3
-            '{{UUC_SET_3}}': cal.set_3 or '-',
+            '{{SET_3}}': cal.set_3 or '-',
             '{{ACTUAL_3}}': cal.actual_3 or '-',
             '{{ERROR_3}}': cal.error_3 or '-',
-            '{{TOLERANCE_LIMIT_3}}': f"{cal.tolerance_start_3 or '-'} - {cal.tolerance_end_3 or '-'}" if cal.tolerance_start_3 and cal.tolerance_end_3 else '-',
+            '{{TOLERANCE_START_3}}': cal.tolerance_start_3 or '-',
+            '{{TOLERANCE_END_3}}': cal.tolerance_end_3 or '-',
             
             # แถวที่ 4
-            '{{UUC_SET_4}}': cal.set_4 or '-',
+            '{{SET_4}}': cal.set_4 or '-',
             '{{ACTUAL_4}}': cal.actual_4 or '-',
             '{{ERROR_4}}': cal.error_4 or '-',
-            '{{TOLERANCE_LIMIT_4}}': f"{cal.tolerance_start_4 or '-'} - {cal.tolerance_end_4 or '-'}" if cal.tolerance_start_4 and cal.tolerance_end_4 else '-',
+            '{{TOLERANCE_START_4}}': cal.tolerance_start_4 or '-',
+            '{{TOLERANCE_END_4}}': cal.tolerance_end_4 or '-',
             
             # แถวที่ 5
-            '{{UUC_SET_5}}': cal.set_5 or '-',
+            '{{SET_5}}': cal.set_5 or '-',
             '{{ACTUAL_5}}': cal.actual_5 or '-',
             '{{ERROR_5}}': cal.error_5 or '-',
-            '{{TOLERANCE_LIMIT_5}}': f"{cal.tolerance_start_5 or '-'} - {cal.tolerance_end_5 or '-'}" if cal.tolerance_start_5 and cal.tolerance_end_5 else '-',
+            '{{TOLERANCE_START_5}}': cal.tolerance_start_5 or '-',
+            '{{TOLERANCE_END_5}}': cal.tolerance_end_5 or '-',
             
             # แถวที่ 6
-            '{{UUC_SET_6}}': cal.set_6 or '-',
+            '{{SET_6}}': cal.set_6 or '-',
             '{{ACTUAL_6}}': cal.actual_6 or '-',
             '{{ERROR_6}}': cal.error_6 or '-',
-            '{{TOLERANCE_LIMIT_6}}': f"{cal.tolerance_start_6 or '-'} - {cal.tolerance_end_6 or '-'}" if cal.tolerance_start_6 and cal.tolerance_end_6 else '-',
+            '{{TOLERANCE_START_6}}': cal.tolerance_start_6 or '-',
+            '{{TOLERANCE_END_6}}': cal.tolerance_end_6 or '-',
+            
+            # ข้อมูลเพิ่มเติมสำหรับการแสดงผล
+            '{{MODEL_PART_NUMBER}}': f"{getattr(cal.uuc_id, 'model', '-')} / {getattr(cal.uuc_id, 'part_number', '-')}" if getattr(cal.uuc_id, 'part_number', None) else getattr(cal.uuc_id, 'model', '-'),
+            '{{DATE_OF_CALIBRATION}}': cal.update.strftime('%d/%m/%Y') if cal.update else '-',
+            '{{DESCRIPTION}}': getattr(cal.uuc_id, 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
+            '{{DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
+            '{{SERIAL_NUMBER}}': getattr(cal.uuc_id, 'serial_number', '-'),
+            '{{RANGE}}': getattr(cal.uuc_id, 'measurement_range', '-') or getattr(cal, 'measurement_range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
+            '{{MANUFACTURER}}': getattr(cal.uuc_id, 'manufacture', '-'),  # ดึงผู้ผลิตมา
+            '{{CERTIFICATE_NO}}': cal.certificate_number or '-',
+            '{{TYPE}}': getattr(cal.uuc_id, 'type', '-') or 'Microwave',  # ประเภท Microwave
+            '{{CATEGORY}}': getattr(cal.uuc_id, 'category', '-') or 'Microwave',  # หมวดหมู่
+            '{{EQUIPMENT_TYPE}}': getattr(cal.uuc_id, 'equipment_type', '-') or 'Microwave',  # ประเภทเครื่องมือ
         }
         
         # ข้อมูลมาตรฐาน
         if std:
             replacements.update({
                 '{{STANDARD_ASSET_NO}}': getattr(std, 'asset_number', None) or getattr(std, 'serial_number', '-'),
-                '{{STANDARD_DESCRIPTION}}': std.name or '-',
-                '{{STANDARD_MAKER_MODEL}}': getattr(std, 'maker_model', '-'),
-                '{{STANDARD_SERIAL}}': std.serial_number or '-',
+                '{{STANDARD_DESCRIPTION}}': std.name or '-',  # Description Name
+                '{{STANDARD_MAKER_MODEL}}': getattr(std, 'model', '-'),  # Maker / Model
+                '{{STANDARD_SERIAL}}': std.serial_number or '-',  # Serial Number
                 '{{STANDARD_CERTIFICATE}}': getattr(std, 'certificate_number', '-'),
                 '{{STANDARD_DUE_DATE}}': getattr(std, 'due_date', '-'),
             })
@@ -5725,9 +5745,9 @@ def export_pressure_certificate_docx(request, cal_id):
                 eq2 = std2.equipment
                 replacements.update({
                     '{{STANDARD_ASSET_NO_2}}': getattr(eq2, 'asset_number', None) or getattr(eq2, 'serial_number', '-'),
-                    '{{STANDARD_DESCRIPTION_2}}': eq2.name or '-',
-                    '{{STANDARD_MAKER_MODEL_2}}': getattr(eq2, 'maker_model', '-'),
-                    '{{STANDARD_SERIAL_2}}': eq2.serial_number or '-',
+                    '{{STANDARD_DESCRIPTION_2}}': eq2.name or '-',  # Description Name
+                    '{{STANDARD_MAKER_MODEL_2}}': getattr(eq2, 'model', '-'),  # Maker / Model
+                    '{{STANDARD_SERIAL_2}}': eq2.serial_number or '-',  # Serial Number
                     '{{STANDARD_CERTIFICATE_2}}': getattr(eq2, 'certificate_number', '-'),
                     '{{STANDARD_DUE_DATE_2}}': getattr(eq2, 'due_date', '-'),
                 })
@@ -5760,7 +5780,7 @@ def export_pressure_certificate_docx(request, cal_id):
                     eq = eq_used.equipment
                     asset_no = getattr(eq, 'asset_number', None) or getattr(eq, 'serial_number', '-')
                     name = eq.name or '-'
-                    maker_model = getattr(eq, 'maker_model', '-')
+                    maker_model = getattr(eq, 'model', '-')  # Maker / Model
                     serial = eq.serial_number or '-'
                     certificate = getattr(eq, 'certificate_number', '-')
                     due_date = getattr(eq, 'due_date', '-')
@@ -5787,11 +5807,31 @@ def export_pressure_certificate_docx(request, cal_id):
         print(f"DEBUG: ACTUAL: {getattr(cal, 'actual', None)}")
         print(f"DEBUG: ERROR: {getattr(cal, 'error', None)}")
         
+        # Debug: แสดงข้อมูล tolerance
+        print(f"DEBUG: TOLERANCE_START: {getattr(cal, 'tolerance_start', None)}")
+        print(f"DEBUG: TOLERANCE_END: {getattr(cal, 'tolerance_end', None)}")
+        print(f"DEBUG: TOLERANCE_START_2: {getattr(cal, 'tolerance_start_2', None)}")
+        print(f"DEBUG: TOLERANCE_END_2: {getattr(cal, 'tolerance_end_2', None)}")
+        
         # Debug: แสดงข้อมูล APPROVER และ CALIBRATOR
         print(f"DEBUG: APPROVER: {replacements.get('{{APPROVER}}', 'NOT_FOUND')}")
         print(f"DEBUG: CALIBRATOR: {replacements.get('{{CALIBRATOR}}', 'NOT_FOUND')}")
         print(f"DEBUG: Certificate issuer: {cal.certificate_issuer}")
         print(f"DEBUG: Calibrator: {cal.calibrator}")
+        
+        # Debug: แสดงข้อมูลที่ส่งไป template
+        print("DEBUG: === REPLACEMENTS SENT TO TEMPLATE ===")
+        for key, value in replacements.items():
+            if 'SET' in key or 'TOLERANCE' in key or 'ACTUAL' in key or 'ERROR' in key or 'RANGE' in key or 'TYPE' in key:
+                print(f"DEBUG: {key}: {value}")
+        print("DEBUG: === END REPLACEMENTS ===")
+        
+        # Debug: แสดงข้อมูลเครื่องมือ
+        print(f"DEBUG: Machine Range: {getattr(cal.uuc_id, 'measurement_range', 'NOT_FOUND')}")
+        print(f"DEBUG: Calibration Range: {getattr(cal, 'measurement_range', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Type: {getattr(cal.uuc_id, 'type', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Category: {getattr(cal.uuc_id, 'category', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Equipment Type: {getattr(cal.uuc_id, 'equipment_type', 'NOT_FOUND')}")
         
         # แทนค่าในเอกสาร
         replace_text_in_document(doc, replacements)
@@ -5839,11 +5879,11 @@ def export_torque_certificate_docx(request, cal_id):
         replacements = {
             # ข้อมูลเครื่องมือ
             '{{MODEL}}': getattr(cal.uuc_id, 'model', '-'),
-            '{{MANUFACTURER}}': getattr(cal.uuc_id, 'manufacturer', '-'),
-            '{{DESCRIPTION}}': getattr(cal.uuc_id, 'description', '-'),
+            '{{MANUFACTURER}}': getattr(cal.uuc_id, 'manufacture', '-'),  # ดึงผู้ผลิตมา
+            '{{DESCRIPTION}}': getattr(cal.uuc_id, 'name', '-'),  # ดึงชื่อเครื่องมือประเภทมา
             '{{SERIAL_NUMBER}}': getattr(cal.uuc_id, 'serial_number', '-'),
             '{{ASSET_NUMBER}}': getattr(cal.uuc_id, 'asset_number', '-'),
-            '{{RANGE}}': getattr(cal, 'measurement_range', '-'),
+            '{{RANGE}}': getattr(cal.uuc_id, 'range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             
             # ข้อมูลการสอบเทียบ
             '{{CALIBRATION_DATE}}': cal.update.strftime('%d/%m/%Y') if cal.update else '-',
@@ -5917,9 +5957,9 @@ def export_torque_certificate_docx(request, cal_id):
         if std:
             replacements.update({
                 '{{STANDARD_ASSET_NO}}': getattr(std, 'asset_number', None) or getattr(std, 'serial_number', '-'),
-                '{{STANDARD_DESCRIPTION}}': std.name or '-',
-                '{{STANDARD_MAKER_MODEL}}': getattr(std, 'maker_model', '-'),
-                '{{STANDARD_SERIAL}}': std.serial_number or '-',
+                '{{STANDARD_DESCRIPTION}}': std.name or '-',  # Description Name
+                '{{STANDARD_MAKER_MODEL}}': getattr(std, 'model', '-'),  # Maker / Model
+                '{{STANDARD_SERIAL}}': std.serial_number or '-',  # Serial Number
                 '{{STANDARD_CERTIFICATE}}': getattr(std, 'certificate_number', '-'),
                 '{{STANDARD_DUE_DATE}}': getattr(std, 'due_date', '-'),
             })
@@ -5940,9 +5980,9 @@ def export_torque_certificate_docx(request, cal_id):
                 eq2 = std2.equipment
                 replacements.update({
                     '{{STANDARD_ASSET_NO_2}}': getattr(eq2, 'asset_number', None) or getattr(eq2, 'serial_number', '-'),
-                    '{{STANDARD_DESCRIPTION_2}}': eq2.name or '-',
-                    '{{STANDARD_MAKER_MODEL_2}}': getattr(eq2, 'maker_model', '-'),
-                    '{{STANDARD_SERIAL_2}}': eq2.serial_number or '-',
+                    '{{STANDARD_DESCRIPTION_2}}': eq2.name or '-',  # Description Name
+                    '{{STANDARD_MAKER_MODEL_2}}': getattr(eq2, 'model', '-'),  # Maker / Model
+                    '{{STANDARD_SERIAL_2}}': eq2.serial_number or '-',  # Serial Number
                     '{{STANDARD_CERTIFICATE_2}}': getattr(eq2, 'certificate_number', '-'),
                     '{{STANDARD_DUE_DATE_2}}': getattr(eq2, 'due_date', '-'),
                 })
@@ -5975,7 +6015,7 @@ def export_torque_certificate_docx(request, cal_id):
                     eq = eq_used.equipment
                     asset_no = getattr(eq, 'asset_number', None) or getattr(eq, 'serial_number', '-')
                     name = eq.name or '-'
-                    maker_model = getattr(eq, 'maker_model', '-')
+                    maker_model = getattr(eq, 'model', '-')  # Maker / Model
                     serial = eq.serial_number or '-'
                     certificate = getattr(eq, 'certificate_number', '-')
                     due_date = getattr(eq, 'due_date', '-')
@@ -6127,22 +6167,29 @@ def export_microwave_certificate_docx(request, cal_id):
             '{{DESCRIPTION}}': machine.machine_type.name if machine.machine_type else '-',
             '{{DUE_DATE}}': cal.next_due.strftime('%d/%m/%Y') if cal.next_due else '-',
             '{{SERIAL_NUMBER}}': machine.serial_number or '-',
-            '{{MANUFACTURER}}': '-',
-            '{{RANGE}}': cal.dc_uuc_range or '-',
+            '{{MANUFACTURER}}': getattr(machine, 'manufacturer', '-') or '-',
+            '{{TYPE}}': 'Microwave',  # ประเภท Microwave
+            '{{CATEGORY}}': getattr(machine, 'category', '-') or 'Microwave',  # หมวดหมู่
+            '{{EQUIPMENT_TYPE}}': getattr(machine, 'equipment_type', '-') or 'Microwave',  # ประเภทเครื่องมือ
+            '{{RANGE}}': getattr(cal.uuc_id, 'range', '-'),  # ดึงจากช่วงการวัดหน้าเครื่องมือ  # ดึงจากช่วงการวัดหน้าเครื่องมือ
             
             # เพิ่ม placeholder ที่ขาดหายไป
-            '{{CUSTOMER_ADDRESS}}': machine.organize.name if machine.organize else '-',
+            '{{CUSTOMER_ADDRESS}}': machine.organize.address if machine.organize else '-',
+            '{{CUSTOMER}}': machine.organize.name if machine.organize else '-',  # ชื่อหน่วยงาน
+            '{{CUSTOMER_NAME}}': machine.organize.name if machine.organize else '-',  # ชื่อหน่วยงาน
             '{{DATE_OF_CALIBRATION}}': cal.date_calibration.strftime('%d/%m/%Y') if cal.date_calibration else '-',
+            '{{MODEL_PART_NUMBER}}': f"{machine.model or '-'} / {getattr(machine, 'part_number', '-')}" if getattr(machine, 'part_number', None) else machine.model or '-',
+            '{{CERTIFICATE_NO}}': cal.certificate_number or '-',
             
             # ข้อมูลมาตรฐานเพิ่มเติม
             '{{STANDARD_ASSET_NO}}': standard_equipment.equipment.asset_number if standard_equipment and hasattr(standard_equipment.equipment, 'asset_number') else '-',
-            '{{STANDARD_DESCRIPTION}}': standard_equipment.equipment.name if standard_equipment else '-',
-            '{{STANDARD_MAKER_MODEL}}': standard_equipment.equipment.model if standard_equipment else '-',
-            '{{STANDARD_SERIAL}}': standard_equipment.equipment.serial_number if standard_equipment else '-',
+            '{{STANDARD_DESCRIPTION}}': standard_equipment.equipment.name if standard_equipment else '-',  # Description Name
+            '{{STANDARD_MAKER_MODEL}}': standard_equipment.equipment.model if standard_equipment else '-',  # Maker / Model
+            '{{STANDARD_SERIAL}}': standard_equipment.equipment.serial_number if standard_equipment else '-',  # Serial Number
             '{{STANDARD_ASSET_NO_2}}': '-',
-            '{{STANDARD_DESCRIPTION_2}}': '-',
-            '{{STANDARD_MAKER_MODEL_2}}': '-',
-            '{{STANDARD_SERIAL_2}}': '-',
+            '{{STANDARD_DESCRIPTION_2}}': '-',  # Description Name
+            '{{STANDARD_MAKER_MODEL_2}}': '-',  # Maker / Model
+            '{{STANDARD_SERIAL_2}}': '-',  # Serial Number
             
             # ข้อมูลตาราง DC Voltage
             '{{DC_UUC_RANGE}}': cal.dc_uuc_range or '-',
@@ -6181,6 +6228,25 @@ def export_microwave_certificate_docx(request, cal_id):
         }
         
         print(f"DEBUG: Total replacements: {len(replacements)}")
+        
+        # Debug: แสดงข้อมูลที่ส่งไป template
+        print("DEBUG: === MICROWAVE REPLACEMENTS SENT TO TEMPLATE ===")
+        for key, value in replacements.items():
+            if 'RANGE' in key or 'TYPE' in key or 'CATEGORY' in key or 'EQUIPMENT_TYPE' in key or 'MODEL' in key or 'MANUFACTURER' in key:
+                print(f"DEBUG: {key}: {value}")
+        print("DEBUG: === END MICROWAVE REPLACEMENTS ===")
+        
+        # Debug: แสดงข้อมูลเครื่องมือ
+        print(f"DEBUG: Machine Range: {getattr(machine, 'range', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Type: {getattr(machine, 'type', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Category: {getattr(machine, 'category', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Equipment Type: {getattr(machine, 'equipment_type', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Manufacturer: {getattr(machine, 'manufacturer', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Model: {getattr(machine, 'model', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Serial: {getattr(machine, 'serial_number', 'NOT_FOUND')}")
+        print(f"DEBUG: Machine Name: {getattr(machine, 'name', 'NOT_FOUND')}")
+        print(f"DEBUG: Customer Address: {machine.organize.address if machine.organize else 'NOT_FOUND'}")
+        print(f"DEBUG: Customer Name: {machine.organize.name if machine.organize else 'NOT_FOUND'}")
         
         # แทนค่าในเอกสาร
         replace_text_in_document(doc, replacements)

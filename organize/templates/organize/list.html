@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>รายการหน่วยงาน</h1>
+{% if user_permissions.can_manage_organization %}
 <a href="{% url 'organize-add' %}" class="btn btn-success">เพิ่มหน่วยงาน</a>
+{% endif %}
 <table class="table table-bordered mt-3">
     <thead>
         <tr>
@@ -20,8 +22,10 @@
             <td>{{ o.phone }}</td>
             <td>{{ o.email }}</td>
             <td>
+                {% if user_permissions.can_manage_organization %}
                 <a href="{% url 'organize-edit' o.pk %}" class="btn btn-primary btn-sm">แก้ไข</a>
                 <a href="{% url 'organize-delete' o.pk %}" class="btn btn-danger btn-sm">ลบ</a>
+                {% endif %}
             </td>
         </tr>
         {% empty %}

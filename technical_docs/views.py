@@ -8,8 +8,10 @@ import os
 import urllib.parse
 from .models import TechnicalDocument
 from .forms import TechnicalDocumentForm
+from accounts.permissions import permission_required
 
 @login_required
+@permission_required('view_technical_docs')
 def document_list(request):
     """แสดงรายการเอกสารเทคนิคทั้งหมด"""
     documents = TechnicalDocument.objects.all()
@@ -31,6 +33,7 @@ def document_list(request):
     })
 
 @login_required
+@permission_required('manage_technical_docs')
 def upload_document(request):
     """อัพโหลดเอกสารใหม่"""
     if request.method == 'POST':
@@ -49,6 +52,7 @@ def upload_document(request):
     })
 
 @login_required
+@permission_required('view_technical_docs')
 def download_document(request, pk):
     """ดาวน์โหลดเอกสาร"""
     import urllib.parse
@@ -79,6 +83,7 @@ def download_document(request, pk):
         return redirect('technical_docs:document_list')
 
 @login_required
+@permission_required('manage_technical_docs')
 def delete_document(request, pk):
     """ลบเอกสาร"""
     document = get_object_or_404(TechnicalDocument, pk=pk)

@@ -31,6 +31,7 @@ urlpatterns = [
     path('std/', include('std.urls')),
     path('accounts/', include('accounts.urls')),
     path('technical-docs/', include('technical_docs.urls')),
+    path('report/', include('report.urls')),
 ]
 
 if settings.DEBUG:
