@@ -163,101 +163,75 @@ def calibration_data(request, pk):
 
 @login_required
 def send_filtered_email(request):
-    """ส่งอีเมลข้อมูลเครื่องมือที่กรองแล้ว"""
+    """ส่งอีเมลข้อมูลเครื่องมือที่กรองแล้ว (แยกตามหน่วยงาน)"""
     if request.method == 'POST':
-        # รับพารามิเตอร์การกรองจากฟอร์ม
-        organize_id = request.POST.get('organize_id')
-        machine_type = request.POST.get('machine_type')
-        date_from = request.POST.get('date_from')
-        date_to = request.POST.get('date_to')
-        serial_search = request.POST.get('serial_search')
-        name_search = request.POST.get('name_search')
-        
-        # สร้าง queryset ตามการกรอง
+        # --- กรอง queryset ---
         queryset = Machine.objects.filter(deleted=False)
-        
-        if organize_id:
-            queryset = queryset.filter(organize_id=organize_id)
-        if machine_type:
-            queryset = queryset.filter(machine_type_id=machine_type)
-        if date_from:
-            queryset = queryset.filter(update__gte=date_from)
-        if date_to:
-            queryset = queryset.filter(update__lte=date_to)
-        if serial_search:
-            queryset = queryset.filter(serial_number__icontains=serial_search)
-        if name_search:
-            queryset = queryset.filter(name__icontains=name_search)
-        
-        # สร้างเนื้อหาอีเมล
-        subject = "รายงานเครื่องมือวัด"
-        body = "รายการเครื่องมือวัดตามเงื่อนไขที่กรอง:\n\n"
-        
+        if request.POST.get('organize_id'):
+            queryset = queryset.filter(organize_id=request.POST['organize_id'])
+        if request.POST.get('machine_type'):
+            queryset = queryset.filter(machine_type_id=request.POST['machine_type'])
+        if request.POST.get('date_from'):
+            queryset = queryset.filter(update__gte=request.POST['date_from'])
+        if request.POST.get('date_to'):
+            queryset = queryset.filter(update__lte=request.POST['date_to'])
+        if request.POST.get('serial_search'):
+            queryset = queryset.filter(serial_number__icontains=request.POST['serial_search'])
+        if request.POST.get('name_search'):
+            queryset = queryset.filter(name__icontains=request.POST['name_search'])
+
+        # --- จัดกลุ่มตามหน่วยงาน ---
+        machines_by_org = {}
         for machine in queryset:
-            body += f"ID: {machine.id}\n"
-            body += f"ชื่อเครื่องมือ: {machine.name}\n"
-            body += f"รุ่น: {machine.model}\n"
-            body += f"Serial Number: {machine.serial_number}\n"
-            body += f"ประเภท: {machine.machine_type}\n"
-            body += f"หน่วยนับ: {machine.unit}\n"
-            body += f"ผู้ผลิต: {machine.manufacture}\n"
-            body += f"วันที่อัปเดต: {machine.update}\n"
-            body += "-" * 50 + "\n"
-        
-        # ส่งอีเมลไปที่หน่วยงานของผู้ใช้
-        try:
-            recipient_emails = []
-            
-            # ตรวจสอบหน่วยงานหลัก (organize field)
-            if request.user.organize and request.user.organize.email:
-                recipient_emails.append(request.user.organize.email)
-            
-            # ตรวจสอบหน่วยงานเพิ่มเติม (organizations ManyToManyField)
-            if request.user.organizations.exists():
-                for org in request.user.organizations.all():
-                    if org.email and org.email not in recipient_emails:
-                        recipient_emails.append(org.email)
-            
-            if not recipient_emails:
-                # ถ้าไม่มีอีเมลหน่วยงาน ให้แสดงข้อความแจ้งเตือน
-                messages.warning(request, 'ไม่พบอีเมลของหน่วยงาน กรุณาเพิ่มอีเมลหน่วยงานก่อน')
-                return redirect('machine-list')
-            
-            send_mail(
-                subject,
-                body,
-                settings.DEFAULT_FROM_EMAIL,
-                recipient_emails,
-                fail_silently=False,
-            )
-            messages.success(request, f'ส่งอีเมลรายงานสำเร็จไปยัง {", ".join(recipient_emails)}')
-        except Exception as e:
-            messages.warning(request, f'ไม่สามารถส่งอีเมลผ่าน SMTP ได้: {str(e)}')
-            # เก็บอีเมลเป็นไฟล์แทน
+            if machine.organize and machine.organize.email:
+                org_email = machine.organize.email
+                if org_email not in machines_by_org:
+                    machines_by_org[org_email] = {
+                        "org_name": machine.organize.name,
+                        "machines": []
+                    }
+                machines_by_org[org_email]["machines"].append(machine)
+
+        if not machines_by_org:
+            messages.warning(request, "ไม่พบหน่วยงานที่มีอีเมล")
+            return redirect("machine-list")
+
+        success_list, fail_list = [], []
+
+        # --- ส่งเมลแยกตามหน่วยงาน ---
+        for org_email, data in machines_by_org.items():
+            subject = f"รายงานเครื่องมือวัดของ {data['org_name']} ({len(data['machines'])} รายการ)"
+            body = f"หน่วยงาน: {data['org_name']}\n\n"
+
+            for machine in data["machines"]:
+                body += f"ID: {machine.id}\n"
+                body += f"ชื่อเครื่องมือ: {machine.name}\n"
+                body += f"รุ่น: {machine.model or '-'}\n"
+                body += f"Serial Number: {machine.serial_number or '-'}\n"
+                body += f"ประเภท: {machine.machine_type}\n"
+                body += f"ผู้ผลิต: {machine.manufacture or '-'}\n"
+                body += f"วันที่อัปเดต: {machine.update}\n"
+                body += "-" * 50 + "\n"
+
             try:
-                import datetime
-                
-                # สร้างโฟลเดอร์ sent_emails ถ้าไม่มี
-                email_dir = settings.BASE_DIR / 'sent_emails'
-                email_dir.mkdir(exist_ok=True)
-                
-                # สร้างไฟล์อีเมล
-                timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-                email_file = email_dir / f'filtered_email_{timestamp}.txt'
-                
-                with open(email_file, 'w', encoding='utf-8') as f:
-                    f.write(f"To: {', '.join(recipient_emails)}\n")
-                    f.write(f"Subject: {subject}\n")
-                    f.write(f"From: {settings.DEFAULT_FROM_EMAIL}\n")
-                    f.write(f"Date: {datetime.datetime.now()}\n")
-                    f.write("="*50 + "\n")
-                    f.write(body)
-                
-                messages.info(request, f'เก็บอีเมลเป็นไฟล์แทน: {email_file.name}')
-            except Exception as file_error:
-                messages.error(request, f'ไม่สามารถเก็บอีเมลได้: {str(file_error)}')
-    
-    return redirect('machine-list')
+                send_mail(
+                    subject,
+                    body,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [org_email],   # ✅ ส่งแยกไปทีละเมล
+                    fail_silently=False,
+                )
+                success_list.append(org_email)
+            except Exception as e:
+                fail_list.append(f"{org_email} ({str(e)})")
+
+        # --- สรุปผล ---
+        if success_list:
+            messages.success(request, f"ส่งอีเมลสำเร็จไปยัง: {', '.join(success_list)}")
+        if fail_list:
+            messages.warning(request, f"ส่งไม่สำเร็จ: {', '.join(fail_list)}")
+
+    return redirect("machine-list")
 
 @login_required
 def create_calibration_request(request, pk):
@@ -729,175 +703,91 @@ def debug_user_organizations(request):
 @login_required
 @require_http_methods(["POST"])
 def bulk_send_email(request):
-    """ส่งอีเมลข้อมูลเครื่องมือหลายตัว"""
-    import logging
-    import time
-    from django.core.mail import EmailMessage
-    from django.core.mail.backends.smtp import EmailBackend
-    
-    logger = logging.getLogger(__name__)
-    
+    """ส่งอีเมลข้อมูลเครื่องมือหลายตัว (แยกตามหน่วยงานของเครื่องมือ)"""
     try:
-        # รับข้อมูลจาก request
         machine_ids = request.POST.getlist('machine_ids')
-        message = request.POST.get('message', '')
-        
+        msg = request.POST.get('msg', '')
+
         if not machine_ids:
             return JsonResponse({
                 'success': False,
-                'message': 'ไม่พบเครื่องมือที่เลือก'
+                'msg': 'ไม่พบเครื่องมือที่เลือก'
             })
-        
-        # ดึงข้อมูลเครื่องมือ
+
         machines = Machine.objects.filter(id__in=machine_ids, deleted=False)
-        
+
         if not machines.exists():
             return JsonResponse({
                 'success': False,
-                'message': 'ไม่พบเครื่องมือที่ถูกต้อง'
+                'msg': 'ไม่พบเครื่องมือที่ถูกต้อง'
             })
-        
-        # ตรวจสอบจำนวนรายการที่ส่ง
-        machine_count = machines.count()
-        logger.info(f"Attempting to send email for {machine_count} machines")
-        
-        # ตรวจสอบอีเมลหน่วยงาน
-        recipient_emails = []
-        
-        # Debug: ตรวจสอบข้อมูลผู้ใช้
-        logger.info(f"User: {request.user.username}")
-        logger.info(f"User organize: {request.user.organize}")
-        logger.info(f"User organizations count: {request.user.organizations.count()}")
-        
-        # ตรวจสอบหน่วยงานหลัก (organize field)
-        if request.user.organize:
-            logger.info(f"Main organization: {request.user.organize.name}")
-            logger.info(f"Main organization email: {request.user.organize.email}")
-            if request.user.organize.email:
-                recipient_emails.append(request.user.organize.email)
-                logger.info(f"Found email from main organization: {request.user.organize.email}")
-        else:
-            logger.info("No main organization found")
-        
-        # ตรวจสอบหน่วยงานเพิ่มเติม (organizations ManyToManyField)
-        if request.user.organizations.exists():
-            logger.info(f"Found {request.user.organizations.count()} additional organizations")
-            for org in request.user.organizations.all():
-                logger.info(f"Additional organization: {org.name}, email: {org.email}")
-                if org.email and org.email not in recipient_emails:
-                    recipient_emails.append(org.email)
-                    logger.info(f"Found email from additional organization: {org.email}")
-        else:
-            logger.info("No additional organizations found")
-        
-        logger.info(f"Total recipient emails found: {recipient_emails}")
-        
-        if not recipient_emails:
+
+        # --- จัดกลุ่มตามหน่วยงาน ---
+        machines_by_org = {}
+        for machine in machines:
+            if machine.organize and machine.organize.email:
+                org_email = machine.organize.email
+                if org_email not in machines_by_org:
+                    machines_by_org[org_email] = {
+                        "org_name": machine.organize.name,
+                        "machines": []
+                    }
+                machines_by_org[org_email]["machines"].append(machine)
+
+        if not machines_by_org:
             return JsonResponse({
                 'success': False,
-                'message': 'ไม่พบอีเมลของหน่วยงาน กรุณาเพิ่มอีเมลหน่วยงานก่อน'
+                'msg': 'ไม่พบหน่วยงานที่มีอีเมล'
             })
-        
-        # สร้างเนื้อหาอีเมล
-        subject = f"ข้อมูลเครื่องมือวัด ({machine_count} รายการ)"
-        body = f"รายการข้อมูลเครื่องมือวัดที่เลือก:\n\n"
-        
-        for machine in machines:
-            body += f"ID: {machine.id}\n"
-            body += f"ชื่อเครื่องมือ: {machine.name}\n"
-            body += f"รุ่น: {machine.model or '-'}\n"
-            body += f"Serial Number: {machine.serial_number or '-'}\n"
-            body += f"ประเภท: {machine.machine_type}\n"
-            body += f"หน่วยนับ: {machine.unit or '-'}\n"
-            body += f"ผู้ผลิต: {machine.manufacture or '-'}\n"
-            body += f"ช่วงการวัด: {machine.range or '-'}\n"
-            body += f"ความละเอียด: {machine.res_uuc or '-'}\n"
-            if machine.organize:
-                body += f"หน่วยงาน: {machine.organize.name}\n"
-            body += f"วันที่อัปเดต: {machine.update}\n"
-            body += "-" * 50 + "\n"
-        
-        # เพิ่มข้อความเพิ่มเติมถ้ามี
-        if message.strip():
-            body += f"\nข้อความเพิ่มเติม:\n{message}\n"
-        
-        # ส่งอีเมลไปที่หน่วยงานของผู้ใช้
-        try:
-            # ใช้ EmailMessage แทน send_mail เพื่อควบคุมการส่งได้ดีขึ้น
-            email = EmailMessage(
-                subject=subject,
-                body=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=recipient_emails,
-            )
-            
-            # ตั้งค่า timeout และ connection settings
-            email.connection = EmailBackend(
-                host=settings.EMAIL_HOST,
-                port=settings.EMAIL_PORT,
-                username=settings.EMAIL_HOST_USER,
-                password=settings.EMAIL_HOST_PASSWORD,
-                use_tls=settings.EMAIL_USE_TLS,
-                use_ssl=settings.EMAIL_USE_SSL,
-                timeout=getattr(settings, 'EMAIL_TIMEOUT', 60),
-                fail_silently=False,
-            )
-            
-            # ส่งอีเมลพร้อม retry mechanism
-            logger.info(f"Sending email to {recipient_emails}")
-            _send_email_with_retry(
-                email, 
-                max_attempts=getattr(settings, 'EMAIL_RETRY_ATTEMPTS', 3),
-                delay=getattr(settings, 'EMAIL_RETRY_DELAY', 5)
-            )
-            logger.info(f"Email sent successfully for {machine_count} machines")
-            
-            return JsonResponse({
-                'success': True,
-                'sent_count': machine_count,
-                'message': f'ส่งอีเมลข้อมูลเครื่องมือสำเร็จ {machine_count} รายการไปยัง {", ".join(recipient_emails)}'
-            })
-            
-        except Exception as e:
-            logger.error(f"SMTP Error: {str(e)}")
-            # เก็บอีเมลเป็นไฟล์แทน
+
+        success_list, fail_list = [], []
+
+        # --- ส่งเมลแยกตามหน่วยงาน ---
+        for org_email, data in machines_by_org.items():
+            subject = f"ข้อมูลเครื่องมือวัดของ {data['org_name']} ({len(data['machines'])} รายการ)"
+            body = f"หน่วยงาน: {data['org_name']}\n\n"
+
+            for machine in data["machines"]:
+                body += f"ID: {machine.id}\n"
+                body += f"ชื่อเครื่องมือ: {machine.name}\n"
+                body += f"รุ่น: {machine.model or '-'}\n"
+                body += f"Serial Number: {machine.serial_number or '-'}\n"
+                body += f"ประเภท: {machine.machine_type}\n"
+                body += f"ผู้ผลิต: {machine.manufacture or '-'}\n"
+                body += f"ช่วงการวัด: {machine.range or '-'}\n"
+                body += f"ความละเอียด: {machine.res_uuc or '-'}\n"
+                body += f"วันที่อัปเดต: {machine.update}\n"
+                body += "-" * 50 + "\n"
+
+            if msg.strip():
+                body += f"\nข้อความเพิ่มเติม:\n{msg}\n"
+
             try:
-                import datetime
-                
-                # สร้างโฟลเดอร์ sent_emails ถ้าไม่มี
-                email_dir = settings.BASE_DIR / 'sent_emails'
-                email_dir.mkdir(exist_ok=True)
-                
-                # สร้างไฟล์อีเมล
-                timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-                email_file = email_dir / f'bulk_email_{timestamp}.txt'
-                
-                with open(email_file, 'w', encoding='utf-8') as f:
-                    f.write(f"To: {', '.join(recipient_emails)}\n")
-                    f.write(f"Subject: {subject}\n")
-                    f.write(f"From: {settings.DEFAULT_FROM_EMAIL}\n")
-                    f.write(f"Date: {datetime.datetime.now()}\n")
-                    f.write(f"Machine Count: {machine_count}\n")
-                    f.write("="*50 + "\n")
-                    f.write(body)
-                
-                logger.info(f"Email saved to file: {email_file}")
-                
-                return JsonResponse({
-                    'success': False,
-                    'message': f'ไม่สามารถส่งอีเมลผ่าน SMTP ได้ เก็บเป็นไฟล์แทน: {email_file.name} (Error: {str(e)})'
-                })
-            except Exception as file_error:
-                logger.error(f"File save error: {str(file_error)}")
-                return JsonResponse({
-                    'success': False,
-                    'message': f'ไม่สามารถเก็บอีเมลได้: {str(file_error)}'
-                })
-        
+                send_mail(
+                    subject,
+                    body,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [org_email],  # ✅ ส่งแยกทีละหน่วยงาน
+                    fail_silently=False,
+                )
+                success_list.append(org_email)
+            except Exception as e:
+                fail_list.append(f"{org_email} ({str(e)})")
+
+        # --- สรุปผล ---
+        msg = ""
+        if success_list:
+            msg += f"ส่งอีเมลสำเร็จไปยัง: {', '.join(success_list)}. "
+        if fail_list:
+            msg += f"ส่งไม่สำเร็จ: {', '.join(fail_list)}"
+
+        return JsonResponse({
+            'success': True if success_list else False,
+            'message': msg.strip()
+        })
+
     except Exception as e:
-        logger.error(f"General error in bulk_send_email: {str(e)}")
         return JsonResponse({
             'success': False,
             'message': f'เกิดข้อผิดพลาดในการประมวลผล: {str(e)}'
         })
-
