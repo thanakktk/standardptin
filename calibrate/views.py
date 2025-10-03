@@ -1372,6 +1372,7 @@ def calibration_dashboard(request):
             filtered_calibrations.append(cal)
     
     # เรียงลำดับตามระดับความเร่งด่วน: ด่วนมาก -> ด่วน -> ปกติ แล้วตามด้วยวันที่สอบเทียบล่าสุด
+    priority_order = {'very_urgent': 1, 'urgent': 2, 'normal': 3}
     filtered_calibrations.sort(key=lambda x: (
         priority_order.get(x.get('priority'), 4),
         (x.get('calibration_date') or x.get('update_date') or date.min)
@@ -2802,18 +2803,18 @@ def export_to_excel(request):
             'id': cal.cal_pressure_id,
             'type': 'pressure',
             'type_name': 'การสอบเทียบ Pressure',
-    #         'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
-    #         'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
-    #         'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
-    #         'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
-    #         'update_date': cal.update,
-    #         'next_due': cal.next_due,
-    #         'status': cal.status,
-    #         'priority': cal.priority,
-    #         'calibration_date': cal.update,  # ǹ��ͺ�º
-    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+            'machine_name': get_machine_from_calibration(cal).name if get_machine_from_calibration(cal) else '-',
+            'machine_model': get_machine_from_calibration(cal).model if get_machine_from_calibration(cal) else '-',
+            'serial_number': get_machine_from_calibration(cal).serial_number if get_machine_from_calibration(cal) else '-',
+            'std_name': ', '.join([f"{eq.equipment.name} - {eq.equipment.model or ''} - {eq.equipment.serial_number or ''}" for eq in cal.calibration_equipment_used]) if cal.calibration_equipment_used else (cal.std_id.name if cal.std_id else '-'),
+            'update_date': cal.update,
+            'next_due': cal.next_due,
+            'status': cal.status,
+            'priority': cal.priority,
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # เพิ่มข้อมูล Torque calibrations
@@ -2830,10 +2831,10 @@ def export_to_excel(request):
             'next_due': cal.next_due,
             'status': cal.status,
             'priority': cal.priority,
-    #         'calibration_date': cal.update,  # ǹ��ͺ�º
-    #         'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
-    #         'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
-    #         'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
+            'calibration_date': cal.update,  # ǹ��ͺ�º
+            'calibrator': cal.calibrator.get_full_name() if cal.calibrator else '-',
+            'certificate_issuer': cal.certificate_issuer.get_full_name() if cal.certificate_issuer else '-',
+            'user_unit': get_machine_from_calibration(cal).organize.name if get_machine_from_calibration(cal) and get_machine_from_calibration(cal).organize else '-',
         })
     
     # กรองข้อมูลตามพารามิเตอร์ (เหมือนกับใน calibration_report_detail)
